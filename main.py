@@ -8,3 +8,4 @@ X, y = make_classification(n_samples=1500, n_features=3, n_informative=3,
 model = Stree(random_state=random_state)
 model.fit(X, y)
 model.show_outcomes()
+model.save_sub_datasets()

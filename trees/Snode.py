@@ -17,7 +17,7 @@ class Snode:
         self._y = y
         self._down = None
         self._up = None
-        self._class = None
+        self._class = None # really needed?
     
     def set_down(self, son):
         self._down = son
@@ -28,13 +28,13 @@ class Snode:
     def is_leaf(self,) -> bool:
         return self._up is None and self._down is None
     
-    def get_down(self):
+    def get_down(self) -> 'Snode':
         return self._down
 
-    def get_up(self):
+    def get_up(self) -> 'Snode':
         return self._up
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.is_leaf():
             num = 0
             for i in np.unique(self._y):
