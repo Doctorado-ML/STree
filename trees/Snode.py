@@ -2,7 +2,7 @@
 __author__ = "Ricardo Montañana Gómez"
 __copyright__ = "Copyright 2020, Ricardo Montañana Gómez"
 __license__ = "MIT"
-__version__ = "1.0"
+__version__ = "0.9"
 Node of the Stree (binary tree)
 '''
 
@@ -11,10 +11,10 @@ from sklearn.svm import LinearSVC
 
 
 class Snode:
-    def __init__(self, model: LinearSVC, X: np.ndarray, y: np.ndarray, title: str):
-        self._model = model
-        self._vector = None if model is None else model.coef_
-        self._interceptor = 0 if model is None else model.intercept_
+    def __init__(self, clf: LinearSVC, X: np.ndarray, y: np.ndarray, title: str):
+        self._clf = clf
+        self._vector = None if clf is None else clf.coef_
+        self._interceptor = 0 if clf is None else clf.intercept_
         self._title = title
         self._belief = 0  # belief of the prediction in a leaf node based on samples
         self._X = X
@@ -60,6 +60,6 @@ class Snode:
                 num = max(num, self._y[self._y == i].shape[0])
             den = self._y.shape[0]
             accuracy = num / den if den != 0 else 1
-            return f"{self._title} LEAF accuracy={accuracy:.2f}\n"
+            return f"{self._title} LEAF accuracy={accuracy:.2f}, belief={self._belief:.2f} class={self._class}\n"
         else:
             return f"{self._title}\n"

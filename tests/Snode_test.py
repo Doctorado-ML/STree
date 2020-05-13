@@ -11,9 +11,9 @@ class Snode_test(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):
         self._random_state = 1
-        self._model = Stree(random_state=self._random_state,
+        self._clf = Stree(random_state=self._random_state,
                             use_predictions=True)
-        self._model.fit(*self._get_Xy())
+        self._clf.fit(*self._get_Xy())
         super(Snode_test, self).__init__(*args, **kwargs)
 
     def _get_Xy(self):
@@ -42,4 +42,4 @@ class Snode_test(unittest.TestCase):
                 return
             check_leave(node.get_down())
             check_leave(node.get_up())
-        check_leave(self._model._tree)
+        check_leave(self._clf._tree)
