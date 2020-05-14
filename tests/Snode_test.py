@@ -1,6 +1,7 @@
 import unittest
 
 from sklearn.datasets import make_classification
+import os
 import numpy as np
 import csv
 
@@ -10,11 +11,19 @@ from trees.Stree import Stree, Snode
 class Snode_test(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):
+        os.environ['TESTING'] = '1'
         self._random_state = 1
         self._clf = Stree(random_state=self._random_state,
                             use_predictions=True)
         self._clf.fit(*self._get_Xy())
         super(Snode_test, self).__init__(*args, **kwargs)
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            os.environ.pop('TESTING')
+        except:
+            pass
 
     def _get_Xy(self):
         X, y = make_classification(n_samples=1500, n_features=3, n_informative=3,

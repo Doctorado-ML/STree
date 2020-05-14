@@ -6,6 +6,7 @@ __version__ = "0.9"
 Node of the Stree (binary tree)
 '''
 
+import os
 import numpy as np
 from sklearn.svm import LinearSVC
 
@@ -17,11 +18,12 @@ class Snode:
         self._interceptor = 0. if clf is None else clf.intercept_
         self._title = title
         self._belief = 0.  # belief of the prediction in a leaf node based on samples
-        self._X = X
+        self._X = X if os.environ.get(
+            'TESTING', 'Not Set') != 'Not Set' else None
         self._y = y
         self._down = None
         self._up = None
-        self._class = None  # really needed?
+        self._class = None
 
     def set_down(self, son):
         self._down = son
@@ -42,6 +44,9 @@ class Snode:
         """Compute the class of the predictor and its belief based on the subdataset of the node
         only if it is a leaf
         """
+        # Clean memory
+        #self._X = None
+        #self._y = None
         if not self.is_leaf():
             return
         classes, card = np.unique(self._y, return_counts=True)
