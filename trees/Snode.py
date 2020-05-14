@@ -14,9 +14,9 @@ class Snode:
     def __init__(self, clf: LinearSVC, X: np.ndarray, y: np.ndarray, title: str):
         self._clf = clf
         self._vector = None if clf is None else clf.coef_
-        self._interceptor = 0 if clf is None else clf.intercept_
+        self._interceptor = 0. if clf is None else clf.intercept_
         self._title = title
-        self._belief = 0  # belief of the prediction in a leaf node based on samples
+        self._belief = 0.  # belief of the prediction in a leaf node based on samples
         self._X = X
         self._y = y
         self._down = None
@@ -45,21 +45,20 @@ class Snode:
         if not self.is_leaf():
             return
         classes, card = np.unique(self._y, return_counts=True)
-        max_card = max(card)
-        min_card = min(card)
-        try:
-            self._belief = max_card / min_card
-        except:
-            self._belief = 0
-        self._class = classes[card == max_card]
+        if len(classes) > 1:
+            max_card = max(card)
+            min_card = min(card)
+            try:
+                self._belief = max_card / (max_card + min_card)
+            except:
+                self._belief = 0.
+            self._class = classes[card == max_card][0]
+        else:
+            self._belief = 1
+            self._class = classes[0]
 
     def __str__(self) -> str:
         if self.is_leaf():
-            num = 0
-            for i in np.unique(self._y):
-                num = max(num, self._y[self._y == i].shape[0])
-            den = self._y.shape[0]
-            accuracy = num / den if den != 0 else 1
-            return f"{self._title} LEAF accuracy={accuracy:.2f}, belief={self._belief:.2f} class={self._class}\n"
+            return f"Leaf class={self._class} belief={self._belief:.6f} counts={np.unique(self._y, return_counts=True)}\n"
         else:
             return f"{self._title}\n"

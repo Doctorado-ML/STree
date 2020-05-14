@@ -26,20 +26,24 @@ class Snode_test(unittest.TestCase):
         """Check if the attributes in leaves have correct values so they form a predictor
         """
         def check_leave(node: Snode):
-            if node.is_leaf():
-                # Check Belief
-                classes, card = np.unique(node._y, return_counts=True)
-                max_card = max(card)
-                min_card = min(card)
-                try:
-                    accuracy = max_card / min_card
-                except:
-                    accuracy = 0
-                self.assertEqual(accuracy, node._belief)
-                # Check Class
-                class_computed = classes[card == max_card]
-                self.assertEqual(class_computed, node._class)
+            if not node.is_leaf():
+                check_leave(node.get_down())
+                check_leave(node.get_up())
                 return
-            check_leave(node.get_down())
-            check_leave(node.get_up())
+            # Check Belief in leave
+            classes, card = np.unique(node._y, return_counts=True)
+            max_card = max(card)
+            min_card = min(card)
+            if len(classes) > 1:
+                try:
+                    belief = max_card / (max_card + min_card)
+                except:
+                    belief = 0.
+            else:
+                belief = 1
+            self.assertEqual(belief, node._belief)
+            # Check Class
+            class_computed = classes[card == max_card]
+            self.assertEqual(class_computed, node._class)
+            
         check_leave(self._clf._tree)
