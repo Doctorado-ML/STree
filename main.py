@@ -33,8 +33,9 @@ def load_creditcard(n_examples=0):
     print("Fraud: {0:.3f}% {1}".format(len(y[y == 1])*100/X.shape[0], len(y[y == 1])))
     print("Valid: {0:.3f}% {1}".format(len(y[y == 0])*100/X.shape[0], len(y[y == 0])))
     return X, y
-X, y = load_creditcard(-5000)
+#X, y = load_creditcard(-5000)
 #X, y = load_creditcard()
+X, y = load_creditcard()
 
 clf = Stree(C=.01, max_iter=100, random_state=random_state)
 clf.fit(X, y)

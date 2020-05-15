@@ -43,26 +43,25 @@ class Stree(BaseEstimator, ClassifierMixin):
             setattr(self, parameter, value)
         return self
 
-    def _split_data(self, clf: LinearSVC, X: np.ndarray, y: np.ndarray) -> list:
+    def _split_data(self, node: Snode, data: np.ndarray, indices: np.ndarray) -> list:
         if self.__use_predictions:
-            yp = clf.predict(X)
+            yp = node._clf.predict(data)
             down = (yp == 1).reshape(-1, 1)
         else:
             # doesn't work with multiclass as each sample has to do inner product with its own coeficients
             # computes positition of every sample is w.r.t. the hyperplane
-            coef = clf.coef_[0, :].reshape(-1, X.shape[1])
-            intercept = clf.intercept_[0]
-            res = X.dot(coef.T) + intercept
+            coef = node._vector[0, :].reshape(-1, data.shape[1])
+            res = data.dot(coef.T) + node._interceptor[0]
             down = res > 0
         up = ~down
-        X_down = X[down[:, 0]] if any(down) else None
-        y_down = y[down[:, 0]] if any(down) else None
-        X_up = X[up[:, 0]] if any(up) else None
-        y_up = y[up[:, 0]] if any(up) else None
-        return [X_up, y_up, X_down, y_down]
+        data_down = data[down[:, 0]] if any(down) else None
+        indices_down = indices[down[:, 0]] if any(down) else None
+        data_up = data[up[:, 0]] if any(up) else None
+        indices_up = indices[up[:, 0]] if any(up) else None
+        return [data_down, indices_down, data_up, indices_up]
 
     def fit(self, X: np.ndarray, y: np.ndarray, title: str = 'root') -> 'Stree':
-        X, y = check_X_y(X, y)
+        X, y = check_X_y(X, y.ravel())
         self.n_features_in_ = X.shape[1]
         self._tree = self.train(X, y.ravel(), title)
         self._build_predictor()
@@ -83,47 +82,59 @@ class Stree(BaseEstimator, ClassifierMixin):
     def train(self, X: np.ndarray, y: np.ndarray, title: str = 'root') -> Snode:
         if np.unique(y).shape[0] == 1:
             # only 1 class => pure dataset
-            return Snode(None, X, y, title + ', <pure> ')
+            return Snode(None, X, y, title + ', <pure>')
         # Train the model
         clf = LinearSVC(max_iter=self._max_iter, C=self._C,
                         random_state=self._random_state)
         clf.fit(X, y)
         tree = Snode(clf, X, y, title)
-        X_U, y_u, X_D, y_d = self._split_data(clf, X, y)
+        X_U, y_u, X_D, y_d = self._split_data(tree, X, y)
         if X_U is None or X_D is None:
             # didn't part anything
-            return Snode(clf, X, y, title + ', <couldn\'t go any further>')
+            return Snode(clf, X, y, title + ', <cgaf>')
         tree.set_up(self.train(X_U, y_u, title + ' - Up'))
         tree.set_down(self.train(X_D, y_d, title + ' - Down'))
         return tree
 
-    def predict(self, X: np.array) -> np.array:
-        def predict_class(xp: np.array, tree: Snode) -> np.array:
-            if tree.is_leaf():
+    def _predict_values(self, X: np.array) -> np.array:
+        def predict_class(xp: np.array, indices: np.array, node: Snode) -> np.array:
+            if xp is None:
+                return [], []
+            if node.is_leaf():
+                # set a class for every sample in dataset
+                prediction = np.full((xp.shape[0], 1), node._class)
                 if self.__proba:
-                    return [tree._class, tree._belief]
+                    prediction_proba = np.full((xp.shape[0], 1), node._belief)
+                    return np.append(prediction, prediction_proba, axis=1), indices
                 else:
-                    return tree._class
-            coef = tree._vector[0, :].reshape(-1, xp.shape[1])
-            if xp.dot(coef.T) + tree._interceptor[0] > 0:
-                return predict_class(xp, tree.get_down())
-            return predict_class(xp, tree.get_up())
-
+                    return prediction, indices
+            u, i_u, d, i_d = self._split_data(node, xp, indices)
+            k, l = predict_class(d, i_d, node.get_down())
+            m, n = predict_class(u, i_u, node.get_up())
+            return np.append(k, m), np.append(l, n)
         # sklearn check
         check_is_fitted(self)
         # Input validation
         X = check_array(X)
         # setup prediction & make it happen
-        y = np.array([], dtype=int)
-        for xp in X:
-            y = np.append(y, predict_class(xp.reshape(-1, X.shape[1]), self._tree))
-        return y
+        indices = np.arange(X.shape[0])
+        return predict_class(X, indices, self._tree)
+    
+    def _reorder_results(self, y: np.array, indices: np.array) -> np.array:
+        y_ordered = np.zeros(y.shape, dtype=int if y.ndim == 1 else float)
+        indices = indices.astype(int)
+        for i, index in enumerate(indices):
+            y_ordered[index] = y[i]
+        return y_ordered
+
+    def predict(self, X: np.array) -> np.array:
+        return self._reorder_results(*self._predict_values(X))
 
     def predict_proba(self, X: np.array) -> np.array:
         self.__proba = True
-        result = self.predict(X).reshape(X.shape[0], 2)
+        result, indices = self._predict_values(X)
         self.__proba = False
-        return result
+        return self._reorder_results(result.reshape(X.shape[0], 2), indices)
 
     def score(self, X: np.array, y: np.array, print_out=True) -> float:
         if not self.__trained:

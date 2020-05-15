@@ -10,5 +10,5 @@ python main.py
 ## Tests
 
 ```python
-python -m unittest tests.Stree_test tests.Snode_test
+python -m unittest -v tests.Stree_test tests.Snode_test
 ```

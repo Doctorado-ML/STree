@@ -18,8 +18,8 @@ class Snode:
         self._interceptor = 0. if clf is None else clf.intercept_
         self._title = title
         self._belief = 0.  # belief of the prediction in a leaf node based on samples
-        self._X = X if os.environ.get(
-            'TESTING', 'Not Set') != 'Not Set' else None
+        # Only store dataset in Testing 
+        self._X = X if os.environ.get('TESTING', 'NS') != 'NS' else None
         self._y = y
         self._down = None
         self._up = None
@@ -64,6 +64,6 @@ class Snode:
 
     def __str__(self) -> str:
         if self.is_leaf():
-            return f"Leaf class={self._class} belief={self._belief:.6f} counts={np.unique(self._y, return_counts=True)}\n"
+            return f"{self._title} - Leaf class={self._class} belief={self._belief:.6f} counts={np.unique(self._y, return_counts=True)}\n"
         else:
             return f"{self._title}\n"
