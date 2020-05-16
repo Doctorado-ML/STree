@@ -54,5 +54,20 @@ class Snode_test(unittest.TestCase):
             # Check Class
             class_computed = classes[card == max_card]
             self.assertEqual(class_computed, node._class)
-            
         check_leave(self._clf._tree)
+    
+    def test_nodes_coefs(self):
+        """Check if the nodes of the tree have the right attributes filled
+        """
+        def run_tree(node: Snode):
+            if node._belief < 1:
+                # only exclude pure leaves
+                self.assertIsNotNone(node._clf)
+                self.assertIsNotNone(node._clf.coef_)
+                self.assertIsNotNone(node._vector)
+                self.assertIsNotNone(node._interceptor)
+            if node.is_leaf():
+                return
+            run_tree(node.get_down())
+            run_tree(node.get_up())
+        run_tree(self._clf._tree)

@@ -35,7 +35,7 @@ def load_creditcard(n_examples=0):
     return X, y
 #X, y = load_creditcard(-5000)
 #X, y = load_creditcard()
-X, y = load_creditcard()
+#X, y = load_creditcard()
 
 clf = Stree(C=.01, max_iter=100, random_state=random_state)
 clf.fit(X, y)
@@ -46,3 +46,4 @@ yp = clf.predict_proba(X[0, :].reshape(-1, X.shape[1]))
 print(f"Predicting {y[0]} we have {yp[0, 0]} with {yp[0, 1]} of belief")
 print(f"Classifier's accuracy: {clf.score(X, y, print_out=False):.4f}")
 clf.show_tree(only_leaves=True)
+print(clf.predict_proba(X))

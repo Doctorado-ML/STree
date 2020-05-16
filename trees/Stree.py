@@ -43,6 +43,10 @@ class Stree(BaseEstimator, ClassifierMixin):
             setattr(self, parameter, value)
         return self
 
+    def _linear_function(self, data: np.array, node: Snode) -> np.array:
+        coef = node._vector[0, :].reshape(-1, data.shape[1])
+        return data.dot(coef.T) + node._interceptor[0]
+
     def _split_data(self, node: Snode, data: np.ndarray, indices: np.ndarray) -> list:
         if self.__use_predictions:
             yp = node._clf.predict(data)
@@ -50,8 +54,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         else:
             # doesn't work with multiclass as each sample has to do inner product with its own coeficients
             # computes positition of every sample is w.r.t. the hyperplane
-            coef = node._vector[0, :].reshape(-1, data.shape[1])
-            res = data.dot(coef.T) + node._interceptor[0]
+            res = self._linear_function(data, node)
             down = res > 0
         up = ~down
         data_down = data[down[:, 0]] if any(down) else None
@@ -105,6 +108,7 @@ class Stree(BaseEstimator, ClassifierMixin):
                 prediction = np.full((xp.shape[0], 1), node._class)
                 if self.__proba:
                     prediction_proba = np.full((xp.shape[0], 1), node._belief)
+                    #prediction_proba = self._linear_function(xp, node)
                     return np.append(prediction, prediction_proba, axis=1), indices
                 else:
                     return prediction, indices
@@ -134,7 +138,10 @@ class Stree(BaseEstimator, ClassifierMixin):
         self.__proba = True
         result, indices = self._predict_values(X)
         self.__proba = False
-        return self._reorder_results(result.reshape(X.shape[0], 2), indices)
+        result = result.reshape(X.shape[0], 2)
+        # Sigmoidize distance like in sklearn based on Platt(1999)
+        #result[:, 1] = 1 / (1 + np.exp(-result[:, 1]))
+        return self._reorder_results(result, indices)
 
     def score(self, X: np.array, y: np.array, print_out=True) -> float:
         if not self.__trained:
