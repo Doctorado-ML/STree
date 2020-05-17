@@ -133,7 +133,7 @@ class Stree_test(unittest.TestCase):
 
     def test_score(self):
         X, y = self._get_Xy()
-        accuracy_score = self._clf.score(X, y, print_out=False)
+        accuracy_score = self._clf.score(X, y)
         yp = self._clf.predict(X)
         right = (yp == y).astype(int)
         accuracy_computed = sum(right) / len(y)
@@ -178,8 +178,8 @@ class Stree_test(unittest.TestCase):
             model_predictions.predict(X).tolist(),
             model_hyperplane.predict(X).tolist()
         )
-        a = model_predictions.score(X, y, print_out=False),
-        b = model_hyperplane.score(X, y, print_out=False)
+        a = model_predictions.score(X, y),
+        b = model_hyperplane.score(X, y)
         self.assertEqual(a, b)
         self.assertGreater(b, .95)
 
