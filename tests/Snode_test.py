@@ -1,9 +1,8 @@
+import os
 import unittest
 
-from sklearn.datasets import make_classification
-import os
 import numpy as np
-import csv
+from sklearn.datasets import make_classification
 
 from trees.Stree import Stree, Snode
 

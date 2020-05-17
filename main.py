@@ -1,5 +1,6 @@
-from trees.Stree import Stree
 from sklearn.datasets import make_classification
+
+from trees.Stree import Stree
 
 random_state = 1
 X, y = make_classification(n_samples=1500, n_features=3, n_informative=3,

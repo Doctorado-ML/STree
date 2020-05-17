@@ -8,10 +8,11 @@ Build an oblique tree classifier based on SVM Trees
 Uses LinearSVC
 '''
 
-import numpy as np
 import typing
-from sklearn.svm import LinearSVC
+
+import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.svm import LinearSVC
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 
 from trees.Snode import Snode
