@@ -6,11 +6,11 @@ Oblique Tree classifier based on SVM nodes
 
 ## Example
 
-## Jupyter
+### Jupyter
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/Doctorado-ML/STree/master?filepath=test.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/Doctorado-ML/STree/master?urlpath=lab/tree/test.ipynb)
 
-## Command line
+### Command line
 
 ```python
 python main.py

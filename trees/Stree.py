@@ -144,15 +144,12 @@ class Stree(BaseEstimator, ClassifierMixin):
         #result[:, 1] = 1 / (1 + np.exp(-result[:, 1]))
         return self._reorder_results(result, indices)
 
-    def score(self, X: np.array, y: np.array, print_out=True) -> float:
+    def score(self, X: np.array, y: np.array) -> float:
         if not self.__trained:
             self.fit(X, y)
         yp = self.predict(X).reshape(y.shape)
         right = (yp == y).astype(int)
-        accuracy = np.sum(right) / len(y)
-        if print_out:
-            print(f"Accuracy: {accuracy:.6f}")
-        return accuracy
+        return np.sum(right) / len(y)
 
     def __print_tree(self, tree: Snode, only_leaves=False) -> str:
         if not only_leaves:

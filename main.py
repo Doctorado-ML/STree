@@ -1,11 +1,8 @@
-from sklearn.datasets import make_classification
-
+import time
+from sklearn.model_selection import train_test_split
 from trees.Stree import Stree
 
-random_state = 1
-X, y = make_classification(n_samples=1500, n_features=3, n_informative=3,
-                           n_redundant=0, n_repeated=0, n_classes=2, n_clusters_per_class=2,
-                           class_sep=1.5, flip_y=0, weights=[0.5, 0.5], random_state=random_state)
+random_state=1
 
 def load_creditcard(n_examples=0):
     import pandas as pd
@@ -16,8 +13,6 @@ def load_creditcard(n_examples=0):
     print("Valid: {0:.3f}% {1}".format(df.Class[df.Class == 0].count()*100/df.shape[0], df.Class[df.Class == 0].count()))
     y = np.expand_dims(df.Class.values, axis=1)
     X = df.drop(['Class', 'Time', 'Amount'], axis=1).values
-    #Xtrain, Xtest, ytrain, ytest = train_test_split(X, y, train_size=0.7, shuffle=True, random_state=random_state, stratify=y)
-    #return Xtrain, Xtest, ytrain, ytest
     if n_examples > 0:
         # Take first n_examples samples
         X = X[:n_examples, :]
@@ -32,19 +27,23 @@ def load_creditcard(n_examples=0):
             y = np.append(yt, y[indices], axis=0)
     print("X.shape", X.shape, " y.shape", y.shape)
     print("Fraud: {0:.3f}% {1}".format(len(y[y == 1])*100/X.shape[0], len(y[y == 1])))
-    print("Valid: {0:.3f}% {1}".format(len(y[y == 0])*100/X.shape[0], len(y[y == 0])))
-    return X, y
-#X, y = load_creditcard(-5000)
-#X, y = load_creditcard()
-#X, y = load_creditcard()
+    print("Valid: {0:.3f}% {1}".format(len(y[y == 0]) * 100 / X.shape[0], len(y[y == 0])))
+    Xtrain, Xtest, ytrain, ytest = train_test_split(X, y, train_size=0.7, shuffle=True, random_state=random_state, stratify=y)
+    return Xtrain, Xtest, ytrain, ytest
 
-clf = Stree(C=.01, max_iter=100, random_state=random_state)
-clf.fit(X, y)
+# data = load_creditcard(-5000) # Take all true samples + 5000 of the others
+# data = load_creditcard(5000)  # Take the first 5000 samples
+data = load_creditcard() # Take all the samples
+
+Xtrain = data[0]
+Xtest = data[1]
+ytrain = data[2]
+ytest = data[3]
+
+now = time.time()
+clf = Stree(C=.01, random_state=random_state)
+clf.fit(Xtrain, ytrain)
+print(f"Took {time.time() - now:.2f} seconds to train")
 print(clf)
-#clf.show_tree()
-#clf.save_sub_datasets()
-yp = clf.predict_proba(X[0, :].reshape(-1, X.shape[1]))
-print(f"Predicting {y[0]} we have {yp[0, 0]} with {yp[0, 1]} of belief")
-print(f"Classifier's accuracy: {clf.score(X, y, print_out=False):.4f}")
-clf.show_tree(only_leaves=True)
-print(clf.predict_proba(X))
+print(f"Classifier's accuracy (train): {clf.score(Xtrain, ytrain):.4f}")
+print(f"Classifier's accuracy (test) : {clf.score(Xtest, ytest):.4f}")
