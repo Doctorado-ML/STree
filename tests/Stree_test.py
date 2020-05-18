@@ -148,7 +148,7 @@ class Stree_test(unittest.TestCase):
         yp = self._clf.predict_proba(X[28, :].reshape(-1, X.shape[1]))
         self.assertEqual(0, yp[0:, 0])
         self.assertEqual(1, y[28])
-        self.assertEqual(0.29026400765649235, yp[0, 1])
+        self.assertEqual(0.29026400766, round(yp[0, 1], 11))
 
     def test_multiple_predict_proba(self):
         # First 27 elements the predictions are the same as the truth

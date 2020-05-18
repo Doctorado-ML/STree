@@ -47,3 +47,11 @@ print(f"Took {time.time() - now:.2f} seconds to train")
 print(clf)
 print(f"Classifier's accuracy (train): {clf.score(Xtrain, ytrain):.4f}")
 print(f"Classifier's accuracy (test) : {clf.score(Xtest, ytest):.4f}")
+proba = clf.predict_proba(Xtest)
+res0 = proba[proba[:, 0] == 0]
+res1 = proba[proba[:, 0] == 0]
+print("++++++++++res0++++++++++++")
+print(res0[res0[:, 1] > .8])
+print("**********res1************")
+print(res1[res1[:, 1] < .4])
+print(clf.predict_proba(Xtest))
