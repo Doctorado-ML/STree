@@ -52,6 +52,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         if self.__use_predictions:
             yp = node._clf.predict(data)
             down = (yp == 1).reshape(-1, 1)
+            res = node._clf.decision_function(data)
         else:
             # doesn't work with multiclass as each sample has to do inner product with its own coeficients
             # computes positition of every sample is w.r.t. the hyperplane
@@ -60,9 +61,15 @@ class Stree(BaseEstimator, ClassifierMixin):
         up = ~down
         data_down = data[down[:, 0]] if any(down) else None
         indices_down = indices[down[:, 0]] if any(down) else None
+        res_down = res[down[:, 0]] if any(down) else None
         data_up = data[up[:, 0]] if any(up) else None
         indices_up = indices[up[:, 0]] if any(up) else None
-        return [data_down, indices_down, data_up, indices_up]
+        res_up = res[up[:, 0]] if any(up) else None
+        #if any(up):
+        #    print("+++++up", data_up.shape, indices_up.shape, res_up.shape)
+        #if any(down):
+        #    print("+++++down", data_down.shape, indices_down.shape, res_down.shape )
+        return [data_up, indices_up, data_down, indices_down, res_up, res_down]
 
     def fit(self, X: np.ndarray, y: np.ndarray, title: str = 'root') -> 'Stree':
         X, y = check_X_y(X, y.ravel())
@@ -92,7 +99,7 @@ class Stree(BaseEstimator, ClassifierMixin):
                         random_state=self._random_state)
         clf.fit(X, y)
         tree = Snode(clf, X, y, title)
-        X_U, y_u, X_D, y_d = self._split_data(tree, X, y)
+        X_U, y_u, X_D, y_d, _, _ = self._split_data(tree, X, y)
         if X_U is None or X_D is None:
             # didn't part anything
             return Snode(clf, X, y, title + ', <cgaf>')
@@ -100,20 +107,22 @@ class Stree(BaseEstimator, ClassifierMixin):
         tree.set_down(self.train(X_D, y_d, title + ' - Down'))
         return tree
 
-    def _predict_values(self, X: np.array) -> np.array:
+    def _reorder_results(self, y: np.array, indices: np.array) -> np.array:
+        y_ordered = np.zeros(y.shape, dtype=int if y.ndim == 1 else float)
+        indices = indices.astype(int)
+        for i, index in enumerate(indices):
+            y_ordered[index] = y[i]
+        return y_ordered
+
+    def predict(self, X: np.array) -> np.array:
         def predict_class(xp: np.array, indices: np.array, node: Snode) -> np.array:
             if xp is None:
                 return [], []
             if node.is_leaf():
                 # set a class for every sample in dataset
                 prediction = np.full((xp.shape[0], 1), node._class)
-                if self.__proba:
-                    prediction_proba = np.full((xp.shape[0], 1), node._belief)
-                    #prediction_proba = self._linear_function(xp, node)
-                    return np.append(prediction, prediction_proba, axis=1), indices
-                else:
-                    return prediction, indices
-            u, i_u, d, i_d = self._split_data(node, xp, indices)
+                return prediction, indices
+            u, i_u, d, i_d, _, _ = self._split_data(node, xp, indices)
             k, l = predict_class(d, i_d, node.get_down())
             m, n = predict_class(u, i_u, node.get_up())
             return np.append(k, m), np.append(l, n)
@@ -123,22 +132,30 @@ class Stree(BaseEstimator, ClassifierMixin):
         X = check_array(X)
         # setup prediction & make it happen
         indices = np.arange(X.shape[0])
-        return predict_class(X, indices, self._tree)
-    
-    def _reorder_results(self, y: np.array, indices: np.array) -> np.array:
-        y_ordered = np.zeros(y.shape, dtype=int if y.ndim == 1 else float)
-        indices = indices.astype(int)
-        for i, index in enumerate(indices):
-            y_ordered[index] = y[i]
-        return y_ordered
-
-    def predict(self, X: np.array) -> np.array:
-        return self._reorder_results(*self._predict_values(X))
+        return self._reorder_results(*predict_class(X, indices, self._tree))
 
     def predict_proba(self, X: np.array) -> np.array:
-        self.__proba = True
-        result, indices = self._predict_values(X)
-        self.__proba = False
+        def predict_class(xp: np.array, indices: np.array, dist: np.array, node: Snode) -> np.array:
+            if xp is None:
+                return [], []
+            if node.is_leaf():
+                # set a class for every sample in dataset
+                prediction = np.full((xp.shape[0], 1), node._class)
+                prediction_proba = np.full((xp.shape[0], 1), node._belief)
+                #prediction_proba = dist
+                #print("******", prediction.shape, prediction_proba.shape)
+                return np.append(prediction, prediction_proba, axis=1), indices
+            u, i_u, d, i_d, r_u, r_d = self._split_data(node, xp, indices)
+            k, l = predict_class(d, i_d, r_u, node.get_down())
+            m, n = predict_class(u, i_u, r_d, node.get_up())
+            return np.append(k, m), np.append(l, n)
+        # sklearn check
+        check_is_fitted(self)
+        # Input validation
+        X = check_array(X)
+        # setup prediction & make it happen
+        indices = np.arange(X.shape[0])
+        result, indices = predict_class(X, indices, [], self._tree)
         result = result.reshape(X.shape[0], 2)
         # Sigmoidize distance like in sklearn based on Platt(1999)
         #result[:, 1] = 1 / (1 + np.exp(-result[:, 1]))

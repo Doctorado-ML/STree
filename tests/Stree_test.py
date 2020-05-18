@@ -63,8 +63,8 @@ class Stree_test(unittest.TestCase):
         # Is the partition made the same as the prediction?
         # as the node is not a leaf...
         _, count_yp = np.unique(y_prediction, return_counts=True)
-        self.assertEqual(count_yp[1], y_up.shape[0])
-        self.assertEqual(count_yp[0], y_down.shape[0])
+        self.assertEqual(count_yp[0], y_up.shape[0])
+        self.assertEqual(count_yp[1], y_down.shape[0])
         self._check_tree(node.get_down())
         self._check_tree(node.get_up())
 
@@ -154,34 +154,54 @@ class Stree_test(unittest.TestCase):
         # First 27 elements the predictions are the same as the truth
         num = 27
         X, y = self._get_Xy()
-        yp = self._clf.predict_proba(X[:num,:])
+        yp = self._clf.predict_proba(X[:num, :])
         self.assertListEqual(y[:num].tolist(), yp[:, 0].tolist())
         expected_proba = [0.9759887,  0.92829706, 0.9759887,  0.92829706, 0.92829706, 0.9759887, 
                         0.92829706, 0.9759887,  0.9759887,  0.9759887,  0.9759887,  0.92829706, 
                         0.92829706, 0.9759887,  0.92829706, 0.92829706, 0.92829706, 0.92829706, 
                         0.9759887,  0.92829706, 0.9759887,  0.92829706, 0.92829706, 0.92829706,
-                        0.92829706, 0.92829706, 0.9759887 ]
+                        0.92829706, 0.92829706, 0.9759887]
         self.assertListEqual(expected_proba, np.round(yp[:, 1], decimals=8).tolist())
 
-    def test_use_model_predictions(self):
-        """Check that we get the same results wether we use the estimator in nodes
-        to compute labes or we use the hyperplane and the position of samples wrt to it
+    def build_models(self):
+        """Build and train two models, model_clf will use the sklearn classifier to 
+        compute predictions and split data. model_computed will use vector of 
+        coefficients to compute both predictions and splitted data
         """
-        model_predictions = Stree(random_state=self._random_state,
+        model_clf = Stree(random_state=self._random_state,
                             use_predictions=True)
-        model_hyperplane = Stree(random_state=self._random_state,
+        model_computed = Stree(random_state=self._random_state,
                             use_predictions=False)
         X, y = self._get_Xy()
-        model_predictions.fit(X, y)
-        model_hyperplane.fit(X, y)
+        model_clf.fit(X, y)
+        model_computed.fit(X, y)
+        return model_clf, model_computed, X, y
+
+    def test_use_model_predict(self):
+        """Check that we get the same results wether we use the estimator in nodes
+        to compute labels or we use the hyperplane and the position of samples wrt to it
+        """
+        use_clf, use_math, X, _ = self.build_models()
         self.assertListEqual(
-            model_predictions.predict(X).tolist(),
-            model_hyperplane.predict(X).tolist()
+            use_clf.predict(X).tolist(),
+            use_math.predict(X).tolist()
         )
-        a = model_predictions.score(X, y),
-        b = model_hyperplane.score(X, y)
-        self.assertEqual(a, b)
+    
+    def test_use_model_score(self):
+        use_clf, use_math, X, y = self.build_models()
+        b = use_math.score(X, y)
+        self.assertEqual(
+            use_clf.score(X, y),
+           b
+        )
         self.assertGreater(b, .95)
+
+    def test_use_model_predict_proba(self):
+        use_clf, use_math, X, _ = self.build_models()
+        self.assertListEqual(
+            use_clf.predict_proba(X).tolist(),
+            use_math.predict_proba(X).tolist()
+        )
 
     def test_single_vs_multiple_prediction(self):
         """Check if predicting sample by sample gives the same result as predicting
@@ -196,7 +216,6 @@ class Stree_test(unittest.TestCase):
         yp_once = self._clf.predict(X)
         #
         self.assertListEqual(yp_line.tolist(), yp_once.tolist())
-        
 
 
 
