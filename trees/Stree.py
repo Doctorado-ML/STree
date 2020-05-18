@@ -52,7 +52,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         if self.__use_predictions:
             yp = node._clf.predict(data)
             down = (yp == 1).reshape(-1, 1)
-            res = node._clf.decision_function(data)
+            res = np.expand_dims(node._clf.decision_function(data), 1)
         else:
             # doesn't work with multiclass as each sample has to do inner product with its own coeficients
             # computes positition of every sample is w.r.t. the hyperplane
@@ -65,10 +65,6 @@ class Stree(BaseEstimator, ClassifierMixin):
         data_up = data[up[:, 0]] if any(up) else None
         indices_up = indices[up[:, 0]] if any(up) else None
         res_up = res[up[:, 0]] if any(up) else None
-        #if any(up):
-        #    print("+++++up", data_up.shape, indices_up.shape, res_up.shape)
-        #if any(down):
-        #    print("+++++down", data_down.shape, indices_down.shape, res_down.shape )
         return [data_up, indices_up, data_down, indices_down, res_up, res_down]
 
     def fit(self, X: np.ndarray, y: np.ndarray, title: str = 'root') -> 'Stree':
@@ -141,13 +137,11 @@ class Stree(BaseEstimator, ClassifierMixin):
             if node.is_leaf():
                 # set a class for every sample in dataset
                 prediction = np.full((xp.shape[0], 1), node._class)
-                prediction_proba = np.full((xp.shape[0], 1), node._belief)
-                #prediction_proba = dist
-                #print("******", prediction.shape, prediction_proba.shape)
+                prediction_proba = dist
                 return np.append(prediction, prediction_proba, axis=1), indices
             u, i_u, d, i_d, r_u, r_d = self._split_data(node, xp, indices)
-            k, l = predict_class(d, i_d, r_u, node.get_down())
-            m, n = predict_class(u, i_u, r_d, node.get_up())
+            k, l = predict_class(d, i_d, r_d, node.get_down())
+            m, n = predict_class(u, i_u, r_u, node.get_up())
             return np.append(k, m), np.append(l, n)
         # sklearn check
         check_is_fitted(self)
@@ -158,7 +152,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         result, indices = predict_class(X, indices, [], self._tree)
         result = result.reshape(X.shape[0], 2)
         # Sigmoidize distance like in sklearn based on Platt(1999)
-        #result[:, 1] = 1 / (1 + np.exp(-result[:, 1]))
+        result[:, 1] = 1 / (1 + np.exp(-result[:, 1]))
         return self._reorder_results(result, indices)
 
     def score(self, X: np.array, y: np.array) -> float:

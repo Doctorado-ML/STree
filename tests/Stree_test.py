@@ -148,7 +148,7 @@ class Stree_test(unittest.TestCase):
         yp = self._clf.predict_proba(X[28, :].reshape(-1, X.shape[1]))
         self.assertEqual(0, yp[0:, 0])
         self.assertEqual(1, y[28])
-        self.assertEqual(0.9282970550576184, yp[0:, 1])
+        self.assertEqual(0.29026400765649235, yp[0, 1])
 
     def test_multiple_predict_proba(self):
         # First 27 elements the predictions are the same as the truth
@@ -156,16 +156,16 @@ class Stree_test(unittest.TestCase):
         X, y = self._get_Xy()
         yp = self._clf.predict_proba(X[:num, :])
         self.assertListEqual(y[:num].tolist(), yp[:, 0].tolist())
-        expected_proba = [0.9759887,  0.92829706, 0.9759887,  0.92829706, 0.92829706, 0.9759887, 
-                        0.92829706, 0.9759887,  0.9759887,  0.9759887,  0.9759887,  0.92829706, 
-                        0.92829706, 0.9759887,  0.92829706, 0.92829706, 0.92829706, 0.92829706, 
-                        0.9759887,  0.92829706, 0.9759887,  0.92829706, 0.92829706, 0.92829706,
-                        0.92829706, 0.92829706, 0.9759887]
+        expected_proba = [0.88395641, 0.36746962, 0.84158767, 0.34106833, 0.14269291, 0.85193236,
+                        0.29876058, 0.7282164,  0.85958616, 0.89517877, 0.99745224, 0.18860349,
+                        0.30756427, 0.8318412,  0.18981198, 0.15564624, 0.25740655, 0.22923355,
+                        0.87365959, 0.49928689, 0.95574351, 0.28761257, 0.28906333, 0.32643692,
+                        0.29788483, 0.01657364, 0.81149083]
         self.assertListEqual(expected_proba, np.round(yp[:, 1], decimals=8).tolist())
 
     def build_models(self):
-        """Build and train two models, model_clf will use the sklearn classifier to 
-        compute predictions and split data. model_computed will use vector of 
+        """Build and train two models, model_clf will use the sklearn classifier to
+        compute predictions and split data. model_computed will use vector of
         coefficients to compute both predictions and splitted data
         """
         model_clf = Stree(random_state=self._random_state,
