@@ -131,7 +131,26 @@ class Stree(BaseEstimator, ClassifierMixin):
         return self._reorder_results(*predict_class(X, indices, self._tree))
 
     def predict_proba(self, X: np.array) -> np.array:
+        """Computes an approximation of the probability of samples belonging to class 1 
+        (nothing more, nothing less)
+
+        :param X: dataset
+        :type X: np.array
+        """
         def predict_class(xp: np.array, indices: np.array, dist: np.array, node: Snode) -> np.array:
+            """Run the tree to compute predictions
+
+            :param xp: subdataset of samples
+            :type xp: np.array
+            :param indices: indices of subdataset samples to rebuild original order
+            :type indices: np.array
+            :param dist: distances of every sample to the hyperplane or the father node
+            :type dist: np.array
+            :param node: node of the leaf with the class
+            :type node: Snode
+            :return: array of labels and distances, array of indices
+            :rtype: np.array
+            """
             if xp is None:
                 return [], []
             if node.is_leaf():
@@ -151,11 +170,14 @@ class Stree(BaseEstimator, ClassifierMixin):
         indices = np.arange(X.shape[0])
         result, indices = predict_class(X, indices, [], self._tree)
         result = result.reshape(X.shape[0], 2)
-        # Sigmoidize distance like in sklearn based on Platt(1999)
+        # Turn distances to hyperplane into probabilities based on fitting distances
+        # of samples to its hyperplane that classified them, to the sigmoid function
         result[:, 1] = 1 / (1 + np.exp(-result[:, 1]))
         return self._reorder_results(result, indices)
 
     def score(self, X: np.array, y: np.array) -> float:
+        """Return accuracy
+        """
         if not self.__trained:
             self.fit(X, y)
         yp = self.predict(X).reshape(y.shape)
@@ -187,9 +209,12 @@ class Stree(BaseEstimator, ClassifierMixin):
     def _save_datasets(self, tree: Snode, catalog: typing.TextIO, number: int):
         """Save the dataset of the node in a csv file
 
-        Arguments:
-            tree {Snode} -- node with data to save
-            number {int} -- a number to make different file names
+        :param tree: node with data to save
+        :type tree: Snode
+        :param catalog: catalog file handler
+        :type catalog: typing.TextIO
+        :param number: sequential number for the generated file name
+        :type number: int
         """
         data = np.append(tree._X, tree._y.reshape(-1, 1), axis=1)
         name = f"{self.__folder}dataset{number}.csv"
