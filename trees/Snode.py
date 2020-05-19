@@ -65,6 +65,6 @@ class Snode:
 
     def __str__(self) -> str:
         if self.is_leaf():
-            return f"{self._title} - Leaf class={self._class} belief={self._belief:.6f} counts={np.unique(self._y, return_counts=True)}\n"
+            return f"{self._title} - Leaf class={self._class} belief={self._belief:.6f} counts={np.unique(self._y, return_counts=True)}"
         else:
-            return f"{self._title}\n"
+            return f"{self._title}"

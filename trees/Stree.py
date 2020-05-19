@@ -1,4 +1,3 @@
-# This Python file uses the following encoding: utf-8
 '''
 __author__ = "Ricardo Montañana Gómez"
 __copyright__ = "Copyright 2020, Ricardo Montañana Gómez"
@@ -16,13 +15,14 @@ from sklearn.svm import LinearSVC
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 
 from trees.Snode import Snode
+from trees.Siterator import Siterator
 
 
 class Stree(BaseEstimator, ClassifierMixin):
     """
     """
 
-    def __init__(self, C=1.0, max_iter: int=1000, random_state: int=0, use_predictions: bool=False):
+    def __init__(self, C=1.0, max_iter: int = 1000, random_state: int = 0, use_predictions: bool = False):
         self._max_iter = max_iter
         self._C = C
         self._random_state = random_state
@@ -184,27 +184,14 @@ class Stree(BaseEstimator, ClassifierMixin):
         right = (yp == y).astype(int)
         return np.sum(right) / len(y)
 
-    def __print_tree(self, tree: Snode, only_leaves=False) -> str:
-        if not only_leaves:
-            output = str(tree)
-        else:
-            output = ''
-        if tree.is_leaf():
-            if only_leaves:
-                output = str(tree)
-            return output
-        output += self.__print_tree(tree.get_down(), only_leaves)
-        output += self.__print_tree(tree.get_up(), only_leaves)
+    def __iter__(self):
+        return Siterator(self._tree)
+
+    def __str__(self) -> str:
+        output = ''
+        for i in self:
+            output += str(i) + '\n'
         return output
-
-    def show_tree(self, only_leaves=False):
-        if only_leaves:
-            print(self.__print_tree(self._tree, only_leaves=True))
-        else:
-            print(self)
-
-    def __str__(self):
-        return self.__print_tree(self._tree)
 
     def _save_datasets(self, tree: Snode, catalog: typing.TextIO, number: int):
         """Save the dataset of the node in a csv file
