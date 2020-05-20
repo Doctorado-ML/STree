@@ -33,6 +33,9 @@ class Stree_grapher(Stree):
 
     def _copy_tree(self, node: Snode) -> Snode_graph:
         mirror = Snode_graph(node)
+        # clone node
+        mirror._class = node._class
+        mirror._belief = node._belief
         if node.get_down() is not None:
             mirror.set_down(self._copy_tree(node.get_down()))
         if node.get_up() is not None:

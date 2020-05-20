@@ -50,9 +50,8 @@ print(f"Classifier's accuracy (test) : {clf.score(Xtest, ytest):.4f}")
 proba = clf.predict_proba(Xtest)
 print("Checking that we have correct probabilities, these are probabilities of sample belonging to class 1")
 res0 = proba[proba[:, 0] == 0]
-res1 = proba[proba[:, 0] == 0]
-print("++++++++++res0++++++++++++")
+res1 = proba[proba[:, 0] == 1]
+print("++++++++++res0 > .8++++++++++++")
 print(res0[res0[:, 1] > .8])
-print("**********res1************")
+print("**********res1 < .4************")
 print(res1[res1[:, 1] < .4])
-print(clf.predict_proba(Xtest))

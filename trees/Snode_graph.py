@@ -23,17 +23,26 @@ class Snode_graph(Snode):
     def set_plot_size(self, size):
         self._plot_size = size
 
+    def _is_pure(self) -> bool:
+        """is considered pure a leaf node with one label
+        """
+        if self.is_leaf():
+            return self._belief == 1.
+        return False
+
     def plot_hyperplane(self):
         # get the splitting hyperplane
         def hyperplane(x, y): return (-self._interceptor - self._vector[0][0] * x
                                       - self._vector[0][1] * y) / self._vector[0][2]
         fig = plt.figure(figsize=self._plot_size)
         ax = fig.add_subplot(1, 1, 1, projection='3d')
-        tmpx = np.linspace(self._X[:, 0].min(), self._X[:, 0].max())
-        tmpy = np.linspace(self._X[:, 1].min(), self._X[:, 1].max())
-        xx, yy = np.meshgrid(tmpx, tmpy)
-        ax.plot_surface(xx, yy, hyperplane(xx, yy), alpha=.5, antialiased=True,
-                        rstride=1, cstride=1, cmap='seismic')
+        if not self._is_pure():
+            # Can't plot hyperplane of leaves with one label because it hasn't classiffier
+            tmpx = np.linspace(self._X[:, 0].min(), self._X[:, 0].max())
+            tmpy = np.linspace(self._X[:, 1].min(), self._X[:, 1].max())
+            xx, yy = np.meshgrid(tmpx, tmpy)
+            ax.plot_surface(xx, yy, hyperplane(xx, yy), alpha=.5, antialiased=True,
+                            rstride=1, cstride=1, cmap='seismic')
         plt.title(self._title)
         self.plot_distribution(ax)
         return ax
