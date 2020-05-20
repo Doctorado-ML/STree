@@ -13,7 +13,6 @@ import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.svm import LinearSVC
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
-
 from trees.Snode import Snode
 from trees.Siterator import Siterator
 
@@ -22,7 +21,7 @@ class Stree(BaseEstimator, ClassifierMixin):
     """
     """
 
-    def __init__(self, C=1.0, max_iter: int = 1000, random_state: int = 0, use_predictions: bool = False):
+    def __init__(self, C: float=1.0, max_iter: int = 1000, random_state: int = 0, use_predictions: bool = False):
         self._max_iter = max_iter
         self._C = C
         self._random_state = random_state

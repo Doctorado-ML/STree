@@ -11,7 +11,6 @@ import os
 import numpy as np
 from sklearn.svm import LinearSVC
 
-
 class Snode:
     def __init__(self, clf: LinearSVC, X: np.ndarray, y: np.ndarray, title: str):
         self._clf = clf
@@ -25,6 +24,10 @@ class Snode:
         self._down = None
         self._up = None
         self._class = None
+
+    @classmethod
+    def copy(cls, node: 'Snode') -> 'Snode':
+        return cls(node._clf, node._X, node._y, node._title)
 
     def set_down(self, son):
         self._down = son
@@ -45,9 +48,6 @@ class Snode:
         """Compute the class of the predictor and its belief based on the subdataset of the node
         only if it is a leaf
         """
-        # Clean memory
-        #self._X = None
-        #self._y = None
         if not self.is_leaf():
             return
         classes, card = np.unique(self._y, return_counts=True)

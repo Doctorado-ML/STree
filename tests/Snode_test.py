@@ -15,7 +15,7 @@ class Snode_test(unittest.TestCase):
         self._clf = Stree(random_state=self._random_state,
                             use_predictions=True)
         self._clf.fit(*self._get_Xy())
-        super(Snode_test, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @classmethod
     def tearDownClass(cls):

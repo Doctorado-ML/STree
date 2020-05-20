@@ -16,7 +16,7 @@ class Stree_test(unittest.TestCase):
         self._clf = Stree(random_state=self._random_state,
                             use_predictions=False)
         self._clf.fit(*self._get_Xy())
-        super(Stree_test, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @classmethod
     def tearDownClass(cls):
@@ -216,6 +216,23 @@ class Stree_test(unittest.TestCase):
         yp_once = self._clf.predict(X)
         #
         self.assertListEqual(yp_line.tolist(), yp_once.tolist())
+
+    def test_iterator(self):
+        """Check preorder iterator
+        """
+        expected = [
+            'root',
+            'root - Down',
+            'root - Down - Down, <cgaf> - Leaf class=1 belief=0.975989 counts=(array([0, 1]), array([ 17, 691]))',
+            'root - Down - Up',
+            'root - Down - Up - Down, <cgaf> - Leaf class=1 belief=0.750000 counts=(array([0, 1]), array([1, 3]))',
+            'root - Down - Up - Up, <pure> - Leaf class=0 belief=1.000000 counts=(array([0]), array([7]))',
+            'root - Up, <cgaf> - Leaf class=0 belief=0.928297 counts=(array([0, 1]), array([725,  56]))',
+        ]
+        computed = []
+        for node in self._clf:
+            computed.append(str(node))
+        self.assertListEqual(expected, computed)
 
 
 
