@@ -31,12 +31,12 @@ class Snode_graph(Snode):
         return False
 
     def plot_hyperplane(self):
-        # get the splitting hyperplane
-        def hyperplane(x, y): return (-self._interceptor - self._vector[0][0] * x
-                                      - self._vector[0][1] * y) / self._vector[0][2]
         fig = plt.figure(figsize=self._plot_size)
         ax = fig.add_subplot(1, 1, 1, projection='3d')
         if not self._is_pure():
+             # get the splitting hyperplane
+            def hyperplane(x, y): return (-self._interceptor - self._vector[0][0] * x
+                                      - self._vector[0][1] * y) / self._vector[0][2]
             # Can't plot hyperplane of leaves with one label because it hasn't classiffier
             tmpx = np.linspace(self._X[:, 0].min(), self._X[:, 0].max())
             tmpy = np.linspace(self._X[:, 1].min(), self._X[:, 1].max())
