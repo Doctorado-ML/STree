@@ -4,6 +4,8 @@
 
 Oblique Tree classifier based on SVM nodes
 
+![Stree](example.png)
+
 ## Examples
 
 ### Jupyter notebooks
