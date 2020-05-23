@@ -8,20 +8,100 @@ Uses LinearSVC
 '''
 
 import typing
+import os
 
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.svm import LinearSVC
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
-from trees.Snode import Snode
-from trees.Siterator import Siterator
 
+class Snode:
+    def __init__(self, clf: LinearSVC, X: np.ndarray, y: np.ndarray, title: str):
+        self._clf = clf
+        self._vector = None if clf is None else clf.coef_
+        self._interceptor = 0. if clf is None else clf.intercept_
+        self._title = title
+        self._belief = 0.  # belief of the prediction in a leaf node based on samples
+        # Only store dataset in Testing 
+        self._X = X if os.environ.get('TESTING', 'NS') != 'NS' else None
+        self._y = y
+        self._down = None
+        self._up = None
+        self._class = None
+
+    @classmethod
+    def copy(cls, node: 'Snode') -> 'Snode':
+        return cls(node._clf, node._X, node._y, node._title)
+
+    def set_down(self, son):
+        self._down = son
+
+    def set_up(self, son):
+        self._up = son
+
+    def is_leaf(self) -> bool:
+        return self._up is None and self._down is None
+
+    def get_down(self) -> 'Snode':
+        return self._down
+
+    def get_up(self) -> 'Snode':
+        return self._up
+
+    def make_predictor(self):
+        """Compute the class of the predictor and its belief based on the subdataset of the node
+        only if it is a leaf
+        """
+        if not self.is_leaf():
+            return
+        classes, card = np.unique(self._y, return_counts=True)
+        if len(classes) > 1:
+            max_card = max(card)
+            min_card = min(card)
+            try:
+                self._belief = max_card / (max_card + min_card)
+            except:
+                self._belief = 0.
+            self._class = classes[card == max_card][0]
+        else:
+            self._belief = 1
+            self._class = classes[0]
+
+    def __str__(self) -> str:
+        if self.is_leaf():
+            return f"{self._title} - Leaf class={self._class} belief={self._belief:.6f} counts={np.unique(self._y, return_counts=True)}"
+        else:
+            return f"{self._title}"
+
+
+class Siterator:
+    """Stree preorder iterator
+    """
+
+    def __init__(self, tree: Snode):
+        self._stack = []
+        self._push(tree)
+
+    def __iter__(self):
+        return self
+
+    def _push(self, node: Snode):
+        if node is not None:
+            self._stack.append(node)
+
+    def __next__(self) -> Snode:
+        if len(self._stack) == 0:
+            raise StopIteration()
+        node = self._stack.pop()
+        self._push(node.get_up())
+        self._push(node.get_down())
+        return node
 
 class Stree(BaseEstimator, ClassifierMixin):
     """
     """
 
-    def __init__(self, C: float=1.0, max_iter: int = 1000, random_state: int = 0, use_predictions: bool = False):
+    def __init__(self, C: float = 1.0, max_iter: int = 1000, random_state: int = 0, use_predictions: bool = False):
         self._max_iter = max_iter
         self._C = C
         self._random_state = random_state
@@ -77,12 +157,14 @@ class Stree(BaseEstimator, ClassifierMixin):
     def _build_predictor(self):
         """Process the leaves to make them predictors
         """
+
         def run_tree(node: Snode):
             if node.is_leaf():
                 node.make_predictor()
                 return
             run_tree(node.get_down())
             run_tree(node.get_up())
+
         run_tree(self._tree)
 
     def train(self, X: np.ndarray, y: np.ndarray, title: str = 'root') -> Snode:
@@ -121,6 +203,7 @@ class Stree(BaseEstimator, ClassifierMixin):
             k, l = predict_class(d, i_d, node.get_down())
             m, n = predict_class(u, i_u, node.get_up())
             return np.append(k, m), np.append(l, n)
+
         # sklearn check
         check_is_fitted(self)
         # Input validation
@@ -136,6 +219,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         :param X: dataset
         :type X: np.array
         """
+
         def predict_class(xp: np.array, indices: np.array, dist: np.array, node: Snode) -> np.array:
             """Run the tree to compute predictions
 
@@ -161,6 +245,7 @@ class Stree(BaseEstimator, ClassifierMixin):
             k, l = predict_class(d, i_d, r_d, node.get_down())
             m, n = predict_class(u, i_u, r_u, node.get_up())
             return np.append(k, m), np.append(l, n)
+
         # sklearn check
         check_is_fitted(self)
         # Input validation
@@ -217,5 +302,10 @@ class Stree(BaseEstimator, ClassifierMixin):
     def save_sub_datasets(self):
         """Save the every dataset stored in the tree to check with manual classifier
         """
+        if not os.path.isdir(self.__folder):
+            os.mkdir(self.__folder)
         with open(self.get_catalog_name(), 'w', encoding='utf-8') as catalog:
             self._save_datasets(self._tree, catalog, 1)
+
+
+

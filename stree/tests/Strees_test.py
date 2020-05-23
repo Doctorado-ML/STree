@@ -5,7 +5,7 @@ import unittest
 import numpy as np
 from sklearn.datasets import make_classification
 
-from trees.Stree import Stree, Snode
+from stree import Stree, Snode
 
 
 class Stree_test(unittest.TestCase):
@@ -14,7 +14,7 @@ class Stree_test(unittest.TestCase):
         os.environ['TESTING'] = '1'
         self._random_state = 1
         self._clf = Stree(random_state=self._random_state,
-                            use_predictions=False)
+                          use_predictions=False)
         self._clf.fit(*self._get_Xy())
         super().__init__(*args, **kwargs)
 
@@ -24,7 +24,7 @@ class Stree_test(unittest.TestCase):
             os.environ.pop('TESTING')
         except:
             pass
-        
+
     def _get_Xy(self):
         X, y = make_classification(n_samples=1500, n_features=3, n_informative=3,
                                    n_redundant=0, n_repeated=0, n_classes=2, n_clusters_per_class=2,
@@ -118,7 +118,7 @@ class Stree_test(unittest.TestCase):
                 x_file, y_file = self._get_file_data(row[0])
                 y_original = np.array(self._find_out(x_file, X, y), dtype=int)
                 self.assertTrue(np.array_equal(y_file, y_original))
-    
+
     def test_single_prediction(self):
         X, y = self._get_Xy()
         yp = self._clf.predict((X[0, :].reshape(-1, X.shape[1])))
@@ -139,7 +139,7 @@ class Stree_test(unittest.TestCase):
         accuracy_computed = sum(right) / len(y)
         self.assertEqual(accuracy_score, accuracy_computed)
         self.assertGreater(accuracy_score, 0.8)
-    
+
     def test_single_predict_proba(self):
         """Check that element 28 has a prediction different that the current label
         """
@@ -163,10 +163,10 @@ class Stree_test(unittest.TestCase):
         yp = self._clf.predict_proba(X[:num, :])
         self.assertListEqual(y[:num].tolist(), yp[:, 0].tolist())
         expected_proba = [0.88395641, 0.36746962, 0.84158767, 0.34106833, 0.14269291, 0.85193236,
-                        0.29876058, 0.7282164,  0.85958616, 0.89517877, 0.99745224, 0.18860349,
-                        0.30756427, 0.8318412,  0.18981198, 0.15564624, 0.25740655, 0.22923355,
-                        0.87365959, 0.49928689, 0.95574351, 0.28761257, 0.28906333, 0.32643692,
-                        0.29788483, 0.01657364, 0.81149083]
+                          0.29876058, 0.7282164, 0.85958616, 0.89517877, 0.99745224, 0.18860349,
+                          0.30756427, 0.8318412, 0.18981198, 0.15564624, 0.25740655, 0.22923355,
+                          0.87365959, 0.49928689, 0.95574351, 0.28761257, 0.28906333, 0.32643692,
+                          0.29788483, 0.01657364, 0.81149083]
         expected = np.round(expected_proba, decimals=decimals).tolist()
         computed = np.round(yp[:, 1], decimals=decimals).tolist()
         for i in range(len(expected)):
@@ -178,9 +178,9 @@ class Stree_test(unittest.TestCase):
         coefficients to compute both predictions and splitted data
         """
         model_clf = Stree(random_state=self._random_state,
-                            use_predictions=True)
+                          use_predictions=True)
         model_computed = Stree(random_state=self._random_state,
-                            use_predictions=False)
+                               use_predictions=False)
         X, y = self._get_Xy()
         model_clf.fit(X, y)
         model_computed.fit(X, y)
@@ -195,13 +195,13 @@ class Stree_test(unittest.TestCase):
             use_clf.predict(X).tolist(),
             use_math.predict(X).tolist()
         )
-    
+
     def test_use_model_score(self):
         use_clf, use_math, X, y = self.build_models()
         b = use_math.score(X, y)
         self.assertEqual(
             use_clf.score(X, y),
-           b
+            b
         )
         self.assertGreater(b, .95)
 
@@ -243,7 +243,71 @@ class Stree_test(unittest.TestCase):
             computed.append(str(node))
         self.assertListEqual(expected, computed)
 
+class Snode_test(unittest.TestCase):
 
+    def __init__(self, *args, **kwargs):
+        os.environ['TESTING'] = '1'
+        self._random_state = 1
+        self._clf = Stree(random_state=self._random_state,
+                          use_predictions=True)
+        self._clf.fit(*self._get_Xy())
+        super().__init__(*args, **kwargs)
 
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            os.environ.pop('TESTING')
+        except:
+            pass
 
+    def _get_Xy(self):
+        X, y = make_classification(n_samples=1500, n_features=3, n_informative=3,
+                                   n_redundant=0, n_repeated=0, n_classes=2, n_clusters_per_class=2,
+                                   class_sep=1.5, flip_y=0, weights=[0.5, 0.5], random_state=self._random_state)
+        return X, y
+
+    def test_attributes_in_leaves(self):
+        """Check if the attributes in leaves have correct values so they form a predictor
+        """
+
+        def check_leave(node: Snode):
+            if not node.is_leaf():
+                check_leave(node.get_down())
+                check_leave(node.get_up())
+                return
+            # Check Belief in leave
+            classes, card = np.unique(node._y, return_counts=True)
+            max_card = max(card)
+            min_card = min(card)
+            if len(classes) > 1:
+                try:
+                    belief = max_card / (max_card + min_card)
+                except:
+                    belief = 0.
+            else:
+                belief = 1
+            self.assertEqual(belief, node._belief)
+            # Check Class
+            class_computed = classes[card == max_card]
+            self.assertEqual(class_computed, node._class)
+
+        check_leave(self._clf._tree)
+
+    def test_nodes_coefs(self):
+        """Check if the nodes of the tree have the right attributes filled
+        """
+
+        def run_tree(node: Snode):
+            if node._belief < 1:
+                # only exclude pure leaves
+                self.assertIsNotNone(node._clf)
+                self.assertIsNotNone(node._clf.coef_)
+                self.assertIsNotNone(node._vector)
+                self.assertIsNotNone(node._interceptor)
+            if node.is_leaf():
+                return
+            run_tree(node.get_down())
+            run_tree(node.get_up())
+
+        run_tree(self._clf._tree)
 

@@ -10,4 +10,4 @@ notifications:
     on_success: never # default: change
     on_failure: always # default: always
 # command to run tests
-script: python -m unittest tests.Stree_test tests.Snode_test
+script: python -m unittest stree.tests

@@ -1,6 +1,6 @@
 import time
 from sklearn.model_selection import train_test_split
-from trees.Stree import Stree
+from stree import Stree
 
 random_state=1
 

@@ -4,7 +4,13 @@
 
 Oblique Tree classifier based on SVM nodes
 
-![Stree](example.png)
+![Stree](https://raw.github.com/doctorado-ml/stree/master/example.png)
+
+## Installation
+
+```bash
+pip install git+https://github.com/doctorado-ml/stree
+```
 
 ## Examples
 
@@ -24,12 +30,12 @@ Oblique Tree classifier based on SVM nodes
 
 ### Command line
 
-```python
+```bash
 python main.py
 ```
 
 ## Tests
 
-```python
-python -m unittest -v tests.Stree_test tests.Snode_test
+```bash
+python -m unittest -v stree.tests
 ```
