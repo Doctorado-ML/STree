@@ -15,7 +15,7 @@ setuptools.setup(
     description='a python interface to oblique decision tree implementations',
     long_description=readme(),
     long_description_content_type='text/markdown',
-    packages=['stree'],
+    packages=setuptools.find_packages(),
     url='https://github.com/doctorado-ml/stree',
     author=__author__,
     author_email='ricardo.montanana@alu.uclm.es',
