@@ -1,7 +1,7 @@
 import setuptools
 
-from stree import __author__, __version__
-
+__version__ = "0.9rc1"
+__author__ = "Ricardo Montañana Gómez"
 
 def readme():
     with open('README.md') as f:
