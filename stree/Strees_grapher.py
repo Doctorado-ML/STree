@@ -164,6 +164,8 @@ class Stree_grapher(Stree):
         :type save_folder: str, optional
         """
         self._check_fitted()
+        if not os.path.isdir(save_folder):
+            os.mkdir(save_folder)
         seq = 1
         for node in self:
             node.save_hyperplane(save_folder=save_folder,

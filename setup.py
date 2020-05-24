@@ -1,6 +1,6 @@
 import setuptools
 
-__version__ = "0.9rc1"
+__version__ = "0.9rc2"
 __author__ = "Ricardo Montañana Gómez"
 
 def readme():
@@ -12,7 +12,7 @@ setuptools.setup(
     name='STree',
     version=__version__,
     license='MIT License',
-    description='a python interface to oblique decision tree implementations',
+    description='Oblique decision tree with svm nodes',
     long_description=readme(),
     long_description_content_type='text/markdown',
     packages=setuptools.find_packages(),
@@ -34,7 +34,6 @@ setuptools.setup(
         'matplotlib',
         'ipympl'
     ],
-    data_files=[('data', ['data/.gitignore'])],
     test_suite="stree.tests",
     zip_safe=False
 )
