@@ -71,7 +71,7 @@ class Stree_test(unittest.TestCase):
     def test_build_tree(self):
         """Check if the tree is built the same way as predictions of models
         """
-        self._check_tree(self._clf._tree)
+        self._check_tree(self._clf.tree_)
 
     def _get_file_data(self, file_name: str) -> tuple:
         """Return X, y from data, y is the last column in array
@@ -145,12 +145,14 @@ class Stree_test(unittest.TestCase):
         """
         # Element 28 has a different prediction than the truth
         decimals = 5
+        prob = 0.29026400766
         X, y = self._get_Xy()
         yp = self._clf.predict_proba(X[28, :].reshape(-1, X.shape[1]))
-        self.assertEqual(0, yp[0:, 0])
+        self.assertEqual(np.round(1 - prob, decimals), np.round(yp[0:, 0], decimals))
         self.assertEqual(1, y[28])
+        
         self.assertAlmostEqual(
-            round(0.29026400766, decimals),
+            round(prob, decimals),
             round(yp[0, 1], decimals),
             decimals
         )
@@ -161,7 +163,7 @@ class Stree_test(unittest.TestCase):
         decimals = 5
         X, y = self._get_Xy()
         yp = self._clf.predict_proba(X[:num, :])
-        self.assertListEqual(y[:num].tolist(), yp[:, 0].tolist())
+        self.assertListEqual(y[:num].tolist(), np.argmax(yp[:num], axis=1).tolist())
         expected_proba = [0.88395641, 0.36746962, 0.84158767, 0.34106833, 0.14269291, 0.85193236,
                           0.29876058, 0.7282164, 0.85958616, 0.89517877, 0.99745224, 0.18860349,
                           0.30756427, 0.8318412, 0.18981198, 0.15564624, 0.25740655, 0.22923355,
@@ -243,6 +245,14 @@ class Stree_test(unittest.TestCase):
             computed.append(str(node))
         self.assertListEqual(expected, computed)
 
+    def test_is_a_sklearn_classifier(self):
+        import warnings
+        from sklearn.exceptions import ConvergenceWarning
+        warnings.filterwarnings('ignore', category=ConvergenceWarning)
+        warnings.filterwarnings('ignore', category=RuntimeWarning)
+        from sklearn.utils.estimator_checks import check_estimator
+        check_estimator(Stree())
+
 class Snode_test(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):
@@ -291,7 +301,7 @@ class Snode_test(unittest.TestCase):
             class_computed = classes[card == max_card]
             self.assertEqual(class_computed, node._class)
 
-        check_leave(self._clf._tree)
+        check_leave(self._clf.tree_)
 
     def test_nodes_coefs(self):
         """Check if the nodes of the tree have the right attributes filled
@@ -309,5 +319,4 @@ class Snode_test(unittest.TestCase):
             run_tree(node.get_down())
             run_tree(node.get_up())
 
-        run_tree(self._clf._tree)
-
+        run_tree(self._clf.tree_)

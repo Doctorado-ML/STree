@@ -1,6 +1,6 @@
 import setuptools
 
-__version__ = "0.9rc2"
+__version__ = "0.9rc3"
 __author__ = "Ricardo Montañana Gómez"
 
 def readme():

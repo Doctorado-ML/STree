@@ -143,7 +143,7 @@ class Stree_grapher(Stree):
             self._pca = PCA(n_components=3)
             X = self._pca.fit_transform(X)
         res = super().fit(X, y)
-        self._tree_gr = self._copy_tree(self._tree)
+        self._tree_gr = self._copy_tree(self.tree_)
         self._fitted = True
         return res
 
