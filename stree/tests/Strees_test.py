@@ -107,24 +107,6 @@ class Stree_test(unittest.TestCase):
                     res.append(y_original[row])
         return res
 
-    def test_subdatasets(self):
-        """Check if the subdatasets files have the same labels as the original dataset
-        """
-        self._clf.save_sub_datasets()
-        with open(self._clf.get_catalog_name()) as cat_file:
-            catalog = csv.reader(cat_file, delimiter=',')
-            for row in catalog:
-                X, y = self._get_Xy()
-                x_file, y_file = self._get_file_data(row[0])
-                y_original = np.array(self._find_out(x_file, X, y), dtype=int)
-                self.assertTrue(np.array_equal(y_file, y_original))
-        if os.path.isdir(self._clf.get_folder()):
-            try:
-                os.remove(f"{self._clf.get_folder()}*")
-                os.rmdir(self._clf.get_folder())
-            except:
-                pass
-
     def test_single_prediction(self):
         X, y = self._get_Xy()
         yp = self._clf.predict((X[0, :].reshape(-1, X.shape[1])))
@@ -141,10 +123,9 @@ class Stree_test(unittest.TestCase):
         X, y = self._get_Xy()
         accuracy_score = self._clf.score(X, y)
         yp = self._clf.predict(X)
-        right = (yp == y).astype(int)
-        accuracy_computed = sum(right) / len(y)
+        accuracy_computed = np.mean(yp == y)
         self.assertEqual(accuracy_score, accuracy_computed)
-        self.assertGreater(accuracy_score, 0.8)
+        self.assertGreater(accuracy_score, 0.9)
 
     def test_single_predict_proba(self):
         """Check that element 28 has a prediction different that the current label
