@@ -118,6 +118,12 @@ class Stree_test(unittest.TestCase):
                 x_file, y_file = self._get_file_data(row[0])
                 y_original = np.array(self._find_out(x_file, X, y), dtype=int)
                 self.assertTrue(np.array_equal(y_file, y_original))
+        if os.path.isdir(self._clf.get_folder()):
+            try:
+                os.remove(f"{self._clf.get_folder()}*")
+                os.rmdir(self._clf.get_folder())
+            except:
+                pass
 
     def test_single_prediction(self):
         X, y = self._get_Xy()
@@ -252,6 +258,30 @@ class Stree_test(unittest.TestCase):
         warnings.filterwarnings('ignore', category=RuntimeWarning)
         from sklearn.utils.estimator_checks import check_estimator
         check_estimator(Stree())
+
+    def test_exception_if_C_is_negative(self):
+        tclf = Stree(C=-1)
+        with self.assertRaises(ValueError):
+            tclf.fit(*self._get_Xy())
+
+    def test_check_max_depth_is_positive_or_None(self):
+        tcl = Stree()
+        self.assertIsNone(tcl.max_depth)
+        tcl = Stree(max_depth=1)
+        self.assertGreaterEqual(1, tcl.max_depth)
+        with self.assertRaises(ValueError):
+            tcl = Stree(max_depth=-1)
+            tcl.fit(*self._get_Xy())
+    
+    def test_check_max_depth(self):
+        depth = 3
+        tcl = Stree(random_state=self._random_state, max_depth=depth)        
+        tcl.fit(*self._get_Xy())
+        self.assertEqual(depth, tcl.depth_)
+
+    def test_unfitted_tree_is_iterable(self):
+        tcl = Stree()
+        self.assertEqual(0, len(list(tcl)))
 
 class Snode_test(unittest.TestCase):
 
