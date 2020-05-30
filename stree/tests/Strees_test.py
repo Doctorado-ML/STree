@@ -1,4 +1,3 @@
-import csv
 import os
 import unittest
 
@@ -22,18 +21,22 @@ class Stree_test(unittest.TestCase):
     def tearDownClass(cls):
         try:
             os.environ.pop('TESTING')
-        except:
+        except KeyError:
             pass
 
     def _get_Xy(self):
-        X, y = make_classification(n_samples=1500, n_features=3, n_informative=3,
-                                   n_redundant=0, n_repeated=0, n_classes=2, n_clusters_per_class=2,
-                                   class_sep=1.5, flip_y=0, weights=[0.5, 0.5], random_state=self._random_state)
+        X, y = make_classification(n_samples=1500, n_features=3,
+                                   n_informative=3, n_redundant=0,
+                                   n_repeated=0, n_classes=2,
+                                   n_clusters_per_class=2, class_sep=1.5,
+                                   flip_y=0, weights=[0.5, 0.5],
+                                   random_state=self._random_state)
         return X, y
 
     def _check_tree(self, node: Snode):
-        """Check recursively that the nodes that are not leaves have the correct 
-        number of labels and its sons have the right number of elements in their dataset
+        """Check recursively that the nodes that are not leaves have the
+        correct number of labels and its sons have the right number of elements
+        in their dataset
 
         Arguments:
             node {Snode} -- node to check
@@ -53,11 +56,11 @@ class Stree_test(unittest.TestCase):
         for i in unique_y:
             try:
                 number_down = count_d[i]
-            except:
+            except IndexError:
                 number_down = 0
             try:
                 number_up = count_u[i]
-            except:
+            except IndexError:
                 number_up = 0
             self.assertEqual(count_y[i], number_down + number_up)
         # Is the partition made the same as the prediction?
@@ -89,7 +92,8 @@ class Stree_test(unittest.TestCase):
         fx = np.delete(data, column_y, axis=1)
         return fx, fy
 
-    def _find_out(self, px: np.array, x_original: np.array, y_original) -> list:
+    def _find_out(self, px: np.array, x_original: np.array,
+                  y_original) -> list:
         """Find the original values of y for a given array of samples
 
         Arguments:
@@ -128,16 +132,18 @@ class Stree_test(unittest.TestCase):
         self.assertGreater(accuracy_score, 0.9)
 
     def test_single_predict_proba(self):
-        """Check that element 28 has a prediction different that the current label
+        """Check that element 28 has a prediction different that the current
+        label
         """
         # Element 28 has a different prediction than the truth
         decimals = 5
         prob = 0.29026400766
         X, y = self._get_Xy()
         yp = self._clf.predict_proba(X[28, :].reshape(-1, X.shape[1]))
-        self.assertEqual(np.round(1 - prob, decimals), np.round(yp[0:, 0], decimals))
+        self.assertEqual(np.round(1 - prob, decimals),
+                         np.round(yp[0:, 0], decimals))
         self.assertEqual(1, y[28])
-        
+
         self.assertAlmostEqual(
             round(prob, decimals),
             round(yp[0, 1], decimals),
@@ -150,11 +156,16 @@ class Stree_test(unittest.TestCase):
         decimals = 5
         X, y = self._get_Xy()
         yp = self._clf.predict_proba(X[:num, :])
-        self.assertListEqual(y[:num].tolist(), np.argmax(yp[:num], axis=1).tolist())
-        expected_proba = [0.88395641, 0.36746962, 0.84158767, 0.34106833, 0.14269291, 0.85193236,
-                          0.29876058, 0.7282164, 0.85958616, 0.89517877, 0.99745224, 0.18860349,
-                          0.30756427, 0.8318412, 0.18981198, 0.15564624, 0.25740655, 0.22923355,
-                          0.87365959, 0.49928689, 0.95574351, 0.28761257, 0.28906333, 0.32643692,
+        self.assertListEqual(
+            y[:num].tolist(), np.argmax(yp[:num], axis=1).tolist())
+        expected_proba = [0.88395641, 0.36746962, 0.84158767, 0.34106833,
+                          0.14269291, 0.85193236,
+                          0.29876058, 0.7282164, 0.85958616, 0.89517877,
+                          0.99745224, 0.18860349,
+                          0.30756427, 0.8318412, 0.18981198, 0.15564624,
+                          0.25740655, 0.22923355,
+                          0.87365959, 0.49928689, 0.95574351, 0.28761257,
+                          0.28906333, 0.32643692,
                           0.29788483, 0.01657364, 0.81149083]
         expected = np.round(expected_proba, decimals=decimals).tolist()
         computed = np.round(yp[:, 1], decimals=decimals).tolist()
@@ -162,9 +173,10 @@ class Stree_test(unittest.TestCase):
             self.assertAlmostEqual(expected[i], computed[i], decimals)
 
     def build_models(self):
-        """Build and train two models, model_clf will use the sklearn classifier to
-        compute predictions and split data. model_computed will use vector of
-        coefficients to compute both predictions and splitted data
+        """Build and train two models, model_clf will use the sklearn
+        classifier to compute predictions and split data. model_computed will
+        use vector of coefficients to compute both predictions and splitted
+        data
         """
         model_clf = Stree(random_state=self._random_state,
                           use_predictions=True)
@@ -176,8 +188,9 @@ class Stree_test(unittest.TestCase):
         return model_clf, model_computed, X, y
 
     def test_use_model_predict(self):
-        """Check that we get the same results wether we use the estimator in nodes
-        to compute labels or we use the hyperplane and the position of samples wrt to it
+        """Check that we get the same results wether we use the estimator in
+        nodes to compute labels or we use the hyperplane and the position of
+        samples wrt to it
         """
         use_clf, use_math, X, _ = self.build_models()
         self.assertListEqual(
@@ -202,14 +215,15 @@ class Stree_test(unittest.TestCase):
         )
 
     def test_single_vs_multiple_prediction(self):
-        """Check if predicting sample by sample gives the same result as predicting
-        all samples at once
+        """Check if predicting sample by sample gives the same result as
+        predicting all samples at once
         """
         X, _ = self._get_Xy()
         # Compute prediction line by line
         yp_line = np.array([], dtype=int)
         for xp in X:
-            yp_line = np.append(yp_line, self._clf.predict(xp.reshape(-1, X.shape[1])))
+            yp_line = np.append(yp_line, self._clf.predict(
+                xp.reshape(-1, X.shape[1])))
         # Compute prediction at once
         yp_once = self._clf.predict(X)
         #
@@ -221,11 +235,15 @@ class Stree_test(unittest.TestCase):
         expected = [
             'root',
             'root - Down',
-            'root - Down - Down, <cgaf> - Leaf class=1 belief=0.975989 counts=(array([0, 1]), array([ 17, 691]))',
+            'root - Down - Down, <cgaf> - Leaf class=1 belief= 0.975989 counts'
+            '=(array([0, 1]), array([ 17, 691]))',
             'root - Down - Up',
-            'root - Down - Up - Down, <cgaf> - Leaf class=1 belief=0.750000 counts=(array([0, 1]), array([1, 3]))',
-            'root - Down - Up - Up, <pure> - Leaf class=0 belief=1.000000 counts=(array([0]), array([7]))',
-            'root - Up, <cgaf> - Leaf class=0 belief=0.928297 counts=(array([0, 1]), array([725,  56]))',
+            'root - Down - Up - Down, <cgaf> - Leaf class=1 belief= 0.750000 '
+            'counts=(array([0, 1]), array([1, 3]))',
+            'root - Down - Up - Up, <pure> - Leaf class=0 belief= 1.000000 '
+            'counts=(array([0]), array([7]))',
+            'root - Up, <cgaf> - Leaf class=0 belief= 0.928297 counts=(array('
+            '[0, 1]), array([725,  56]))',
         ]
         computed = []
         for node in self._clf:
@@ -253,16 +271,17 @@ class Stree_test(unittest.TestCase):
         with self.assertRaises(ValueError):
             tcl = Stree(max_depth=-1)
             tcl.fit(*self._get_Xy())
-    
+
     def test_check_max_depth(self):
         depth = 3
-        tcl = Stree(random_state=self._random_state, max_depth=depth)        
+        tcl = Stree(random_state=self._random_state, max_depth=depth)
         tcl.fit(*self._get_Xy())
         self.assertEqual(depth, tcl.depth_)
 
     def test_unfitted_tree_is_iterable(self):
         tcl = Stree()
         self.assertEqual(0, len(list(tcl)))
+
 
 class Snode_test(unittest.TestCase):
 
@@ -276,19 +295,24 @@ class Snode_test(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        """[summary]
+        """
         try:
             os.environ.pop('TESTING')
-        except:
+        except KeyError:
             pass
 
     def _get_Xy(self):
-        X, y = make_classification(n_samples=1500, n_features=3, n_informative=3,
-                                   n_redundant=0, n_repeated=0, n_classes=2, n_clusters_per_class=2,
-                                   class_sep=1.5, flip_y=0, weights=[0.5, 0.5], random_state=self._random_state)
+        X, y = make_classification(n_samples=1500, n_features=3,
+                                   n_informative=3, n_redundant=0, n_classes=2,
+                                   n_repeated=0, n_clusters_per_class=2,
+                                   class_sep=1.5, flip_y=0, weights=[0.5, 0.5],
+                                   random_state=self._random_state)
         return X, y
 
     def test_attributes_in_leaves(self):
-        """Check if the attributes in leaves have correct values so they form a predictor
+        """Check if the attributes in leaves have correct values so they form a
+        predictor
         """
 
         def check_leave(node: Snode):
@@ -303,7 +327,7 @@ class Snode_test(unittest.TestCase):
             if len(classes) > 1:
                 try:
                     belief = max_card / (max_card + min_card)
-                except:
+                except ZeroDivisionError:
                     belief = 0.
             else:
                 belief = 1

@@ -3,6 +3,7 @@ import setuptools
 __version__ = "0.9rc3"
 __author__ = "Ricardo Montañana Gómez"
 
+
 def readme():
     with open('README.md') as f:
         return f.read()
@@ -19,7 +20,8 @@ setuptools.setup(
     url='https://github.com/doctorado-ml/stree',
     author=__author__,
     author_email='ricardo.montanana@alu.uclm.es',
-    keywords='scikit-learn oblique-classifier oblique-decision-tree decision-tree svm svc',
+    keywords='scikit-learn oblique-classifier oblique-decision-tree decision-\
+    tree svm svc',
     classifiers=[
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: MIT License',
