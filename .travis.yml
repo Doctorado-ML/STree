@@ -3,6 +3,7 @@ os: linux
 dist: xenial
 install:
   - pip install -r requirements.txt
+  - pip install --upgrade codecov coverage black flake8
 notifications:
   email:
     recipients:
@@ -10,4 +11,10 @@ notifications:
     on_success: never # default: change
     on_failure: always # default: always
 # command to run tests
-script: python -m unittest stree.tests
+script:
+  - black --check --diff stree
+  - flake8 --count --exclude __init__.py stree
+  - coverage run -m unittest -v stree.tests
+after_success:
+  - codecov
+  - bash <(curl -Ls https://coverage.codacy.com/get.sh)

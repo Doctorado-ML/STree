@@ -1,11 +1,11 @@
-'''
+"""
 __author__ = "Ricardo Montañana Gómez"
 __copyright__ = "Copyright 2020, Ricardo Montañana Gómez"
 __license__ = "MIT"
 __version__ = "0.9"
 Build an oblique tree classifier based on SVM Trees
 Uses LinearSVC
-'''
+"""
 
 import os
 
@@ -13,8 +13,12 @@ import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.svm import LinearSVC
 from sklearn.utils.multiclass import check_classification_targets
-from sklearn.utils.validation import check_X_y, check_array, check_is_fitted, \
-    _check_sample_weight
+from sklearn.utils.validation import (
+    check_X_y,
+    check_array,
+    check_is_fitted,
+    _check_sample_weight,
+)
 
 
 class Snode:
@@ -22,22 +26,23 @@ class Snode:
     dataset assigned to it
     """
 
-    def __init__(self, clf: LinearSVC, X: np.ndarray, y: np.ndarray,
-                 title: str):
+    def __init__(
+        self, clf: LinearSVC, X: np.ndarray, y: np.ndarray, title: str
+    ):
         self._clf = clf
         self._vector = None if clf is None else clf.coef_
-        self._interceptor = 0. if clf is None else clf.intercept_
+        self._interceptor = 0.0 if clf is None else clf.intercept_
         self._title = title
-        self._belief = 0.
+        self._belief = 0.0
         # Only store dataset in Testing
-        self._X = X if os.environ.get('TESTING', 'NS') != 'NS' else None
+        self._X = X if os.environ.get("TESTING", "NS") != "NS" else None
         self._y = y
         self._down = None
         self._up = None
         self._class = None
 
     @classmethod
-    def copy(cls, node: 'Snode') -> 'Snode':
+    def copy(cls, node: "Snode") -> "Snode":
         return cls(node._clf, node._X, node._y, node._title)
 
     def set_down(self, son):
@@ -49,10 +54,10 @@ class Snode:
     def is_leaf(self) -> bool:
         return self._up is None and self._down is None
 
-    def get_down(self) -> 'Snode':
+    def get_down(self) -> "Snode":
         return self._down
 
-    def get_up(self) -> 'Snode':
+    def get_up(self) -> "Snode":
         return self._up
 
     def make_predictor(self):
@@ -68,7 +73,7 @@ class Snode:
             try:
                 self._belief = max_card / (max_card + min_card)
             except ZeroDivisionError:
-                self._belief = 0.
+                self._belief = 0.0
             self._class = classes[card == max_card][0]
         else:
             self._belief = 1
@@ -77,8 +82,10 @@ class Snode:
     def __str__(self) -> str:
         if self.is_leaf():
             count_values = np.unique(self._y, return_counts=True)
-            result = f"{self._title} - Leaf class={self._class} belief="\
+            result = (
+                f"{self._title} - Leaf class={self._class} belief="
                 f"{self._belief: .6f} counts={count_values}"
+            )
             return result
         else:
             return f"{self._title}"
@@ -116,9 +123,15 @@ class Stree(BaseEstimator, ClassifierMixin):
     with "classifier" as value
     """
 
-    def __init__(self, C: float = 1.0, max_iter: int = 1000,
-                 random_state: int = None, max_depth: int = None,
-                 tol: float = 1e-4, use_predictions: bool = False):
+    def __init__(
+        self,
+        C: float = 1.0,
+        max_iter: int = 1000,
+        random_state: int = None,
+        max_depth: int = None,
+        tol: float = 1e-4,
+        use_predictions: bool = False,
+    ):
         self.max_iter = max_iter
         self.C = C
         self.random_state = random_state
@@ -132,7 +145,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         :return: the tag required
         :rtype: dict
         """
-        return {'binary_only': True, 'requires_y': True}
+        return {"binary_only": True, "requires_y": True}
 
     def _linear_function(self, data: np.array, node: Snode) -> np.array:
         """Compute the distance of set of samples to a hyperplane, in
@@ -140,9 +153,9 @@ class Stree(BaseEstimator, ClassifierMixin):
         hyperplane of each class
 
         :param data: dataset of samples
-        :type data: np.array
+        :type data: np.array shape(m, n)
         :param node: the node that contains the hyperplance coefficients
-        :type node: Snode
+        :type node: Snode shape(1, n)
         :return: array of distances of each sample to the hyperplane
         :rtype: np.array
         """
@@ -160,8 +173,10 @@ class Stree(BaseEstimator, ClassifierMixin):
         :rtype: list
         """
         up = ~down
-        return origin[up[:, 0]] if any(up) else None, \
-            origin[down[:, 0]] if any(down) else None
+        return (
+            origin[up[:, 0]] if any(up) else None,
+            origin[down[:, 0]] if any(down) else None,
+        )
 
     def _distances(self, node: Snode, data: np.ndarray) -> np.array:
         """Compute distances of the samples to the hyperplane of the node
@@ -194,8 +209,9 @@ class Stree(BaseEstimator, ClassifierMixin):
         """
         return data > 0
 
-    def fit(self, X: np.ndarray, y: np.ndarray,
-            sample_weight: np.array = None) -> 'Stree':
+    def fit(
+        self, X: np.ndarray, y: np.ndarray, sample_weight: np.array = None
+    ) -> "Stree":
         """Build the tree based on the dataset of samples and its labels
 
         :raises ValueError: if parameters C or max_depth are out of bounds
@@ -203,17 +219,22 @@ class Stree(BaseEstimator, ClassifierMixin):
         :rtype: Stree
         """
         # Check parameters are Ok.
-        if type(y).__name__ == 'np.ndarray':
+        if type(y).__name__ == "np.ndarray":
             y = y.ravel()
         if self.C < 0:
             raise ValueError(
-                f"Penalty term must be positive... got (C={self.C:f})")
-        self.__max_depth = np.iinfo(
-            np.int32).max if self.max_depth is None else self.max_depth
+                f"Penalty term must be positive... got (C={self.C:f})"
+            )
+        self.__max_depth = (
+            np.iinfo(np.int32).max
+            if self.max_depth is None
+            else self.max_depth
+        )
         if self.__max_depth < 1:
             raise ValueError(
                 f"Maximum depth has to be greater than 1... got (max_depth=\
-                    {self.max_depth})")
+                    {self.max_depth})"
+            )
         check_classification_targets(y)
         X, y = check_X_y(X, y)
         sample_weight = _check_sample_weight(sample_weight, X)
@@ -223,13 +244,14 @@ class Stree(BaseEstimator, ClassifierMixin):
         self.n_iter_ = self.max_iter
         self.depth_ = 0
         self.n_features_in_ = X.shape[1]
-        self.tree_ = self.train(X, y, sample_weight, 1, 'root')
+        self.tree_ = self.train(X, y, sample_weight, 1, "root")
         self._build_predictor()
         return self
 
     def _build_predictor(self):
         """Process the leaves to make them predictors
         """
+
         def run_tree(node: Snode):
             if node.is_leaf():
                 node.make_predictor()
@@ -239,8 +261,14 @@ class Stree(BaseEstimator, ClassifierMixin):
 
         run_tree(self.tree_)
 
-    def train(self, X: np.ndarray, y: np.ndarray, sample_weight: np.ndarray,
-              depth: int, title: str) -> Snode:
+    def train(
+        self,
+        X: np.ndarray,
+        y: np.ndarray,
+        sample_weight: np.ndarray,
+        depth: int,
+        title: str,
+    ) -> Snode:
         """Recursive function to split the original dataset into predictor
         nodes (leaves)
 
@@ -261,10 +289,11 @@ class Stree(BaseEstimator, ClassifierMixin):
             return None
         if np.unique(y).shape[0] == 1:
             # only 1 class => pure dataset
-            return Snode(None, X, y, title + ', <pure>')
+            return Snode(None, X, y, title + ", <pure>")
         # Train the model
-        clf = LinearSVC(max_iter=self.max_iter, random_state=self.random_state,
-                        C=self.C)  # , sample_weight=sample_weight)
+        clf = LinearSVC(
+            max_iter=self.max_iter, random_state=self.random_state, C=self.C
+        )  # , sample_weight=sample_weight)
         clf.fit(X, y, sample_weight=sample_weight)
         tree = Snode(clf, X, y, title)
         self.depth_ = max(depth, self.depth_)
@@ -274,9 +303,9 @@ class Stree(BaseEstimator, ClassifierMixin):
         sw_u, sw_d = self._split_array(sample_weight, down)
         if X_U is None or X_D is None:
             # didn't part anything
-            return Snode(clf, X, y, title + ', <cgaf>')
-        tree.set_up(self.train(X_U, y_u, sw_u, depth + 1, title + ' - Up'))
-        tree.set_down(self.train(X_D, y_d, sw_d, depth + 1, title + ' - Down'))
+            return Snode(clf, X, y, title + ", <cgaf>")
+        tree.set_up(self.train(X_U, y_u, sw_u, depth + 1, title + " - Up"))
+        tree.set_down(self.train(X_D, y_d, sw_d, depth + 1, title + " - Down"))
         return tree
 
     def _reorder_results(self, y: np.array, indices: np.array) -> np.array:
@@ -308,8 +337,10 @@ class Stree(BaseEstimator, ClassifierMixin):
         :return: array of labels
         :rtype: np.array
         """
-        def predict_class(xp: np.array, indices: np.array,
-                          node: Snode) -> np.array:
+
+        def predict_class(
+            xp: np.array, indices: np.array, node: Snode
+        ) -> np.array:
             if xp is None:
                 return [], []
             if node.is_leaf():
@@ -322,14 +353,18 @@ class Stree(BaseEstimator, ClassifierMixin):
             prx_u, prin_u = predict_class(X_U, i_u, node.get_up())
             prx_d, prin_d = predict_class(X_D, i_d, node.get_down())
             return np.append(prx_u, prx_d), np.append(prin_u, prin_d)
+
         # sklearn check
-        check_is_fitted(self, ['tree_'])
+        check_is_fitted(self, ["tree_"])
         # Input validation
         X = check_array(X)
         # setup prediction & make it happen
         indices = np.arange(X.shape[0])
-        result = self._reorder_results(
-            *predict_class(X, indices, self.tree_)).astype(int).ravel()
+        result = (
+            self._reorder_results(*predict_class(X, indices, self.tree_))
+            .astype(int)
+            .ravel()
+        )
         return self.classes_[result]
 
     def predict_proba(self, X: np.array) -> np.array:
@@ -341,8 +376,10 @@ class Stree(BaseEstimator, ClassifierMixin):
         each class
         :rtype: np.array
         """
-        def predict_class(xp: np.array, indices: np.array, dist: np.array,
-                          node: Snode) -> np.array:
+
+        def predict_class(
+            xp: np.array, indices: np.array, dist: np.array, node: Snode
+        ) -> np.array:
             """Run the tree to compute predictions
 
             :param xp: subdataset of samples
@@ -375,7 +412,7 @@ class Stree(BaseEstimator, ClassifierMixin):
             return np.append(prx_u, prx_d), np.append(prin_u, prin_d)
 
         # sklearn check
-        check_is_fitted(self, ['tree_'])
+        check_is_fitted(self, ["tree_"])
         # Input validation
         X = check_array(X)
         # setup prediction & make it happen
@@ -426,7 +463,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         :return: description of nodes in the tree in preorder
         :rtype: str
         """
-        output = ''
+        output = ""
         for i in self:
-            output += str(i) + '\n'
+            output += str(i) + "\n"
         return output

@@ -1,0 +1,14 @@
+[run]
+branch = True
+source = stree
+
+[report]
+exclude_lines =
+    if self.debug:
+    pragma: no cover
+    raise NotImplementedError
+    if __name__ == .__main__.:
+ignore_errors = True
+omit =
+    stree/tests/*
+    stree/__init__.py

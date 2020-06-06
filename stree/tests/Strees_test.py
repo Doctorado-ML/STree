@@ -7,30 +7,54 @@ from sklearn.datasets import make_classification
 from stree import Stree, Snode
 
 
-class Stree_test(unittest.TestCase):
+def get_dataset(random_state=0):
+    X, y = make_classification(
+        n_samples=1500,
+        n_features=3,
+        n_informative=3,
+        n_redundant=0,
+        n_repeated=0,
+        n_classes=2,
+        n_clusters_per_class=2,
+        class_sep=1.5,
+        flip_y=0,
+        weights=[0.5, 0.5],
+        random_state=random_state,
+    )
+    return X, y
 
+
+class Stree_test(unittest.TestCase):
     def __init__(self, *args, **kwargs):
-        os.environ['TESTING'] = '1'
+        os.environ["TESTING"] = "1"
         self._random_state = 1
-        self._clf = Stree(random_state=self._random_state,
-                          use_predictions=False)
-        self._clf.fit(*self._get_Xy())
+        self._clf = Stree(
+            random_state=self._random_state, use_predictions=False
+        )
+        self._clf.fit(*get_dataset(self._random_state))
         super().__init__(*args, **kwargs)
 
     @classmethod
     def tearDownClass(cls):
         try:
-            os.environ.pop('TESTING')
+            os.environ.pop("TESTING")
         except KeyError:
             pass
 
     def _get_Xy(self):
-        X, y = make_classification(n_samples=1500, n_features=3,
-                                   n_informative=3, n_redundant=0,
-                                   n_repeated=0, n_classes=2,
-                                   n_clusters_per_class=2, class_sep=1.5,
-                                   flip_y=0, weights=[0.5, 0.5],
-                                   random_state=self._random_state)
+        X, y = make_classification(
+            n_samples=1500,
+            n_features=3,
+            n_informative=3,
+            n_redundant=0,
+            n_repeated=0,
+            n_classes=2,
+            n_clusters_per_class=2,
+            class_sep=1.5,
+            flip_y=0,
+            weights=[0.5, 0.5],
+            random_state=self._random_state,
+        )
         return X, y
 
     def _check_tree(self, node: Snode):
@@ -85,15 +109,16 @@ class Stree_test(unittest.TestCase):
         Returns:
             tuple -- tuple with samples, categories
         """
-        data = np.genfromtxt(file_name, delimiter=',')
+        data = np.genfromtxt(file_name, delimiter=",")
         data = np.array(data)
         column_y = data.shape[1] - 1
         fy = data[:, column_y]
         fx = np.delete(data, column_y, axis=1)
         return fx, fy
 
-    def _find_out(self, px: np.array, x_original: np.array,
-                  y_original) -> list:
+    def _find_out(
+        self, px: np.array, x_original: np.array, y_original
+    ) -> list:
         """Find the original values of y for a given array of samples
 
         Arguments:
@@ -112,19 +137,19 @@ class Stree_test(unittest.TestCase):
         return res
 
     def test_single_prediction(self):
-        X, y = self._get_Xy()
+        X, y = get_dataset(self._random_state)
         yp = self._clf.predict((X[0, :].reshape(-1, X.shape[1])))
         self.assertEqual(yp[0], y[0])
 
     def test_multiple_prediction(self):
         # First 27 elements the predictions are the same as the truth
         num = 27
-        X, y = self._get_Xy()
+        X, y = get_dataset(self._random_state)
         yp = self._clf.predict(X[:num, :])
         self.assertListEqual(y[:num].tolist(), yp.tolist())
 
     def test_score(self):
-        X, y = self._get_Xy()
+        X, y = get_dataset(self._random_state)
         accuracy_score = self._clf.score(X, y)
         yp = self._clf.predict(X)
         accuracy_computed = np.mean(yp == y)
@@ -138,35 +163,55 @@ class Stree_test(unittest.TestCase):
         # Element 28 has a different prediction than the truth
         decimals = 5
         prob = 0.29026400766
-        X, y = self._get_Xy()
+        X, y = get_dataset(self._random_state)
         yp = self._clf.predict_proba(X[28, :].reshape(-1, X.shape[1]))
-        self.assertEqual(np.round(1 - prob, decimals),
-                         np.round(yp[0:, 0], decimals))
+        self.assertEqual(
+            np.round(1 - prob, decimals), np.round(yp[0:, 0], decimals)
+        )
         self.assertEqual(1, y[28])
 
         self.assertAlmostEqual(
-            round(prob, decimals),
-            round(yp[0, 1], decimals),
-            decimals
+            round(prob, decimals), round(yp[0, 1], decimals), decimals
         )
 
     def test_multiple_predict_proba(self):
         # First 27 elements the predictions are the same as the truth
         num = 27
         decimals = 5
-        X, y = self._get_Xy()
+        X, y = get_dataset(self._random_state)
         yp = self._clf.predict_proba(X[:num, :])
         self.assertListEqual(
-            y[:num].tolist(), np.argmax(yp[:num], axis=1).tolist())
-        expected_proba = [0.88395641, 0.36746962, 0.84158767, 0.34106833,
-                          0.14269291, 0.85193236,
-                          0.29876058, 0.7282164, 0.85958616, 0.89517877,
-                          0.99745224, 0.18860349,
-                          0.30756427, 0.8318412, 0.18981198, 0.15564624,
-                          0.25740655, 0.22923355,
-                          0.87365959, 0.49928689, 0.95574351, 0.28761257,
-                          0.28906333, 0.32643692,
-                          0.29788483, 0.01657364, 0.81149083]
+            y[:num].tolist(), np.argmax(yp[:num], axis=1).tolist()
+        )
+        expected_proba = [
+            0.88395641,
+            0.36746962,
+            0.84158767,
+            0.34106833,
+            0.14269291,
+            0.85193236,
+            0.29876058,
+            0.7282164,
+            0.85958616,
+            0.89517877,
+            0.99745224,
+            0.18860349,
+            0.30756427,
+            0.8318412,
+            0.18981198,
+            0.15564624,
+            0.25740655,
+            0.22923355,
+            0.87365959,
+            0.49928689,
+            0.95574351,
+            0.28761257,
+            0.28906333,
+            0.32643692,
+            0.29788483,
+            0.01657364,
+            0.81149083,
+        ]
         expected = np.round(expected_proba, decimals=decimals).tolist()
         computed = np.round(yp[:, 1], decimals=decimals).tolist()
         for i in range(len(expected)):
@@ -178,11 +223,13 @@ class Stree_test(unittest.TestCase):
         use vector of coefficients to compute both predictions and splitted
         data
         """
-        model_clf = Stree(random_state=self._random_state,
-                          use_predictions=True)
-        model_computed = Stree(random_state=self._random_state,
-                               use_predictions=False)
-        X, y = self._get_Xy()
+        model_clf = Stree(
+            random_state=self._random_state, use_predictions=True
+        )
+        model_computed = Stree(
+            random_state=self._random_state, use_predictions=False
+        )
+        X, y = get_dataset(self._random_state)
         model_clf.fit(X, y)
         model_computed.fit(X, y)
         return model_clf, model_computed, X, y
@@ -194,74 +241,76 @@ class Stree_test(unittest.TestCase):
         """
         use_clf, use_math, X, _ = self.build_models()
         self.assertListEqual(
-            use_clf.predict(X).tolist(),
-            use_math.predict(X).tolist()
+            use_clf.predict(X).tolist(), use_math.predict(X).tolist()
         )
 
     def test_use_model_score(self):
         use_clf, use_math, X, y = self.build_models()
         b = use_math.score(X, y)
-        self.assertEqual(
-            use_clf.score(X, y),
-            b
-        )
-        self.assertGreater(b, .95)
+        self.assertEqual(use_clf.score(X, y), b)
+        self.assertGreater(b, 0.95)
 
     def test_use_model_predict_proba(self):
         use_clf, use_math, X, _ = self.build_models()
         self.assertListEqual(
             use_clf.predict_proba(X).tolist(),
-            use_math.predict_proba(X).tolist()
+            use_math.predict_proba(X).tolist(),
         )
 
     def test_single_vs_multiple_prediction(self):
         """Check if predicting sample by sample gives the same result as
         predicting all samples at once
         """
-        X, _ = self._get_Xy()
+        X, _ = get_dataset(self._random_state)
         # Compute prediction line by line
         yp_line = np.array([], dtype=int)
         for xp in X:
-            yp_line = np.append(yp_line, self._clf.predict(
-                xp.reshape(-1, X.shape[1])))
+            yp_line = np.append(
+                yp_line, self._clf.predict(xp.reshape(-1, X.shape[1]))
+            )
         # Compute prediction at once
         yp_once = self._clf.predict(X)
         #
         self.assertListEqual(yp_line.tolist(), yp_once.tolist())
 
-    def test_iterator(self):
+    def test_iterator_and_str(self):
         """Check preorder iterator
         """
         expected = [
-            'root',
-            'root - Down',
-            'root - Down - Down, <cgaf> - Leaf class=1 belief= 0.975989 counts'
-            '=(array([0, 1]), array([ 17, 691]))',
-            'root - Down - Up',
-            'root - Down - Up - Down, <cgaf> - Leaf class=1 belief= 0.750000 '
-            'counts=(array([0, 1]), array([1, 3]))',
-            'root - Down - Up - Up, <pure> - Leaf class=0 belief= 1.000000 '
-            'counts=(array([0]), array([7]))',
-            'root - Up, <cgaf> - Leaf class=0 belief= 0.928297 counts=(array('
-            '[0, 1]), array([725,  56]))',
+            "root",
+            "root - Down",
+            "root - Down - Down, <cgaf> - Leaf class=1 belief= 0.975989 counts"
+            "=(array([0, 1]), array([ 17, 691]))",
+            "root - Down - Up",
+            "root - Down - Up - Down, <cgaf> - Leaf class=1 belief= 0.750000 "
+            "counts=(array([0, 1]), array([1, 3]))",
+            "root - Down - Up - Up, <pure> - Leaf class=0 belief= 1.000000 "
+            "counts=(array([0]), array([7]))",
+            "root - Up, <cgaf> - Leaf class=0 belief= 0.928297 counts=(array("
+            "[0, 1]), array([725,  56]))",
         ]
         computed = []
+        expected_string = ""
         for node in self._clf:
             computed.append(str(node))
+            expected_string += str(node) + "\n"
         self.assertListEqual(expected, computed)
+        self.assertEqual(expected_string, str(self._clf))
 
     def test_is_a_sklearn_classifier(self):
         import warnings
         from sklearn.exceptions import ConvergenceWarning
-        warnings.filterwarnings('ignore', category=ConvergenceWarning)
-        warnings.filterwarnings('ignore', category=RuntimeWarning)
+
+        warnings.filterwarnings("ignore", category=ConvergenceWarning)
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
         from sklearn.utils.estimator_checks import check_estimator
+
         check_estimator(Stree())
 
     def test_exception_if_C_is_negative(self):
         tclf = Stree(C=-1)
         with self.assertRaises(ValueError):
-            tclf.fit(*self._get_Xy())
+            tclf.fit(*get_dataset(self._random_state))
 
     def test_check_max_depth_is_positive_or_None(self):
         tcl = Stree()
@@ -270,12 +319,12 @@ class Stree_test(unittest.TestCase):
         self.assertGreaterEqual(1, tcl.max_depth)
         with self.assertRaises(ValueError):
             tcl = Stree(max_depth=-1)
-            tcl.fit(*self._get_Xy())
+            tcl.fit(*get_dataset(self._random_state))
 
     def test_check_max_depth(self):
         depth = 3
         tcl = Stree(random_state=self._random_state, max_depth=depth)
-        tcl.fit(*self._get_Xy())
+        tcl.fit(*get_dataset(self._random_state))
         self.assertEqual(depth, tcl.depth_)
 
     def test_unfitted_tree_is_iterable(self):
@@ -284,13 +333,13 @@ class Stree_test(unittest.TestCase):
 
 
 class Snode_test(unittest.TestCase):
-
     def __init__(self, *args, **kwargs):
-        os.environ['TESTING'] = '1'
+        os.environ["TESTING"] = "1"
         self._random_state = 1
-        self._clf = Stree(random_state=self._random_state,
-                          use_predictions=True)
-        self._clf.fit(*self._get_Xy())
+        self._clf = Stree(
+            random_state=self._random_state, use_predictions=True
+        )
+        self._clf.fit(*get_dataset(self._random_state))
         super().__init__(*args, **kwargs)
 
     @classmethod
@@ -298,17 +347,9 @@ class Snode_test(unittest.TestCase):
         """[summary]
         """
         try:
-            os.environ.pop('TESTING')
+            os.environ.pop("TESTING")
         except KeyError:
             pass
-
-    def _get_Xy(self):
-        X, y = make_classification(n_samples=1500, n_features=3,
-                                   n_informative=3, n_redundant=0, n_classes=2,
-                                   n_repeated=0, n_clusters_per_class=2,
-                                   class_sep=1.5, flip_y=0, weights=[0.5, 0.5],
-                                   random_state=self._random_state)
-        return X, y
 
     def test_attributes_in_leaves(self):
         """Check if the attributes in leaves have correct values so they form a
@@ -328,7 +369,7 @@ class Snode_test(unittest.TestCase):
                 try:
                     belief = max_card / (max_card + min_card)
                 except ZeroDivisionError:
-                    belief = 0.
+                    belief = 0.0
             else:
                 belief = 1
             self.assertEqual(belief, node._belief)
@@ -355,3 +396,16 @@ class Snode_test(unittest.TestCase):
             run_tree(node.get_up())
 
         run_tree(self._clf.tree_)
+
+    def test_make_predictor_on_leaf(self):
+        test = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], "test")
+        test.make_predictor()
+        self.assertEqual(1, test._class)
+        self.assertEqual(0.75, test._belief)
+
+    def test_make_predictor_on_not_leaf(self):
+        test = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], "test")
+        test.set_up(Snode(None, [1], [1], "another_test"))
+        test.make_predictor()
+        self.assertIsNone(test._class)
+        self.assertEqual(0, test._belief)
