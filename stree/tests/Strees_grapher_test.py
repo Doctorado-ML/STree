@@ -181,6 +181,7 @@ class Snode_graph_test(unittest.TestCase):
         os.remove(file_name)
 
     def test_plot_hyperplane_with_distribution(self):
+        plt.close()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             matplotlib.use("Agg")
@@ -190,6 +191,7 @@ class Snode_graph_test(unittest.TestCase):
         self.assertEqual(1, num_figures_after - num_figures_before)
 
     def test_plot_hyperplane_without_distribution(self):
+        plt.close()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             matplotlib.use("Agg")
@@ -199,6 +201,7 @@ class Snode_graph_test(unittest.TestCase):
         self.assertEqual(1, num_figures_after - num_figures_before)
 
     def test_plot_distribution(self):
+        plt.close()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             matplotlib.use("Agg")

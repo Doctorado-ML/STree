@@ -13,7 +13,7 @@ notifications:
 # command to run tests
 script:
   - black --check --diff stree
-  - flake8 --count --exclude __init__.py stree
+  - flake8 --count stree
   - coverage run -m unittest -v stree.tests
 after_success:
   - codecov

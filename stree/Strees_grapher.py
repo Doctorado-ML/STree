@@ -146,7 +146,9 @@ class Stree_grapher(Stree):
             mirror.set_up(self._copy_tree(node.get_up()))
         return mirror
 
-    def fit(self, X: np.array, y: np.array) -> Stree:
+    def fit(
+        self, X: np.array, y: np.array, sample_weight: np.array = None
+    ) -> "Stree_grapher":
         """Fit the Stree and copy the tree in a Snode_graph tree
 
         :param X: Dataset
@@ -159,10 +161,10 @@ class Stree_grapher(Stree):
         if X.shape[1] != 3:
             self._pca = PCA(n_components=3)
             X = self._pca.fit_transform(X)
-        res = super().fit(X, y)
+        super().fit(X, y, sample_weight=sample_weight)
         self._tree_gr = self._copy_tree(self.tree_)
         self._fitted = True
-        return res
+        return self
 
     def score(self, X: np.array, y: np.array) -> float:
         self._check_fitted()
