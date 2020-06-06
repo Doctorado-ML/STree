@@ -2,10 +2,10 @@ overage:
   status:
     project:
       default:
-        target: auto
+        target: 90%
     patch:
       default:
-        target: auto
+        target: 90%
 comment:
   layout: "reach, diff, flags, files"
   behavior: default
