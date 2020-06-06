@@ -95,9 +95,6 @@ class Stree_grapher_test(unittest.TestCase):
             num_figures_after = plt.gcf().number
         self.assertEqual(7, num_figures_after - num_figures_before)
 
-    def test_filt_4_dims_dataset(self):
-        self._clf.fit(*get_dataset(self._random_state, n_features=4))
-
 
 class Snode_graph_test(unittest.TestCase):
     def __init__(self, *args, **kwargs):

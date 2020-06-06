@@ -192,10 +192,9 @@ class Stree(BaseEstimator, ClassifierMixin):
         if self.use_predictions:
             res = np.expand_dims(node._clf.decision_function(data), 1)
         else:
-            """doesn't work with multiclass as each sample has to do inner
-            product with its own coefficients computes positition of every
-            sample is w.r.t. the hyperplane
-            """
+            # doesn't work with multiclass as each sample has to do inner
+            # product with its own coefficients computes positition of every
+            # sample is w.r.t. the hyperplane
             res = self._linear_function(data, node)
         return res
 
