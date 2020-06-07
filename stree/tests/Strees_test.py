@@ -315,6 +315,17 @@ class Stree_test(unittest.TestCase):
         tcl = Stree()
         self.assertEqual(0, len(list(tcl)))
 
+    def test_min_samples_split(self):
+        tcl_split = Stree(min_samples_split=3)
+        tcl_nosplit = Stree(min_samples_split=4)
+        dataset = [[1], [2], [3]], [1, 1, 0]
+        tcl_split.fit(*dataset)
+        self.assertIsNotNone(tcl_split.tree_.get_down())
+        self.assertIsNotNone(tcl_split.tree_.get_up())
+        tcl_nosplit.fit(*dataset)
+        self.assertIsNone(tcl_nosplit.tree_.get_down())
+        self.assertIsNone(tcl_nosplit.tree_.get_up())
+
 
 class Snode_test(unittest.TestCase):
     def __init__(self, *args, **kwargs):

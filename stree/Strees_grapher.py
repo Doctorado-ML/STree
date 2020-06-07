@@ -133,7 +133,6 @@ class Stree_grapher(Stree):
             os.environ.pop("TESTING")
         except KeyError:
             pass
-        plt.close("all")
 
     def _copy_tree(self, node: Snode) -> Snode_graph:
         mirror = Snode_graph(node)
