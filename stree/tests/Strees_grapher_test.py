@@ -32,9 +32,7 @@ class Stree_grapher_test(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         os.environ["TESTING"] = "1"
         self._random_state = 1
-        self._clf = Stree_grapher(
-            dict(random_state=self._random_state, use_predictions=False)
-        )
+        self._clf = Stree_grapher(dict(random_state=self._random_state))
         self._clf.fit(*get_dataset(self._random_state, n_features=4))
         super().__init__(*args, **kwargs)
 
@@ -102,9 +100,7 @@ class Snode_graph_test(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         os.environ["TESTING"] = "1"
         self._random_state = 1
-        self._clf = Stree_grapher(
-            dict(random_state=self._random_state, use_predictions=False)
-        )
+        self._clf = Stree_grapher(dict(random_state=self._random_state))
         self._clf.fit(*get_dataset(self._random_state))
         super().__init__(*args, **kwargs)
 
