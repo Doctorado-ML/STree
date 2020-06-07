@@ -4,7 +4,7 @@
 
 # Stree
 
-Oblique Tree classifier based on SVM nodes. The nodes are built and splitted with sklearn LinearSVC models.Stree is a sklearn estimator and can be integrated in pipelines, grid searches, etc.
+Oblique Tree classifier based on SVM nodes. The nodes are built and splitted with sklearn SVC models.Stree is a sklearn estimator and can be integrated in pipelines, grid searches, etc.
 
 ![Stree](https://raw.github.com/doctorado-ml/stree/master/example.png)
 

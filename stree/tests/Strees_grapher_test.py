@@ -76,7 +76,9 @@ class Stree_grapher_test(unittest.TestCase):
 
     def test_save_all(self):
         folder_name = "/tmp/"
-        file_names = [f"{folder_name}STnode{i}.png" for i in range(1, 8)]
+        file_names = [
+            os.path.join(folder_name, f"STnode{i}.png") for i in range(1, 8)
+        ]
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             matplotlib.use("Agg")
@@ -160,8 +162,6 @@ class Snode_graph_test(unittest.TestCase):
                 # only exclude pure leaves
                 self.assertIsNotNone(node._clf)
                 self.assertIsNotNone(node._clf.coef_)
-                self.assertIsNotNone(node._vector)
-                self.assertIsNotNone(node._interceptor)
             if node.is_leaf():
                 return
             run_tree(node.get_down())
@@ -171,7 +171,7 @@ class Snode_graph_test(unittest.TestCase):
 
     def test_save_hyperplane(self):
         folder_name = "/tmp/"
-        file_name = f"{folder_name}STnode1.png"
+        file_name = os.path.join(folder_name, "STnode1.png")
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             matplotlib.use("Agg")

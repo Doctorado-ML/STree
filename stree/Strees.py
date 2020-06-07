@@ -4,14 +4,13 @@ __copyright__ = "Copyright 2020, Ricardo Montañana Gómez"
 __license__ = "MIT"
 __version__ = "0.9"
 Build an oblique tree classifier based on SVM Trees
-Uses LinearSVC
 """
 
 import os
 
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.svm import LinearSVC
+from sklearn.svm import SVC, LinearSVC
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_X_y,
@@ -26,12 +25,8 @@ class Snode:
     dataset assigned to it
     """
 
-    def __init__(
-        self, clf: LinearSVC, X: np.ndarray, y: np.ndarray, title: str
-    ):
+    def __init__(self, clf: SVC, X: np.ndarray, y: np.ndarray, title: str):
         self._clf = clf
-        self._vector = None if clf is None else clf.coef_
-        self._interceptor = 0.0 if clf is None else clf.intercept_
         self._title = title
         self._belief = 0.0
         # Only store dataset in Testing
@@ -126,6 +121,7 @@ class Stree(BaseEstimator, ClassifierMixin):
     def __init__(
         self,
         C: float = 1.0,
+        kernel: str = "linear",
         max_iter: int = 1000,
         random_state: int = None,
         max_depth: int = None,
@@ -135,6 +131,7 @@ class Stree(BaseEstimator, ClassifierMixin):
     ):
         self.max_iter = max_iter
         self.C = C
+        self.kernel = kernel
         self.random_state = random_state
         self.use_predictions = use_predictions
         self.max_depth = max_depth
@@ -161,8 +158,8 @@ class Stree(BaseEstimator, ClassifierMixin):
         :return: array of distances of each sample to the hyperplane
         :rtype: np.array
         """
-        coef = node._vector[0, :].reshape(-1, data.shape[1])
-        return data.dot(coef.T) + node._interceptor[0]
+        coef = node._clf.coef_[0, :].reshape(-1, data.shape[1])
+        return data.dot(coef.T) + node._clf.intercept_[0]
 
     def _split_array(self, origin: np.array, down: np.array) -> list:
         """Split an array in two based on indices passed as down and its complement
@@ -266,6 +263,26 @@ class Stree(BaseEstimator, ClassifierMixin):
 
         run_tree(self.tree_)
 
+    def _build_clf(self):
+        """ Select the correct classifier for the node
+        """
+
+        return (
+            LinearSVC(
+                max_iter=self.max_iter,
+                random_state=self.random_state,
+                C=self.C,
+                tol=self.tol,
+            )
+            if self.kernel == "linear"
+            else SVC(
+                kernel=self.kernel,
+                max_iter=self.max_iter,
+                tol=self.tol,
+                C=self.C,
+            )
+        )
+
     def train(
         self,
         X: np.ndarray,
@@ -296,9 +313,7 @@ class Stree(BaseEstimator, ClassifierMixin):
             # only 1 class => pure dataset
             return Snode(None, X, y, title + ", <pure>")
         # Train the model
-        clf = LinearSVC(
-            max_iter=self.max_iter, random_state=self.random_state, C=self.C
-        )  # , sample_weight=sample_weight)
+        clf = self._build_clf()
         clf.fit(X, y, sample_weight=sample_weight)
         tree = Snode(clf, X, y, title)
         self.depth_ = max(depth, self.depth_)

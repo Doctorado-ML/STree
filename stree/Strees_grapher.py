@@ -73,10 +73,10 @@ class Snode_graph(Snode):
             # get the splitting hyperplane
             def hyperplane(x, y):
                 return (
-                    -self._interceptor
-                    - self._vector[0][0] * x
-                    - self._vector[0][1] * y
-                ) / self._vector[0][2]
+                    -self._clf.intercept_
+                    - self._clf.coef_[0][0] * x
+                    - self._clf.coef_[0][1] * y
+                ) / self._clf.coef_[0][2]
 
             tmpx = np.linspace(self._X[:, 0].min(), self._X[:, 0].max())
             tmpy = np.linspace(self._X[:, 1].min(), self._X[:, 1].max())

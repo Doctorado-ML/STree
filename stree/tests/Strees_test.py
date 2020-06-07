@@ -84,22 +84,6 @@ class Stree_test(unittest.TestCase):
         """
         self._check_tree(self._clf.tree_)
 
-    def _get_file_data(self, file_name: str) -> tuple:
-        """Return X, y from data, y is the last column in array
-
-        Arguments:
-            file_name {str} -- the file name
-
-        Returns:
-            tuple -- tuple with samples, categories
-        """
-        data = np.genfromtxt(file_name, delimiter=",")
-        data = np.array(data)
-        column_y = data.shape[1] - 1
-        fy = data[:, column_y]
-        fx = np.delete(data, column_y, axis=1)
-        return fx, fy
-
     def _find_out(
         self, px: np.array, x_original: np.array, y_original
     ) -> list:
@@ -134,11 +118,18 @@ class Stree_test(unittest.TestCase):
 
     def test_score(self):
         X, y = get_dataset(self._random_state)
-        accuracy_score = self._clf.score(X, y)
-        yp = self._clf.predict(X)
-        accuracy_computed = np.mean(yp == y)
-        self.assertEqual(accuracy_score, accuracy_computed)
-        self.assertGreater(accuracy_score, 0.9)
+        for kernel in ["linear"]:
+            clf = Stree(
+                random_state=self._random_state,
+                kernel=kernel,
+                use_predictions=True,
+            )
+            clf.fit(X, y)
+            accuracy_score = clf.score(X, y)
+            yp = clf.predict(X)
+            accuracy_computed = np.mean(yp == y)
+            self.assertEqual(accuracy_score, accuracy_computed)
+            self.assertGreater(accuracy_score, 0.9)
 
     def test_single_predict_proba(self):
         """Check that element 28 has a prediction different that the current
@@ -306,10 +297,11 @@ class Stree_test(unittest.TestCase):
             tcl.fit(*get_dataset(self._random_state))
 
     def test_check_max_depth(self):
-        depth = 3
-        tcl = Stree(random_state=self._random_state, max_depth=depth)
-        tcl.fit(*get_dataset(self._random_state))
-        self.assertEqual(depth, tcl.depth_)
+        depths = (3, 4)
+        for depth in depths:
+            tcl = Stree(random_state=self._random_state, max_depth=depth)
+            tcl.fit(*get_dataset(self._random_state))
+            self.assertEqual(depth, tcl.depth_)
 
     def test_unfitted_tree_is_iterable(self):
         tcl = Stree()
@@ -383,8 +375,6 @@ class Snode_test(unittest.TestCase):
                 # only exclude pure leaves
                 self.assertIsNotNone(node._clf)
                 self.assertIsNotNone(node._clf.coef_)
-                self.assertIsNotNone(node._vector)
-                self.assertIsNotNone(node._interceptor)
             if node.is_leaf():
                 return
             run_tree(node.get_down())
