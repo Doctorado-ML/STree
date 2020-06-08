@@ -4,7 +4,7 @@
 
 # Stree
 
-Oblique Tree classifier based on SVM nodes. The nodes are built and splitted with sklearn SVC models.Stree is a sklearn estimator and can be integrated in pipelines, grid searches, etc.
+Oblique Tree classifier based on SVM nodes. The nodes are built and splitted with sklearn SVC models. Stree is a sklearn estimator and can be integrated in pipelines, grid searches, etc.
 
 ![Stree](https://raw.github.com/doctorado-ml/stree/master/example.png)
 
@@ -27,6 +27,10 @@ pip install git+https://github.com/doctorado-ml/stree
 * [![Test](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Doctorado-ML/STree/blob/master/notebooks/test.ipynb) Test notebook
 
 * [![Test2](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Doctorado-ML/STree/blob/master/notebooks/test2.ipynb) Another Test notebook
+
+* [![Adaboost](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Doctorado-ML/STree/blob/master/notebooks/adaboost.ipynb) Adaboost
+
+* [![Gridsearch](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Doctorado-ML/STree/blob/master/notebooks/gridsearch.ipynb) Gridsearch
 
 * [![Test Graphics](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Doctorado-ML/STree/blob/master/notebooks/test_graphs.ipynb) Test Graphics notebook
 

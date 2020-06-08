@@ -126,6 +126,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         random_state: int = None,
         max_depth: int = None,
         tol: float = 1e-4,
+        degree: int = 3,
         gamma="scale",
         min_samples_split: int = 0,
     ):
@@ -136,6 +137,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         self.max_depth = max_depth
         self.tol = tol
         self.gamma = gamma
+        self.degree = degree
         self.min_samples_split = min_samples_split
 
     def _more_tags(self) -> dict:
@@ -263,6 +265,7 @@ class Stree(BaseEstimator, ClassifierMixin):
                 tol=self.tol,
                 C=self.C,
                 gamma=self.gamma,
+                degree=self.degree,
             )
         )
 
