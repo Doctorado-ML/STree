@@ -26,17 +26,13 @@ def get_dataset(random_state=0):
 
 class Stree_test(unittest.TestCase):
     def __init__(self, *args, **kwargs):
-        os.environ["TESTING"] = "1"
         self._random_state = 1
         self._kernels = ["linear", "rbf", "poly"]
         super().__init__(*args, **kwargs)
 
     @classmethod
-    def tearDownClass(cls):
-        try:
-            os.environ.pop("TESTING")
-        except KeyError:
-            pass
+    def setUp(cls):
+        os.environ["TESTING"] = "1"
 
     def _check_tree(self, node: Snode):
         """Check recursively that the nodes that are not leaves have the
@@ -79,6 +75,9 @@ class Stree_test(unittest.TestCase):
     def test_build_tree(self):
         """Check if the tree is built the same way as predictions of models
         """
+        import warnings
+
+        warnings.filterwarnings("ignore")
         for kernel in self._kernels:
             clf = Stree(kernel=kernel, random_state=self._random_state)
             clf.fit(*get_dataset(self._random_state))
@@ -260,20 +259,14 @@ class Stree_test(unittest.TestCase):
 
 class Snode_test(unittest.TestCase):
     def __init__(self, *args, **kwargs):
-        os.environ["TESTING"] = "1"
         self._random_state = 1
         self._clf = Stree(random_state=self._random_state)
         self._clf.fit(*get_dataset(self._random_state))
         super().__init__(*args, **kwargs)
 
     @classmethod
-    def tearDownClass(cls):
-        """[summary]
-        """
-        try:
-            os.environ.pop("TESTING")
-        except KeyError:
-            pass
+    def setUp(cls):
+        os.environ["TESTING"] = "1"
 
     def test_attributes_in_leaves(self):
         """Check if the attributes in leaves have correct values so they form a

@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import warnings
 from sklearn.datasets import make_classification
 
-from stree import Stree_grapher, Snode_graph
+from stree import Stree_grapher, Snode_graph, Snode
 
 
 def get_dataset(random_state=0, n_features=3):
@@ -30,18 +30,14 @@ def get_dataset(random_state=0, n_features=3):
 
 class Stree_grapher_test(unittest.TestCase):
     def __init__(self, *args, **kwargs):
-        os.environ["TESTING"] = "1"
         self._random_state = 1
         self._clf = Stree_grapher(dict(random_state=self._random_state))
         self._clf.fit(*get_dataset(self._random_state, n_features=4))
         super().__init__(*args, **kwargs)
 
     @classmethod
-    def tearDownClass(cls):
-        try:
-            os.environ.pop("TESTING")
-        except KeyError:
-            pass
+    def setUp(cls):
+        os.environ["TESTING"] = "1"
 
     def test_iterator(self):
         """Check preorder iterator
@@ -73,7 +69,9 @@ class Stree_grapher_test(unittest.TestCase):
         self.assertGreater(accuracy_score, 0.86)
 
     def test_save_all(self):
-        folder_name = "/tmp/"
+        folder_name = os.path.join(os.sep, "tmp", "stree")
+        if os.path.isdir(folder_name):
+            os.rmdir(folder_name)
         file_names = [
             os.path.join(folder_name, f"STnode{i}.png") for i in range(1, 8)
         ]
@@ -85,6 +83,7 @@ class Stree_grapher_test(unittest.TestCase):
             self.assertTrue(os.path.exists(file_name))
             self.assertEqual("png", imghdr.what(file_name))
             os.remove(file_name)
+        os.rmdir(folder_name)
 
     def test_plot_all(self):
         with warnings.catch_warnings():
@@ -98,20 +97,14 @@ class Stree_grapher_test(unittest.TestCase):
 
 class Snode_graph_test(unittest.TestCase):
     def __init__(self, *args, **kwargs):
-        os.environ["TESTING"] = "1"
         self._random_state = 1
         self._clf = Stree_grapher(dict(random_state=self._random_state))
         self._clf.fit(*get_dataset(self._random_state))
         super().__init__(*args, **kwargs)
 
     @classmethod
-    def tearDownClass(cls):
-        """Remove the testing environ variable
-        """
-        try:
-            os.environ.pop("TESTING")
-        except KeyError:
-            pass
+    def setUp(cls):
+        os.environ["TESTING"] = "1"
 
     def test_plot_size(self):
         default = self._clf._tree_gr.get_plot_size()
@@ -205,3 +198,14 @@ class Snode_graph_test(unittest.TestCase):
             self._clf._tree_gr.plot_distribution()
             num_figures_after = plt.gcf().number
         self.assertEqual(1, num_figures_after - num_figures_before)
+
+    def test_set_axis_limits(self):
+        node = Snode_graph(Snode(None, None, None, "test"))
+        limits = (-2, 2), (-3, 3), (-4, 4)
+        node.set_axis_limits(limits)
+        computed = node.get_axis_limits()
+        x, y, z = limits
+        xx, yy, zz = computed
+        self.assertEqual(x, xx)
+        self.assertEqual(y, yy)
+        self.assertEqual(z, zz)
