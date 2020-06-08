@@ -11,6 +11,7 @@ import os
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.svm import SVC, LinearSVC
+from sklearn.utils import check_consistent_length
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_X_y,
@@ -18,6 +19,8 @@ from sklearn.utils.validation import (
     check_is_fitted,
     _check_sample_weight,
 )
+from sklearn.utils.sparsefuncs import count_nonzero
+from sklearn.metrics._classification import _weighted_sum, _check_targets
 
 
 class Snode:
@@ -201,6 +204,13 @@ class Stree(BaseEstimator, ClassifierMixin):
     ) -> "Stree":
         """Build the tree based on the dataset of samples and its labels
 
+        :param X: dataset of samples to make predictions
+        :type X: np.array
+        :param y: samples labels
+        :type y: np.array
+        :param sample_weight: weights of the samples. Rescale C per sample.
+        Hi' weights force the classifier to put more emphasis on these points
+        :type sample_weight: np.array optional
         :raises ValueError: if parameters C or max_depth are out of bounds
         :return: itself to be able to chain actions: fit().predict() ...
         :rtype: Stree
@@ -284,7 +294,8 @@ class Stree(BaseEstimator, ClassifierMixin):
         :type X: np.ndarray
         :param y: samples labels
         :type y: np.ndarray
-        :param sample_weight: weight of samples (used in boosting)
+        :param sample_weight: weight of samples. Rescale C per sample.
+        Hi weights force the classifier to put more emphasis on these points.
         :type sample_weight: np.ndarray
         :param depth: actual depth in the tree
         :type depth: int
@@ -435,20 +446,35 @@ class Stree(BaseEstimator, ClassifierMixin):
         result[:, 0] = 1 - result[:, 1]
         return self._reorder_results(result, indices)
 
-    def score(self, X: np.array, y: np.array) -> float:
+    def score(
+        self, X: np.array, y: np.array, sample_weight: np.array = None
+    ) -> float:
         """Compute accuracy of the prediction
 
         :param X: dataset of samples to make predictions
         :type X: np.array
-        :param y: samples labels
-        :type y: np.array
+        :param y_true: samples labels
+        :type y_true: np.array
+        :param sample_weight: weights of the samples. Rescale C per sample.
+        Hi' weights force the classifier to put more emphasis on these points
+        :type sample_weight: np.array optional
         :return: accuracy of the prediction
         :rtype: float
         """
         # sklearn check
         check_is_fitted(self)
-        yp = self.predict(X).reshape(y.shape)
-        return np.mean(yp == y)
+
+        y_pred = self.predict(X).reshape(y.shape)
+        # Compute accuracy for each possible representation
+        y_type, y_true, y_pred = _check_targets(y, y_pred)
+        check_consistent_length(y_true, y_pred, sample_weight)
+        if y_type.startswith("multilabel"):
+            differing_labels = count_nonzero(y_true - y_pred, axis=1)
+            score = differing_labels == 0
+        else:
+            score = y_true == y_pred
+
+        return _weighted_sum(score, sample_weight, normalize=True)
 
     def __iter__(self) -> Siterator:
         """Create an iterator to be able to visit the nodes of the tree in preorder,
