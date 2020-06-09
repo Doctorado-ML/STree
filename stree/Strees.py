@@ -4,14 +4,14 @@ __copyright__ = "Copyright 2020, Ricardo Montañana Gómez"
 __license__ = "MIT"
 __version__ = "0.9"
 Build an oblique tree classifier based on SVM Trees
-Uses LinearSVC
 """
 
 import os
 
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.svm import LinearSVC
+from sklearn.svm import SVC, LinearSVC
+from sklearn.utils import check_consistent_length
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_X_y,
@@ -19,6 +19,8 @@ from sklearn.utils.validation import (
     check_is_fitted,
     _check_sample_weight,
 )
+from sklearn.utils.sparsefuncs import count_nonzero
+from sklearn.metrics._classification import _weighted_sum, _check_targets
 
 
 class Snode:
@@ -26,12 +28,8 @@ class Snode:
     dataset assigned to it
     """
 
-    def __init__(
-        self, clf: LinearSVC, X: np.ndarray, y: np.ndarray, title: str
-    ):
+    def __init__(self, clf: SVC, X: np.ndarray, y: np.ndarray, title: str):
         self._clf = clf
-        self._vector = None if clf is None else clf.coef_
-        self._interceptor = 0.0 if clf is None else clf.intercept_
         self._title = title
         self._belief = 0.0
         # Only store dataset in Testing
@@ -70,14 +68,14 @@ class Snode:
         if len(classes) > 1:
             max_card = max(card)
             min_card = min(card)
-            try:
-                self._belief = max_card / (max_card + min_card)
-            except ZeroDivisionError:
-                self._belief = 0.0
             self._class = classes[card == max_card][0]
+            self._belief = max_card / (max_card + min_card)
         else:
             self._belief = 1
-            self._class = classes[0]
+            try:
+                self._class = classes[0]
+            except IndexError:
+                self._class = None
 
     def __str__(self) -> str:
         if self.is_leaf():
@@ -126,19 +124,23 @@ class Stree(BaseEstimator, ClassifierMixin):
     def __init__(
         self,
         C: float = 1.0,
+        kernel: str = "linear",
         max_iter: int = 1000,
         random_state: int = None,
         max_depth: int = None,
         tol: float = 1e-4,
-        use_predictions: bool = False,
+        degree: int = 3,
+        gamma="scale",
         min_samples_split: int = 0,
     ):
         self.max_iter = max_iter
         self.C = C
+        self.kernel = kernel
         self.random_state = random_state
-        self.use_predictions = use_predictions
         self.max_depth = max_depth
         self.tol = tol
+        self.gamma = gamma
+        self.degree = degree
         self.min_samples_split = min_samples_split
 
     def _more_tags(self) -> dict:
@@ -148,21 +150,6 @@ class Stree(BaseEstimator, ClassifierMixin):
         :rtype: dict
         """
         return {"binary_only": True, "requires_y": True}
-
-    def _linear_function(self, data: np.array, node: Snode) -> np.array:
-        """Compute the distance of set of samples to a hyperplane, in
-        multiclass classification it should compute the distance to a
-        hyperplane of each class
-
-        :param data: dataset of samples
-        :type data: np.array shape(m, n)
-        :param node: the node that contains the hyperplance coefficients
-        :type node: Snode shape(1, n)
-        :return: array of distances of each sample to the hyperplane
-        :rtype: np.array
-        """
-        coef = node._vector[0, :].reshape(-1, data.shape[1])
-        return data.dot(coef.T) + node._interceptor[0]
 
     def _split_array(self, origin: np.array, down: np.array) -> list:
         """Split an array in two based on indices passed as down and its complement
@@ -191,13 +178,12 @@ class Stree(BaseEstimator, ClassifierMixin):
         the hyperplane of the node
         :rtype: np.array
         """
-        if self.use_predictions:
-            res = np.expand_dims(node._clf.decision_function(data), 1)
-        else:
-            # doesn't work with multiclass as each sample has to do inner
-            # product with its own coefficients computes positition of every
-            # sample is w.r.t. the hyperplane
-            res = self._linear_function(data, node)
+        res = node._clf.decision_function(data)
+        if res.ndim == 1:
+            return np.expand_dims(res, 1)
+        elif res.shape[1] > 1:
+            # remove multiclass info
+            res = np.delete(res, slice(1, res.shape[1]), axis=1)
         return res
 
     def _split_criteria(self, data: np.array) -> np.array:
@@ -219,13 +205,18 @@ class Stree(BaseEstimator, ClassifierMixin):
     ) -> "Stree":
         """Build the tree based on the dataset of samples and its labels
 
+        :param X: dataset of samples to make predictions
+        :type X: np.array
+        :param y: samples labels
+        :type y: np.array
+        :param sample_weight: weights of the samples. Rescale C per sample.
+        Hi' weights force the classifier to put more emphasis on these points
+        :type sample_weight: np.array optional
         :raises ValueError: if parameters C or max_depth are out of bounds
         :return: itself to be able to chain actions: fit().predict() ...
         :rtype: Stree
         """
         # Check parameters are Ok.
-        if type(y).__name__ == "np.ndarray":
-            y = y.ravel()
         if self.C < 0:
             raise ValueError(
                 f"Penalty term must be positive... got (C={self.C:f})"
@@ -266,6 +257,27 @@ class Stree(BaseEstimator, ClassifierMixin):
 
         run_tree(self.tree_)
 
+    def _build_clf(self):
+        """ Build the correct classifier for the node
+        """
+        return (
+            LinearSVC(
+                max_iter=self.max_iter,
+                random_state=self.random_state,
+                C=self.C,
+                tol=self.tol,
+            )
+            if self.kernel == "linear"
+            else SVC(
+                kernel=self.kernel,
+                max_iter=self.max_iter,
+                tol=self.tol,
+                C=self.C,
+                gamma=self.gamma,
+                degree=self.degree,
+            )
+        )
+
     def train(
         self,
         X: np.ndarray,
@@ -281,7 +293,8 @@ class Stree(BaseEstimator, ClassifierMixin):
         :type X: np.ndarray
         :param y: samples labels
         :type y: np.ndarray
-        :param sample_weight: weight of samples (used in boosting)
+        :param sample_weight: weight of samples. Rescale C per sample.
+        Hi weights force the classifier to put more emphasis on these points.
         :type sample_weight: np.ndarray
         :param depth: actual depth in the tree
         :type depth: int
@@ -296,9 +309,7 @@ class Stree(BaseEstimator, ClassifierMixin):
             # only 1 class => pure dataset
             return Snode(None, X, y, title + ", <pure>")
         # Train the model
-        clf = LinearSVC(
-            max_iter=self.max_iter, random_state=self.random_state, C=self.C
-        )  # , sample_weight=sample_weight)
+        clf = self._build_clf()
         clf.fit(X, y, sample_weight=sample_weight)
         tree = Snode(clf, X, y, title)
         self.depth_ = max(depth, self.depth_)
@@ -434,20 +445,36 @@ class Stree(BaseEstimator, ClassifierMixin):
         result[:, 0] = 1 - result[:, 1]
         return self._reorder_results(result, indices)
 
-    def score(self, X: np.array, y: np.array) -> float:
+    def score(
+        self, X: np.array, y: np.array, sample_weight: np.array = None
+    ) -> float:
         """Compute accuracy of the prediction
 
         :param X: dataset of samples to make predictions
         :type X: np.array
-        :param y: samples labels
-        :type y: np.array
+        :param y_true: samples labels
+        :type y_true: np.array
+        :param sample_weight: weights of the samples. Rescale C per sample.
+        Hi' weights force the classifier to put more emphasis on these points
+        :type sample_weight: np.array optional
         :return: accuracy of the prediction
         :rtype: float
         """
         # sklearn check
         check_is_fitted(self)
-        yp = self.predict(X).reshape(y.shape)
-        return np.mean(yp == y)
+        check_classification_targets(y)
+        X, y = check_X_y(X, y)
+        y_pred = self.predict(X).reshape(y.shape)
+        # Compute accuracy for each possible representation
+        y_type, y_true, y_pred = _check_targets(y, y_pred)
+        check_consistent_length(y_true, y_pred, sample_weight)
+        if y_type.startswith("multilabel"):
+            differing_labels = count_nonzero(y_true - y_pred, axis=1)
+            score = differing_labels == 0
+        else:
+            score = y_true == y_pred
+
+        return _weighted_sum(score, sample_weight, normalize=True)
 
     def __iter__(self) -> Siterator:
         """Create an iterator to be able to visit the nodes of the tree in preorder,

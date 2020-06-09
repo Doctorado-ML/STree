@@ -41,6 +41,9 @@ class Snode_graph(Snode):
     def set_axis_limits(self, limits: tuple):
         self._xlimits, self._ylimits, self._zlimits = limits
 
+    def get_axis_limits(self) -> tuple:
+        return self._xlimits, self._ylimits, self._zlimits
+
     def _set_graphics_axis(self, ax: Axes3D):
         ax.set_xlim(self._xlimits)
         ax.set_ylim(self._ylimits)
@@ -50,7 +53,7 @@ class Snode_graph(Snode):
         self, save_folder: str = "./", save_prefix: str = "", save_seq: int = 1
     ):
         _, fig = self.plot_hyperplane()
-        name = f"{save_folder}{save_prefix}STnode{save_seq}.png"
+        name = os.path.join(save_folder, f"{save_prefix}STnode{save_seq}.png")
         fig.savefig(name, bbox_inches="tight")
         plt.close(fig)
 
@@ -73,10 +76,10 @@ class Snode_graph(Snode):
             # get the splitting hyperplane
             def hyperplane(x, y):
                 return (
-                    -self._interceptor
-                    - self._vector[0][0] * x
-                    - self._vector[0][1] * y
-                ) / self._vector[0][2]
+                    -self._clf.intercept_
+                    - self._clf.coef_[0][0] * x
+                    - self._clf.coef_[0][1] * y
+                ) / self._clf.coef_[0][2]
 
             tmpx = np.linspace(self._X[:, 0].min(), self._X[:, 0].max())
             tmpy = np.linspace(self._X[:, 1].min(), self._X[:, 1].max())

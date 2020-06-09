@@ -4,7 +4,7 @@
 
 # Stree
 
-Oblique Tree classifier based on SVM nodes. The nodes are built and splitted with sklearn LinearSVC models.Stree is a sklearn estimator and can be integrated in pipelines, grid searches, etc.
+Oblique Tree classifier based on SVM nodes. The nodes are built and splitted with sklearn SVC models. Stree is a sklearn estimator and can be integrated in pipelines, grid searches, etc.
 
 ![Stree](https://raw.github.com/doctorado-ml/stree/master/example.png)
 
@@ -18,17 +18,17 @@ pip install git+https://github.com/doctorado-ml/stree
 
 ### Jupyter notebooks
 
-##### Slow launch but better integration
+* [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/Doctorado-ML/STree/master?urlpath=lab/tree/notebooks/benchmark.ipynb) Benchmark
 
-* [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/Doctorado-ML/STree/master?urlpath=lab/tree/notebooks/test.ipynb) Test notebook
+* [![Test](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Doctorado-ML/STree/blob/master/notebooks/benchmark.ipynb) Benchmark
 
-##### Fast launch but have to run first commented out cell for setup
+* [![Test2](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Doctorado-ML/STree/blob/master/notebooks/features.ipynb) Test features
 
-* [![Test](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Doctorado-ML/STree/blob/master/notebooks/test.ipynb) Test notebook
+* [![Adaboost](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Doctorado-ML/STree/blob/master/notebooks/adaboost.ipynb) Adaboost
 
-* [![Test2](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Doctorado-ML/STree/blob/master/notebooks/test2.ipynb) Another Test notebook
+* [![Gridsearch](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Doctorado-ML/STree/blob/master/notebooks/gridsearch.ipynb) Gridsearch
 
-* [![Test Graphics](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Doctorado-ML/STree/blob/master/notebooks/test_graphs.ipynb) Test Graphics notebook
+* [![Test Graphics](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Doctorado-ML/STree/blob/master/notebooks/test_graphs.ipynb) Test Graphics
 
 ### Command line
 

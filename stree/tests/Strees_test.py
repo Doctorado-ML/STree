@@ -26,20 +26,13 @@ def get_dataset(random_state=0):
 
 class Stree_test(unittest.TestCase):
     def __init__(self, *args, **kwargs):
-        os.environ["TESTING"] = "1"
         self._random_state = 1
-        self._clf = Stree(
-            random_state=self._random_state, use_predictions=False
-        )
-        self._clf.fit(*get_dataset(self._random_state))
+        self._kernels = ["linear", "rbf", "poly"]
         super().__init__(*args, **kwargs)
 
     @classmethod
-    def tearDownClass(cls):
-        try:
-            os.environ.pop("TESTING")
-        except KeyError:
-            pass
+    def setUp(cls):
+        os.environ["TESTING"] = "1"
 
     def _check_tree(self, node: Snode):
         """Check recursively that the nodes that are not leaves have the
@@ -82,23 +75,13 @@ class Stree_test(unittest.TestCase):
     def test_build_tree(self):
         """Check if the tree is built the same way as predictions of models
         """
-        self._check_tree(self._clf.tree_)
+        import warnings
 
-    def _get_file_data(self, file_name: str) -> tuple:
-        """Return X, y from data, y is the last column in array
-
-        Arguments:
-            file_name {str} -- the file name
-
-        Returns:
-            tuple -- tuple with samples, categories
-        """
-        data = np.genfromtxt(file_name, delimiter=",")
-        data = np.array(data)
-        column_y = data.shape[1] - 1
-        fy = data[:, column_y]
-        fx = np.delete(data, column_y, axis=1)
-        return fx, fy
+        warnings.filterwarnings("ignore")
+        for kernel in self._kernels:
+            clf = Stree(kernel=kernel, random_state=self._random_state)
+            clf.fit(*get_dataset(self._random_state))
+            self._check_tree(clf.tree_)
 
     def _find_out(
         self, px: np.array, x_original: np.array, y_original
@@ -121,141 +104,85 @@ class Stree_test(unittest.TestCase):
         return res
 
     def test_single_prediction(self):
+        probs = [0.29026400766, 0.73105613, 0.0307635]
         X, y = get_dataset(self._random_state)
-        yp = self._clf.predict((X[0, :].reshape(-1, X.shape[1])))
-        self.assertEqual(yp[0], y[0])
+        for kernel, prob in zip(self._kernels, probs):
+            clf = Stree(kernel=kernel, random_state=self._random_state)
+            yp = clf.fit(X, y).predict((X[0, :].reshape(-1, X.shape[1])))
+            self.assertEqual(yp[0], y[0])
 
     def test_multiple_prediction(self):
         # First 27 elements the predictions are the same as the truth
         num = 27
         X, y = get_dataset(self._random_state)
-        yp = self._clf.predict(X[:num, :])
-        self.assertListEqual(y[:num].tolist(), yp.tolist())
+        for kernel in self._kernels:
+            clf = Stree(kernel=kernel, random_state=self._random_state)
+            yp = clf.fit(X, y).predict(X[:num, :])
+            self.assertListEqual(y[:num].tolist(), yp.tolist())
 
     def test_score(self):
         X, y = get_dataset(self._random_state)
-        accuracy_score = self._clf.score(X, y)
-        yp = self._clf.predict(X)
-        accuracy_computed = np.mean(yp == y)
-        self.assertEqual(accuracy_score, accuracy_computed)
-        self.assertGreater(accuracy_score, 0.9)
+        for kernel, accuracy_expected in zip(
+            self._kernels,
+            [0.9506666666666667, 0.9606666666666667, 0.9433333333333334],
+        ):
+            clf = Stree(random_state=self._random_state, kernel=kernel,)
+            clf.fit(X, y)
+            accuracy_score = clf.score(X, y)
+            yp = clf.predict(X)
+            accuracy_computed = np.mean(yp == y)
+            self.assertEqual(accuracy_score, accuracy_computed)
+            self.assertAlmostEqual(accuracy_expected, accuracy_score)
 
     def test_single_predict_proba(self):
-        """Check that element 28 has a prediction different that the current
-        label
+        """Check the element 28 probability of being 1
         """
-        # Element 28 has a different prediction than the truth
         decimals = 5
-        prob = 0.29026400766
+        element = 28
+        probs = [0.29026400766, 0.73105613, 0.0307635]
         X, y = get_dataset(self._random_state)
-        yp = self._clf.predict_proba(X[28, :].reshape(-1, X.shape[1]))
-        self.assertEqual(
-            np.round(1 - prob, decimals), np.round(yp[0:, 0], decimals)
-        )
-        self.assertEqual(1, y[28])
-
-        self.assertAlmostEqual(
-            round(prob, decimals), round(yp[0, 1], decimals), decimals
-        )
+        self.assertEqual(1, y[element])
+        for kernel, prob in zip(self._kernels, probs):
+            clf = Stree(kernel=kernel, random_state=self._random_state)
+            yp = clf.fit(X, y).predict_proba(
+                X[element, :].reshape(-1, X.shape[1])
+            )
+            self.assertAlmostEqual(
+                np.round(1 - prob, decimals), np.round(yp[0:, 0], decimals)
+            )
+            self.assertAlmostEqual(
+                round(prob, decimals), round(yp[0, 1], decimals), decimals
+            )
 
     def test_multiple_predict_proba(self):
         # First 27 elements the predictions are the same as the truth
         num = 27
-        decimals = 5
         X, y = get_dataset(self._random_state)
-        yp = self._clf.predict_proba(X[:num, :])
-        self.assertListEqual(
-            y[:num].tolist(), np.argmax(yp[:num], axis=1).tolist()
-        )
-        expected_proba = [
-            0.88395641,
-            0.36746962,
-            0.84158767,
-            0.34106833,
-            0.14269291,
-            0.85193236,
-            0.29876058,
-            0.7282164,
-            0.85958616,
-            0.89517877,
-            0.99745224,
-            0.18860349,
-            0.30756427,
-            0.8318412,
-            0.18981198,
-            0.15564624,
-            0.25740655,
-            0.22923355,
-            0.87365959,
-            0.49928689,
-            0.95574351,
-            0.28761257,
-            0.28906333,
-            0.32643692,
-            0.29788483,
-            0.01657364,
-            0.81149083,
-        ]
-        expected = np.round(expected_proba, decimals=decimals).tolist()
-        computed = np.round(yp[:, 1], decimals=decimals).tolist()
-        for i in range(len(expected)):
-            self.assertAlmostEqual(expected[i], computed[i], decimals)
-
-    def build_models(self):
-        """Build and train two models, model_clf will use the sklearn
-        classifier to compute predictions and split data. model_computed will
-        use vector of coefficients to compute both predictions and splitted
-        data
-        """
-        model_clf = Stree(
-            random_state=self._random_state, use_predictions=True
-        )
-        model_computed = Stree(
-            random_state=self._random_state, use_predictions=False
-        )
-        X, y = get_dataset(self._random_state)
-        model_clf.fit(X, y)
-        model_computed.fit(X, y)
-        return model_clf, model_computed, X, y
-
-    def test_use_model_predict(self):
-        """Check that we get the same results wether we use the estimator in
-        nodes to compute labels or we use the hyperplane and the position of
-        samples wrt to it
-        """
-        use_clf, use_math, X, _ = self.build_models()
-        self.assertListEqual(
-            use_clf.predict(X).tolist(), use_math.predict(X).tolist()
-        )
-
-    def test_use_model_score(self):
-        use_clf, use_math, X, y = self.build_models()
-        b = use_math.score(X, y)
-        self.assertEqual(use_clf.score(X, y), b)
-        self.assertGreater(b, 0.95)
-
-    def test_use_model_predict_proba(self):
-        use_clf, use_math, X, _ = self.build_models()
-        self.assertListEqual(
-            use_clf.predict_proba(X).tolist(),
-            use_math.predict_proba(X).tolist(),
-        )
+        for kernel in self._kernels:
+            clf = Stree(kernel=kernel, random_state=self._random_state)
+            clf.fit(X, y)
+            yp = clf.predict_proba(X[:num, :])
+            self.assertListEqual(
+                y[:num].tolist(), np.argmax(yp[:num], axis=1).tolist()
+            )
 
     def test_single_vs_multiple_prediction(self):
         """Check if predicting sample by sample gives the same result as
         predicting all samples at once
         """
-        X, _ = get_dataset(self._random_state)
-        # Compute prediction line by line
-        yp_line = np.array([], dtype=int)
-        for xp in X:
-            yp_line = np.append(
-                yp_line, self._clf.predict(xp.reshape(-1, X.shape[1]))
-            )
-        # Compute prediction at once
-        yp_once = self._clf.predict(X)
-        #
-        self.assertListEqual(yp_line.tolist(), yp_once.tolist())
+        X, y = get_dataset(self._random_state)
+        for kernel in self._kernels:
+            clf = Stree(kernel=kernel, random_state=self._random_state)
+            clf.fit(X, y)
+            # Compute prediction line by line
+            yp_line = np.array([], dtype=int)
+            for xp in X:
+                yp_line = np.append(
+                    yp_line, clf.predict(xp.reshape(-1, X.shape[1]))
+                )
+            # Compute prediction at once
+            yp_once = clf.predict(X)
+            self.assertListEqual(yp_line.tolist(), yp_once.tolist())
 
     def test_iterator_and_str(self):
         """Check preorder iterator
@@ -275,11 +202,13 @@ class Stree_test(unittest.TestCase):
         ]
         computed = []
         expected_string = ""
-        for node in self._clf:
+        clf = Stree(kernel="linear", random_state=self._random_state)
+        clf.fit(*get_dataset(self._random_state))
+        for node in clf:
             computed.append(str(node))
             expected_string += str(node) + "\n"
         self.assertListEqual(expected, computed)
-        self.assertEqual(expected_string, str(self._clf))
+        self.assertEqual(expected_string, str(clf))
 
     def test_is_a_sklearn_classifier(self):
         import warnings
@@ -306,10 +235,11 @@ class Stree_test(unittest.TestCase):
             tcl.fit(*get_dataset(self._random_state))
 
     def test_check_max_depth(self):
-        depth = 3
-        tcl = Stree(random_state=self._random_state, max_depth=depth)
-        tcl.fit(*get_dataset(self._random_state))
-        self.assertEqual(depth, tcl.depth_)
+        depths = (3, 4)
+        for depth in depths:
+            tcl = Stree(random_state=self._random_state, max_depth=depth)
+            tcl.fit(*get_dataset(self._random_state))
+            self.assertEqual(depth, tcl.depth_)
 
     def test_unfitted_tree_is_iterable(self):
         tcl = Stree()
@@ -326,25 +256,26 @@ class Stree_test(unittest.TestCase):
         self.assertIsNone(tcl_nosplit.tree_.get_down())
         self.assertIsNone(tcl_nosplit.tree_.get_up())
 
+    def test_muticlass_dataset(self):
+        for kernel in self._kernels:
+            clf = Stree(kernel=kernel, random_state=self._random_state)
+            px = [[1, 2], [3, 4], [5, 6]]
+            py = [1, 2, 3]
+            clf.fit(px, py)
+            self.assertEqual(1.0, clf.score(px, py))
+            self.assertListEqual([1, 2, 3], clf.predict(px).tolist())
+
 
 class Snode_test(unittest.TestCase):
     def __init__(self, *args, **kwargs):
-        os.environ["TESTING"] = "1"
         self._random_state = 1
-        self._clf = Stree(
-            random_state=self._random_state, use_predictions=True
-        )
+        self._clf = Stree(random_state=self._random_state)
         self._clf.fit(*get_dataset(self._random_state))
         super().__init__(*args, **kwargs)
 
     @classmethod
-    def tearDownClass(cls):
-        """[summary]
-        """
-        try:
-            os.environ.pop("TESTING")
-        except KeyError:
-            pass
+    def setUp(cls):
+        os.environ["TESTING"] = "1"
 
     def test_attributes_in_leaves(self):
         """Check if the attributes in leaves have correct values so they form a
@@ -383,8 +314,6 @@ class Snode_test(unittest.TestCase):
                 # only exclude pure leaves
                 self.assertIsNotNone(node._clf)
                 self.assertIsNotNone(node._clf.coef_)
-                self.assertIsNotNone(node._vector)
-                self.assertIsNotNone(node._interceptor)
             if node.is_leaf():
                 return
             run_tree(node.get_down())
@@ -404,3 +333,8 @@ class Snode_test(unittest.TestCase):
         test.make_predictor()
         self.assertIsNone(test._class)
         self.assertEqual(0, test._belief)
+
+    def test_make_predictor_on_leaf_bogus_data(self):
+        test = Snode(None, [1, 2, 3, 4], [], "test")
+        test.make_predictor()
+        self.assertIsNone(test._class)
