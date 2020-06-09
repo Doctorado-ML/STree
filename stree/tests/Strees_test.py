@@ -256,6 +256,15 @@ class Stree_test(unittest.TestCase):
         self.assertIsNone(tcl_nosplit.tree_.get_down())
         self.assertIsNone(tcl_nosplit.tree_.get_up())
 
+    def test_muticlass_dataset(self):
+        for kernel in self._kernels:
+            clf = Stree(kernel=kernel, random_state=self._random_state)
+            px = [[1, 2], [3, 4], [5, 6]]
+            py = [1, 2, 3]
+            clf.fit(px, py)
+            self.assertEqual(1.0, clf.score(px, py))
+            self.assertListEqual([1, 2, 3], clf.predict(px).tolist())
+
 
 class Snode_test(unittest.TestCase):
     def __init__(self, *args, **kwargs):
@@ -324,3 +333,8 @@ class Snode_test(unittest.TestCase):
         test.make_predictor()
         self.assertIsNone(test._class)
         self.assertEqual(0, test._belief)
+
+    def test_make_predictor_on_leaf_bogus_data(self):
+        test = Snode(None, [1, 2, 3, 4], [], "test")
+        test.make_predictor()
+        self.assertIsNone(test._class)
