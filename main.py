@@ -75,14 +75,3 @@ print(f"Took {time.time() - now:.2f} seconds to train")
 print(clf)
 print(f"Classifier's accuracy (train): {clf.score(Xtrain, ytrain):.4f}")
 print(f"Classifier's accuracy (test) : {clf.score(Xtest, ytest):.4f}")
-proba = clf.predict_proba(Xtest)
-print(
-    "Checking that we have correct probabilities, these are probabilities of "
-    "sample belonging to class 1"
-)
-res0 = proba[proba[:, 0] == 0]
-res1 = proba[proba[:, 0] == 1]
-print("++++++++++res0 > .8++++++++++++")
-print(res0[res0[:, 1] > 0.8])
-print("**********res1 < .4************")
-print(res1[res1[:, 1] < 0.4])

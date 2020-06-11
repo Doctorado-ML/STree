@@ -2,23 +2,22 @@ import os
 import unittest
 
 import numpy as np
-from sklearn.datasets import make_classification
+from sklearn.datasets import make_classification, load_iris
 
 from stree import Stree, Snode
 
 
-def get_dataset(random_state=0):
+def get_dataset(random_state=0, n_classes=2):
     X, y = make_classification(
         n_samples=1500,
         n_features=3,
         n_informative=3,
         n_redundant=0,
         n_repeated=0,
-        n_classes=2,
+        n_classes=n_classes,
         n_clusters_per_class=2,
         class_sep=1.5,
         flip_y=0,
-        weights=[0.5, 0.5],
         random_state=random_state,
     )
     return X, y
@@ -104,9 +103,8 @@ class Stree_test(unittest.TestCase):
         return res
 
     def test_single_prediction(self):
-        probs = [0.29026400766, 0.73105613, 0.0307635]
         X, y = get_dataset(self._random_state)
-        for kernel, prob in zip(self._kernels, probs):
+        for kernel in self._kernels:
             clf = Stree(kernel=kernel, random_state=self._random_state)
             yp = clf.fit(X, y).predict((X[0, :].reshape(-1, X.shape[1])))
             self.assertEqual(yp[0], y[0])
@@ -122,10 +120,12 @@ class Stree_test(unittest.TestCase):
 
     def test_score(self):
         X, y = get_dataset(self._random_state)
-        for kernel, accuracy_expected in zip(
-            self._kernels,
-            [0.9506666666666667, 0.9606666666666667, 0.9433333333333334],
-        ):
+        accuracies = [
+            0.9506666666666667,
+            0.9606666666666667,
+            0.9433333333333334,
+        ]
+        for kernel, accuracy_expected in zip(self._kernels, accuracies):
             clf = Stree(random_state=self._random_state, kernel=kernel,)
             clf.fit(X, y)
             accuracy_score = clf.score(X, y)
@@ -133,38 +133,6 @@ class Stree_test(unittest.TestCase):
             accuracy_computed = np.mean(yp == y)
             self.assertEqual(accuracy_score, accuracy_computed)
             self.assertAlmostEqual(accuracy_expected, accuracy_score)
-
-    def test_single_predict_proba(self):
-        """Check the element 28 probability of being 1
-        """
-        decimals = 5
-        element = 28
-        probs = [0.29026400766, 0.73105613, 0.0307635]
-        X, y = get_dataset(self._random_state)
-        self.assertEqual(1, y[element])
-        for kernel, prob in zip(self._kernels, probs):
-            clf = Stree(kernel=kernel, random_state=self._random_state)
-            yp = clf.fit(X, y).predict_proba(
-                X[element, :].reshape(-1, X.shape[1])
-            )
-            self.assertAlmostEqual(
-                np.round(1 - prob, decimals), np.round(yp[0:, 0], decimals)
-            )
-            self.assertAlmostEqual(
-                round(prob, decimals), round(yp[0, 1], decimals), decimals
-            )
-
-    def test_multiple_predict_proba(self):
-        # First 27 elements the predictions are the same as the truth
-        num = 27
-        X, y = get_dataset(self._random_state)
-        for kernel in self._kernels:
-            clf = Stree(kernel=kernel, random_state=self._random_state)
-            clf.fit(X, y)
-            yp = clf.predict_proba(X[:num, :])
-            self.assertListEqual(
-                y[:num].tolist(), np.argmax(yp[:num], axis=1).tolist()
-            )
 
     def test_single_vs_multiple_prediction(self):
         """Check if predicting sample by sample gives the same result as
@@ -225,6 +193,11 @@ class Stree_test(unittest.TestCase):
         with self.assertRaises(ValueError):
             tclf.fit(*get_dataset(self._random_state))
 
+    def test_exception_if_bogus_split_criteria(self):
+        tclf = Stree(split_criteria="duck")
+        with self.assertRaises(ValueError):
+            tclf.fit(*get_dataset(self._random_state))
+
     def test_check_max_depth_is_positive_or_None(self):
         tcl = Stree()
         self.assertIsNone(tcl.max_depth)
@@ -256,14 +229,56 @@ class Stree_test(unittest.TestCase):
         self.assertIsNone(tcl_nosplit.tree_.get_down())
         self.assertIsNone(tcl_nosplit.tree_.get_up())
 
-    def test_muticlass_dataset(self):
+    def test_simple_muticlass_dataset(self):
         for kernel in self._kernels:
-            clf = Stree(kernel=kernel, random_state=self._random_state)
-            px = [[1, 2], [3, 4], [5, 6]]
-            py = [1, 2, 3]
+            clf = Stree(
+                kernel=kernel,
+                split_criteria="max_samples",
+                random_state=self._random_state,
+            )
+            px = [[1, 2], [5, 6], [9, 10]]
+            py = [0, 1, 2]
             clf.fit(px, py)
             self.assertEqual(1.0, clf.score(px, py))
-            self.assertListEqual([1, 2, 3], clf.predict(px).tolist())
+            self.assertListEqual(py, clf.predict(px).tolist())
+            self.assertListEqual(py, clf.classes_.tolist())
+
+    def test_muticlass_dataset(self):
+        datasets = {
+            "Synt": get_dataset(random_state=self._random_state, n_classes=3),
+            "Iris": load_iris(return_X_y=True),
+        }
+        outcomes = {
+            "Synt": {
+                "max_samples linear": 0.9533333333333334,
+                "max_samples rbf": 0.836,
+                "max_samples poly": 0.9473333333333334,
+                "min_distance linear": 0.9533333333333334,
+                "min_distance rbf": 0.836,
+                "min_distance poly": 0.9473333333333334,
+            },
+            "Iris": {
+                "max_samples linear": 0.98,
+                "max_samples rbf": 1.0,
+                "max_samples poly": 1.0,
+                "min_distance linear": 0.98,
+                "min_distance rbf": 1.0,
+                "min_distance poly": 1.0,
+            },
+        }
+        for name, dataset in datasets.items():
+            px, py = dataset
+            for criteria in ["max_samples", "min_distance"]:
+                for kernel in self._kernels:
+                    clf = Stree(
+                        C=1e4,
+                        max_iter=1e4,
+                        kernel=kernel,
+                        random_state=self._random_state,
+                    )
+                    clf.fit(px, py)
+                    outcome = outcomes[name][f"{criteria} {kernel}"]
+                    self.assertAlmostEqual(outcome, clf.score(px, py))
 
 
 class Snode_test(unittest.TestCase):

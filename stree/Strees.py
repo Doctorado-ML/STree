@@ -19,7 +19,6 @@ from sklearn.utils.validation import (
     check_is_fitted,
     _check_sample_weight,
 )
-from sklearn.utils.sparsefuncs import count_nonzero
 from sklearn.metrics._classification import _weighted_sum, _check_targets
 
 
@@ -131,6 +130,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         tol: float = 1e-4,
         degree: int = 3,
         gamma="scale",
+        split_criteria="max_samples",
         min_samples_split: int = 0,
     ):
         self.max_iter = max_iter
@@ -142,17 +142,18 @@ class Stree(BaseEstimator, ClassifierMixin):
         self.gamma = gamma
         self.degree = degree
         self.min_samples_split = min_samples_split
+        self.split_criteria = split_criteria
 
     def _more_tags(self) -> dict:
-        """Required by sklearn to tell that this estimator is a binary classifier
+        """Required by sklearn to supply features of the classifier
 
         :return: the tag required
         :rtype: dict
         """
-        return {"binary_only": True, "requires_y": True}
+        return {"requires_y": True}
 
     def _split_array(self, origin: np.array, down: np.array) -> list:
-        """Split an array in two based on indices passed as down and its complement
+        """Split an array in two based on indices (down) and its complement
 
         :param origin: dataset to split
         :type origin: np.array
@@ -163,8 +164,8 @@ class Stree(BaseEstimator, ClassifierMixin):
         """
         up = ~down
         return (
-            origin[up[:, 0]] if any(up) else None,
-            origin[down[:, 0]] if any(down) else None,
+            origin[up] if any(up) else None,
+            origin[down] if any(down) else None,
         )
 
     def _distances(self, node: Snode, data: np.ndarray) -> np.array:
@@ -178,27 +179,38 @@ class Stree(BaseEstimator, ClassifierMixin):
         the hyperplane of the node
         :rtype: np.array
         """
-        res = node._clf.decision_function(data)
-        if res.ndim == 1:
-            return np.expand_dims(res, 1)
-        elif res.shape[1] > 1:
-            # remove multiclass info
-            res = np.delete(res, slice(1, res.shape[1]), axis=1)
-        return res
+        return node._clf.decision_function(data)
 
-    def _split_criteria(self, data: np.array) -> np.array:
+    def _min_distance(self, data: np.array, _) -> np.array:
+        # chooses the lowest distance of every sample
+        indices = np.argmin(np.abs(data), axis=1)
+        return np.take(data, indices)
+
+    def _max_samples(self, data: np.array, y: np.array) -> np.array:
+        # select the class with max number of samples
+        _, samples = np.unique(y, return_counts=True)
+        selected = np.argmax(samples)
+        return data[:, selected]
+
+    def _split_criteria(self, data: np.array, node: Snode) -> np.array:
         """Set the criteria to split arrays
 
-        :param data: [description]
+        :param data: distances of samples to hyperplanes shape (m, nclasses)
+        if nclasses > 2 else (m,)
         :type data: np.array
-        :return: [description]
+        :param node: node containing the svm classifier
+        :type node: Snode
+        :return: array of booleans of samples under or above zero
         :rtype: np.array
         """
-        return (
-            data > 0
-            if data.shape[0] >= self.min_samples_split
-            else np.ones((data.shape[0], 1), dtype=bool)
-        )
+
+        if data.shape[0] < self.min_samples_split:
+            return np.ones((data.shape[0]), dtype=bool)
+        if data.ndim > 1:
+            # split criteria for multiclass
+            data = getattr(self, f"_{self.split_criteria}")(data, node._y)
+        res = data > 0
+        return res
 
     def fit(
         self, X: np.ndarray, y: np.ndarray, sample_weight: np.array = None
@@ -231,18 +243,71 @@ class Stree(BaseEstimator, ClassifierMixin):
                 f"Maximum depth has to be greater than 1... got (max_depth=\
                     {self.max_depth})"
             )
+        if self.split_criteria not in ["min_distance", "max_samples"]:
+            raise ValueError(
+                f"split_criteria has to be min_distance or \
+                max_samples got ({self.split_criteria})"
+            )
+
         check_classification_targets(y)
         X, y = check_X_y(X, y)
         sample_weight = _check_sample_weight(sample_weight, X)
         check_classification_targets(y)
         # Initialize computed parameters
         self.classes_, y = np.unique(y, return_inverse=True)
+        self.n_classes_ = self.classes_.shape[0]
         self.n_iter_ = self.max_iter
         self.depth_ = 0
         self.n_features_in_ = X.shape[1]
         self.tree_ = self.train(X, y, sample_weight, 1, "root")
         self._build_predictor()
         return self
+
+    def train(
+        self,
+        X: np.ndarray,
+        y: np.ndarray,
+        sample_weight: np.ndarray,
+        depth: int,
+        title: str,
+    ) -> Snode:
+        """Recursive function to split the original dataset into predictor
+        nodes (leaves)
+
+        :param X: samples dataset
+        :type X: np.ndarray
+        :param y: samples labels
+        :type y: np.ndarray
+        :param sample_weight: weight of samples. Rescale C per sample.
+        Hi weights force the classifier to put more emphasis on these points.
+        :type sample_weight: np.ndarray
+        :param depth: actual depth in the tree
+        :type depth: int
+        :param title: description of the node
+        :type title: str
+        :return: binary tree
+        :rtype: Snode
+        """
+        if depth > self.__max_depth:
+            return None
+        if np.unique(y).shape[0] == 1:
+            # only 1 class => pure dataset
+            return Snode(None, X, y, title + ", <pure>")
+        # Train the model
+        clf = self._build_clf()
+        clf.fit(X, y, sample_weight=sample_weight)
+        node = Snode(clf, X, y, title)
+        self.depth_ = max(depth, self.depth_)
+        down = self._split_criteria(self._distances(node, X), node)
+        X_U, X_D = self._split_array(X, down)
+        y_u, y_d = self._split_array(y, down)
+        sw_u, sw_d = self._split_array(sample_weight, down)
+        if X_U is None or X_D is None:
+            # didn't part anything
+            return Snode(clf, X, y, title + ", <cgaf>")
+        node.set_up(self.train(X_U, y_u, sw_u, depth + 1, title + " - Up"))
+        node.set_down(self.train(X_D, y_d, sw_d, depth + 1, title + " - Down"))
+        return node
 
     def _build_predictor(self):
         """Process the leaves to make them predictors
@@ -278,52 +343,6 @@ class Stree(BaseEstimator, ClassifierMixin):
             )
         )
 
-    def train(
-        self,
-        X: np.ndarray,
-        y: np.ndarray,
-        sample_weight: np.ndarray,
-        depth: int,
-        title: str,
-    ) -> Snode:
-        """Recursive function to split the original dataset into predictor
-        nodes (leaves)
-
-        :param X: samples dataset
-        :type X: np.ndarray
-        :param y: samples labels
-        :type y: np.ndarray
-        :param sample_weight: weight of samples. Rescale C per sample.
-        Hi weights force the classifier to put more emphasis on these points.
-        :type sample_weight: np.ndarray
-        :param depth: actual depth in the tree
-        :type depth: int
-        :param title: description of the node
-        :type title: str
-        :return: binary tree
-        :rtype: Snode
-        """
-        if depth > self.__max_depth:
-            return None
-        if np.unique(y).shape[0] == 1:
-            # only 1 class => pure dataset
-            return Snode(None, X, y, title + ", <pure>")
-        # Train the model
-        clf = self._build_clf()
-        clf.fit(X, y, sample_weight=sample_weight)
-        tree = Snode(clf, X, y, title)
-        self.depth_ = max(depth, self.depth_)
-        down = self._split_criteria(self._distances(tree, X))
-        X_U, X_D = self._split_array(X, down)
-        y_u, y_d = self._split_array(y, down)
-        sw_u, sw_d = self._split_array(sample_weight, down)
-        if X_U is None or X_D is None:
-            # didn't part anything
-            return Snode(clf, X, y, title + ", <cgaf>")
-        tree.set_up(self.train(X_U, y_u, sw_u, depth + 1, title + " - Up"))
-        tree.set_down(self.train(X_D, y_d, sw_d, depth + 1, title + " - Down"))
-        return tree
-
     def _reorder_results(self, y: np.array, indices: np.array) -> np.array:
         """Reorder an array based on the array of indices passed
 
@@ -334,12 +353,8 @@ class Stree(BaseEstimator, ClassifierMixin):
         :return: array y ordered
         :rtype: np.array
         """
-        if y.ndim > 1 and y.shape[1] > 1:
-            # if predict_proba return np.array of floats
-            y_ordered = np.zeros(y.shape, dtype=float)
-        else:
-            # return array of same type given in y
-            y_ordered = y.copy()
+        # return array of same type given in y
+        y_ordered = y.copy()
         indices = indices.astype(int)
         for i, index in enumerate(indices):
             y_ordered[index] = y[i]
@@ -363,11 +378,11 @@ class Stree(BaseEstimator, ClassifierMixin):
                 # set a class for every sample in dataset
                 prediction = np.full((xp.shape[0], 1), node._class)
                 return prediction, indices
-            down = self._split_criteria(self._distances(node, xp))
-            X_U, X_D = self._split_array(xp, down)
+            down = self._split_criteria(self._distances(node, xp), node)
+            x_u, x_d = self._split_array(xp, down)
             i_u, i_d = self._split_array(indices, down)
-            prx_u, prin_u = predict_class(X_U, i_u, node.get_up())
-            prx_d, prin_d = predict_class(X_D, i_d, node.get_down())
+            prx_u, prin_u = predict_class(x_u, i_u, node.get_up())
+            prx_d, prin_d = predict_class(x_d, i_d, node.get_down())
             return np.append(prx_u, prx_d), np.append(prin_u, prin_d)
 
         # sklearn check
@@ -382,68 +397,6 @@ class Stree(BaseEstimator, ClassifierMixin):
             .ravel()
         )
         return self.classes_[result]
-
-    def predict_proba(self, X: np.array) -> np.array:
-        """Computes an approximation of the probability of samples belonging to
-        class 0 and 1
-        :param X: dataset
-        :type X: np.array
-        :return: array array of shape (m, num_classes), probability of being
-        each class
-        :rtype: np.array
-        """
-
-        def predict_class(
-            xp: np.array, indices: np.array, dist: np.array, node: Snode
-        ) -> np.array:
-            """Run the tree to compute predictions
-
-            :param xp: subdataset of samples
-            :type xp: np.array
-            :param indices: indices of subdataset samples to rebuild original
-            order
-            :type indices: np.array
-            :param dist: distances of every sample to the hyperplane or the
-            father node
-            :type dist: np.array
-            :param node: node of the leaf with the class
-            :type node: Snode
-            :return: array of labels and distances, array of indices
-            :rtype: np.array
-            """
-            if xp is None:
-                return [], []
-            if node.is_leaf():
-                # set a class for every sample in dataset
-                prediction = np.full((xp.shape[0], 1), node._class)
-                prediction_proba = dist
-                return np.append(prediction, prediction_proba, axis=1), indices
-            distances = self._distances(node, xp)
-            down = self._split_criteria(distances)
-            X_U, X_D = self._split_array(xp, down)
-            i_u, i_d = self._split_array(indices, down)
-            di_u, di_d = self._split_array(distances, down)
-            prx_u, prin_u = predict_class(X_U, i_u, di_u, node.get_up())
-            prx_d, prin_d = predict_class(X_D, i_d, di_d, node.get_down())
-            return np.append(prx_u, prx_d), np.append(prin_u, prin_d)
-
-        # sklearn check
-        check_is_fitted(self, ["tree_"])
-        # Input validation
-        X = check_array(X)
-        # setup prediction & make it happen
-        indices = np.arange(X.shape[0])
-        empty_dist = np.empty((X.shape[0], 1), dtype=float)
-        result, indices = predict_class(X, indices, empty_dist, self.tree_)
-        result = result.reshape(X.shape[0], 2)
-        # Turn distances to hyperplane into probabilities based on fitting
-        # distances of samples to its hyperplane that classified them, to the
-        # sigmoid function
-        # Probability of being 1
-        result[:, 1] = 1 / (1 + np.exp(-result[:, 1]))
-        # Probability of being 0
-        result[:, 0] = 1 - result[:, 1]
-        return self._reorder_results(result, indices)
 
     def score(
         self, X: np.array, y: np.array, sample_weight: np.array = None
@@ -468,17 +421,12 @@ class Stree(BaseEstimator, ClassifierMixin):
         # Compute accuracy for each possible representation
         y_type, y_true, y_pred = _check_targets(y, y_pred)
         check_consistent_length(y_true, y_pred, sample_weight)
-        if y_type.startswith("multilabel"):
-            differing_labels = count_nonzero(y_true - y_pred, axis=1)
-            score = differing_labels == 0
-        else:
-            score = y_true == y_pred
-
+        score = y_true == y_pred
         return _weighted_sum(score, sample_weight, normalize=True)
 
     def __iter__(self) -> Siterator:
-        """Create an iterator to be able to visit the nodes of the tree in preorder,
-        can make a list with all the nodes in preorder
+        """Create an iterator to be able to visit the nodes of the tree in
+        preorder, can make a list with all the nodes in preorder
 
         :return: an iterator, can for i in... and list(...)
         :rtype: Siterator
