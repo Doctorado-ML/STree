@@ -2,25 +2,10 @@ import os
 import unittest
 
 import numpy as np
-from sklearn.datasets import make_classification, load_iris
+from sklearn.datasets import load_iris
 
 from stree import Stree, Snode
-
-
-def get_dataset(random_state=0, n_classes=2):
-    X, y = make_classification(
-        n_samples=1500,
-        n_features=3,
-        n_informative=3,
-        n_redundant=0,
-        n_repeated=0,
-        n_classes=n_classes,
-        n_clusters_per_class=2,
-        class_sep=1.5,
-        flip_y=0,
-        random_state=random_state,
-    )
-    return X, y
+from .utils import get_dataset
 
 
 class Stree_test(unittest.TestCase):
@@ -280,76 +265,33 @@ class Stree_test(unittest.TestCase):
                     outcome = outcomes[name][f"{criteria} {kernel}"]
                     self.assertAlmostEqual(outcome, clf.score(px, py))
 
+    def test_min_distance(self):
+        clf = Stree()
+        data = np.array(
+            [
+                [-0.1, 0.2, -0.3],
+                [0.7, 0.01, -0.1],
+                [0.7, -0.9, 0.5],
+                [0.1, 0.2, 0.3],
+            ]
+        )
+        expected = np.array([-0.1, 0.01, 0.5, 0.1])
+        computed = clf._min_distance(data, None)
+        self.assertEqual((4,), computed.shape)
+        self.assertListEqual(expected.tolist(), computed.tolist())
 
-class Snode_test(unittest.TestCase):
-    def __init__(self, *args, **kwargs):
-        self._random_state = 1
-        self._clf = Stree(random_state=self._random_state)
-        self._clf.fit(*get_dataset(self._random_state))
-        super().__init__(*args, **kwargs)
-
-    @classmethod
-    def setUp(cls):
-        os.environ["TESTING"] = "1"
-
-    def test_attributes_in_leaves(self):
-        """Check if the attributes in leaves have correct values so they form a
-        predictor
-        """
-
-        def check_leave(node: Snode):
-            if not node.is_leaf():
-                check_leave(node.get_down())
-                check_leave(node.get_up())
-                return
-            # Check Belief in leave
-            classes, card = np.unique(node._y, return_counts=True)
-            max_card = max(card)
-            min_card = min(card)
-            if len(classes) > 1:
-                try:
-                    belief = max_card / (max_card + min_card)
-                except ZeroDivisionError:
-                    belief = 0.0
-            else:
-                belief = 1
-            self.assertEqual(belief, node._belief)
-            # Check Class
-            class_computed = classes[card == max_card]
-            self.assertEqual(class_computed, node._class)
-
-        check_leave(self._clf.tree_)
-
-    def test_nodes_coefs(self):
-        """Check if the nodes of the tree have the right attributes filled
-        """
-
-        def run_tree(node: Snode):
-            if node._belief < 1:
-                # only exclude pure leaves
-                self.assertIsNotNone(node._clf)
-                self.assertIsNotNone(node._clf.coef_)
-            if node.is_leaf():
-                return
-            run_tree(node.get_down())
-            run_tree(node.get_up())
-
-        run_tree(self._clf.tree_)
-
-    def test_make_predictor_on_leaf(self):
-        test = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], "test")
-        test.make_predictor()
-        self.assertEqual(1, test._class)
-        self.assertEqual(0.75, test._belief)
-
-    def test_make_predictor_on_not_leaf(self):
-        test = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], "test")
-        test.set_up(Snode(None, [1], [1], "another_test"))
-        test.make_predictor()
-        self.assertIsNone(test._class)
-        self.assertEqual(0, test._belief)
-
-    def test_make_predictor_on_leaf_bogus_data(self):
-        test = Snode(None, [1, 2, 3, 4], [], "test")
-        test.make_predictor()
-        self.assertIsNone(test._class)
+    def test_max_samples(self):
+        clf = Stree()
+        data = np.array(
+            [
+                [-0.1, 0.2, -0.3],
+                [0.7, 0.01, -0.1],
+                [0.7, -0.9, 0.5],
+                [0.1, 0.2, 0.3],
+            ]
+        )
+        expected = np.array([0.2, 0.01, -0.9, 0.2])
+        y = [1, 2, 1, 0]
+        computed = clf._max_samples(data, y)
+        self.assertEqual((4,), computed.shape)
+        self.assertListEqual(expected.tolist(), computed.tolist())

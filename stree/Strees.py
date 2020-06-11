@@ -96,9 +96,6 @@ class Siterator:
         self._stack = []
         self._push(tree)
 
-    def __iter__(self):
-        return self
-
     def _push(self, node: Snode):
         if node is not None:
             self._stack.append(node)
@@ -184,7 +181,9 @@ class Stree(BaseEstimator, ClassifierMixin):
     def _min_distance(self, data: np.array, _) -> np.array:
         # chooses the lowest distance of every sample
         indices = np.argmin(np.abs(data), axis=1)
-        return np.take(data, indices)
+        return np.array(
+            [data[x, y] for x, y in zip(range(len(data[:, 0])), indices)]
+        )
 
     def _max_samples(self, data: np.array, y: np.array) -> np.array:
         # select the class with max number of samples
