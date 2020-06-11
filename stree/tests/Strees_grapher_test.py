@@ -68,6 +68,11 @@ class Stree_grapher_test(unittest.TestCase):
         self.assertEqual(accuracy_score, accuracy_computed)
         self.assertGreater(accuracy_score, 0.86)
 
+    def test_score_4dims(self):
+        X, y = get_dataset(self._random_state, n_features=4)
+        accuracy_score = self._clf.score(X, y)
+        self.assertEqual(accuracy_score, 0.95)
+
     def test_save_all(self):
         folder_name = os.path.join(os.sep, "tmp", "stree")
         if os.path.isdir(folder_name):
@@ -171,11 +176,13 @@ class Snode_graph_test(unittest.TestCase):
 
     def test_plot_hyperplane_with_distribution(self):
         plt.close()
+        # select a pure node
+        node = self._clf._tree_gr.get_down().get_up().get_up()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             matplotlib.use("Agg")
             num_figures_before = plt.gcf().number
-            self._clf._tree_gr.plot_hyperplane(plot_distribution=True)
+            node.plot_hyperplane(plot_distribution=True)
             num_figures_after = plt.gcf().number
         self.assertEqual(1, num_figures_after - num_figures_before)
 
@@ -209,3 +216,11 @@ class Snode_graph_test(unittest.TestCase):
         self.assertEqual(x, xx)
         self.assertEqual(y, yy)
         self.assertEqual(z, zz)
+
+    def test_cmap_change(self):
+        node = Snode_graph(Snode(None, None, None, "test"))
+        self.assertEqual("jet", node._get_cmap())
+        # make node pure
+        node._belief = 1.0
+        node._class = 1
+        self.assertEqual("jet_r", node._get_cmap())

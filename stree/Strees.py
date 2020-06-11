@@ -19,7 +19,6 @@ from sklearn.utils.validation import (
     check_is_fitted,
     _check_sample_weight,
 )
-from sklearn.utils.sparsefuncs import count_nonzero
 from sklearn.metrics._classification import _weighted_sum, _check_targets
 
 
@@ -422,11 +421,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         # Compute accuracy for each possible representation
         y_type, y_true, y_pred = _check_targets(y, y_pred)
         check_consistent_length(y_true, y_pred, sample_weight)
-        if y_type.startswith("multilabel"):
-            differing_labels = count_nonzero(y_true - y_pred, axis=1)
-            score = differing_labels == 0
-        else:
-            score = y_true == y_pred
+        score = y_true == y_pred
         return _weighted_sum(score, sample_weight, normalize=True)
 
     def __iter__(self) -> Siterator:
