@@ -1,3 +1,3 @@
-from .Strees import Stree, Snode, Siterator
+from .Strees import Stree, Snode, Siterator, Splitter
 
-__all__ = ["Stree", "Snode", "Siterator"]
+__all__ = ["Stree", "Snode", "Siterator", "Splitter"]
