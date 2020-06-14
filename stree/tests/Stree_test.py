@@ -360,3 +360,17 @@ class Stree_test(unittest.TestCase):
         clf = Stree(criterion="entropy")
         clf.fit(*load_dataset())
         self.assertEqual(expected, clf.criterion_function_(y))
+
+    def test_predict_feature_dimensions(self):
+        X = np.random.rand(10, 5)
+        y = np.random.randint(0, 2, 10)
+        clf = Stree()
+        clf.fit(X, y)
+        with self.assertRaises(ValueError):
+            clf.predict(X[:, :3])
+
+    def test_score_max_features(self):
+        X, y = load_dataset(self._random_state)
+        clf = Stree(random_state=self._random_state, max_features=2)
+        clf.fit(X, y)
+        self.assertAlmostEqual(0.9426666666666667, clf.score(X, y))

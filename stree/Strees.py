@@ -205,7 +205,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         the hyperplane of the node
         :rtype: np.array
         """
-        return node._clf.decision_function(data)
+        return node._clf.decision_function(data[:, node._features])
 
     def _min_distance(self, data: np.array, _) -> np.array:
         # chooses the lowest distance of every sample
@@ -286,11 +286,14 @@ class Stree(BaseEstimator, ClassifierMixin):
         sample_weight = _check_sample_weight(sample_weight, X)
         check_classification_targets(y)
         # Initialize computed parameters
+        if self.random_state is not None:
+            random.seed(self.random_state)
         self.classes_, y = np.unique(y, return_inverse=True)
         self.n_classes_ = self.classes_.shape[0]
         self.n_iter_ = self.max_iter
         self.depth_ = 0
         self.n_features_ = X.shape[1]
+        self.n_features_in_ = X.shape[1]
         self.max_features_ = self._initialize_max_features()
         self.criterion_function_ = getattr(self, f"_{self.criterion}")
         self.tree_ = self.train(X, y, sample_weight, 1, "root")
@@ -336,12 +339,12 @@ class Stree(BaseEstimator, ClassifierMixin):
             )
         # Train the model
         clf = self._build_clf()
-        Xs, indices_subset = self._get_subspace(X)
+        Xs, features = self._get_subspace(X)
         clf.fit(Xs, y, sample_weight=sample_weight)
         impurity = self.criterion_function_(y)
-        node = Snode(clf, X, y, indices_subset, impurity, title)
+        node = Snode(clf, X, y, features, impurity, title)
         self.depth_ = max(depth, self.depth_)
-        down = self._split_criteria(self._distances(node, Xs), node)
+        down = self._split_criteria(self._distances(node, X), node)
         X_U, X_D = self._split_array(X, down)
         y_u, y_d = self._split_array(y, down)
         sw_u, sw_d = self._split_array(sample_weight, down)
@@ -439,6 +442,11 @@ class Stree(BaseEstimator, ClassifierMixin):
         check_is_fitted(self, ["tree_"])
         # Input validation
         X = check_array(X)
+        if X.shape[1] != self.n_features_:
+            raise ValueError(
+                f"Expected {self.n_features_} features but got "
+                f"({X.shape[1]})"
+            )
         # setup prediction & make it happen
         indices = np.arange(X.shape[0])
         result = (
@@ -548,7 +556,7 @@ class Stree(BaseEstimator, ClassifierMixin):
             features = range(dataset.shape[1])
             features_sets = list(combinations(features, self.max_features_))
             if len(features_sets) > 1:
-                return features_sets[random.randint(0, len(features_sets))]
+                return features_sets[random.randint(0, len(features_sets) - 1)]
             else:
                 return features_sets[0]
 
