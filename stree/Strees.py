@@ -29,7 +29,15 @@ class Snode:
     dataset assigned to it
     """
 
-    def __init__(self, clf: SVC, X: np.ndarray, y: np.ndarray, title: str):
+    def __init__(
+        self,
+        clf: SVC,
+        X: np.ndarray,
+        y: np.ndarray,
+        features: np.array,
+        impurity: float,
+        title: str,
+    ):
         self._clf = clf
         self._title = title
         self._belief = 0.0
@@ -39,10 +47,21 @@ class Snode:
         self._down = None
         self._up = None
         self._class = None
+        self._feature = None
+        self._sample_weight = None
+        self._features = features
+        self._impurity = impurity
 
     @classmethod
     def copy(cls, node: "Snode") -> "Snode":
-        return cls(node._clf, node._X, node._y, node._title)
+        return cls(
+            node._clf,
+            node._X,
+            node._y,
+            node._features,
+            node._impurity,
+            node._title,
+        )
 
     def set_down(self, son):
         self._down = son
@@ -83,11 +102,15 @@ class Snode:
             count_values = np.unique(self._y, return_counts=True)
             result = (
                 f"{self._title} - Leaf class={self._class} belief="
-                f"{self._belief: .6f} counts={count_values}"
+                f"{self._belief: .6f} impurity={self._impurity:.4f} "
+                f"counts={count_values}"
             )
             return result
         else:
-            return f"{self._title}"
+            return (
+                f"{self._title} feaures={self._features} impurity="
+                f"{self._impurity:.4f}"
+            )
 
 
 class Siterator:
@@ -130,6 +153,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         degree: int = 3,
         gamma="scale",
         split_criteria: str = "max_samples",
+        criterion: str = "gini",
         min_samples_split: int = 0,
         max_features=None,
     ):
@@ -144,6 +168,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         self.min_samples_split = min_samples_split
         self.split_criteria = split_criteria
         self.max_features = max_features
+        self.criterion = criterion
 
     def _more_tags(self) -> dict:
         """Required by sklearn to supply features of the classifier
@@ -251,6 +276,10 @@ class Stree(BaseEstimator, ClassifierMixin):
                 f"split_criteria has to be min_distance or \
                 max_samples got ({self.split_criteria})"
             )
+        if self.criterion not in ["gini", "entropy"]:
+            raise ValueError(
+                f"criterion must be gini or entropy got({self.criterion})"
+            )
 
         check_classification_targets(y)
         X, y = check_X_y(X, y)
@@ -263,6 +292,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         self.depth_ = 0
         self.n_features_ = X.shape[1]
         self.max_features_ = self._initialize_max_features()
+        self.criterion_function_ = getattr(self, f"_{self.criterion}")
         self.tree_ = self.train(X, y, sample_weight, 1, "root")
         self._build_predictor()
         return self
@@ -296,12 +326,20 @@ class Stree(BaseEstimator, ClassifierMixin):
             return None
         if np.unique(y).shape[0] == 1:
             # only 1 class => pure dataset
-            return Snode(None, X, y, title + ", <pure>")
+            return Snode(
+                clf=None,
+                X=X,
+                y=y,
+                features=X.shape[1],
+                impurity=0.0,
+                title=title + ", <pure>",
+            )
         # Train the model
         clf = self._build_clf()
         Xs, indices_subset = self._get_subspace(X)
         clf.fit(Xs, y, sample_weight=sample_weight)
-        node = Snode(clf, Xs, y, title)
+        impurity = self.criterion_function_(y)
+        node = Snode(clf, X, y, indices_subset, impurity, title)
         self.depth_ = max(depth, self.depth_)
         down = self._split_criteria(self._distances(node, Xs), node)
         X_U, X_D = self._split_array(X, down)
@@ -309,7 +347,14 @@ class Stree(BaseEstimator, ClassifierMixin):
         sw_u, sw_d = self._split_array(sample_weight, down)
         if X_U is None or X_D is None:
             # didn't part anything
-            return Snode(clf, X, y, title + ", <cgaf>")
+            return Snode(
+                clf,
+                X,
+                y,
+                features=X.shape[1],
+                impurity=impurity,
+                title=title + ", <cgaf>",
+            )
         node.set_up(self.train(X_U, y_u, sw_u, depth + 1, title + " - Up"))
         node.set_down(self.train(X_D, y_d, sw_d, depth + 1, title + " - Down"))
         return node
@@ -483,6 +528,17 @@ class Stree(BaseEstimator, ClassifierMixin):
                     f"got ({self.max_features})"
                 )
         return max_features
+
+    @staticmethod
+    def _gini(y: np.array) -> float:
+        _, count = np.unique(y, return_counts=True)
+        return 1 - np.sum(np.square(count / np.sum(count)))
+
+    @staticmethod
+    def _entropy(y: np.array) -> float:
+        _, count = np.unique(y, return_counts=True)
+        proportion = count / np.sum(count)
+        return -np.sum(proportion * np.log2(proportion))
 
     def _get_subspace(self, dataset: np.array) -> list:
         """Return the best subspace to make a split

@@ -1,7 +1,7 @@
 from sklearn.datasets import make_classification
 
 
-def get_dataset(random_state=0, n_classes=2):
+def load_dataset(random_state=0, n_classes=2):
     X, y = make_classification(
         n_samples=1500,
         n_features=3,

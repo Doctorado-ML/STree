@@ -4,14 +4,14 @@ import unittest
 import numpy as np
 
 from stree import Stree, Snode
-from .utils import get_dataset
+from .utils import load_dataset
 
 
 class Snode_test(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         self._random_state = 1
         self._clf = Stree(random_state=self._random_state)
-        self._clf.fit(*get_dataset(self._random_state))
+        self._clf.fit(*load_dataset(self._random_state))
         super().__init__(*args, **kwargs)
 
     @classmethod
@@ -63,27 +63,27 @@ class Snode_test(unittest.TestCase):
         run_tree(self._clf.tree_)
 
     def test_make_predictor_on_leaf(self):
-        test = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], "test")
+        test = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], [], 0.0, "test")
         test.make_predictor()
         self.assertEqual(1, test._class)
         self.assertEqual(0.75, test._belief)
 
     def test_make_predictor_on_not_leaf(self):
-        test = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], "test")
-        test.set_up(Snode(None, [1], [1], "another_test"))
+        test = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], [], 0.0, "test")
+        test.set_up(Snode(None, [1], [1], [], 0.0, "another_test"))
         test.make_predictor()
         self.assertIsNone(test._class)
         self.assertEqual(0, test._belief)
 
     def test_make_predictor_on_leaf_bogus_data(self):
-        test = Snode(None, [1, 2, 3, 4], [], "test")
+        test = Snode(None, [1, 2, 3, 4], [], [], 0.0, "test")
         test.make_predictor()
         self.assertIsNone(test._class)
 
     def test_copy_node(self):
         px = [1, 2, 3, 4]
         py = [1]
-        test = Snode(Stree(), px, py, "test")
+        test = Snode(Stree(), px, py, [], 0.0, "test")
         computed = Snode.copy(test)
         self.assertListEqual(computed._X, px)
         self.assertListEqual(computed._y, py)
