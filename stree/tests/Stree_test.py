@@ -5,7 +5,7 @@ import numpy as np
 from sklearn.datasets import load_iris
 
 from stree import Stree, Snode
-from .utils import get_dataset
+from .utils import load_dataset
 
 
 class Stree_test(unittest.TestCase):
@@ -64,12 +64,11 @@ class Stree_test(unittest.TestCase):
         warnings.filterwarnings("ignore")
         for kernel in self._kernels:
             clf = Stree(kernel=kernel, random_state=self._random_state)
-            clf.fit(*get_dataset(self._random_state))
+            clf.fit(*load_dataset(self._random_state))
             self._check_tree(clf.tree_)
 
-    def _find_out(
-        self, px: np.array, x_original: np.array, y_original
-    ) -> list:
+    @staticmethod
+    def _find_out(px: np.array, x_original: np.array, y_original) -> list:
         """Find the original values of y for a given array of samples
 
         Arguments:
@@ -88,7 +87,7 @@ class Stree_test(unittest.TestCase):
         return res
 
     def test_single_prediction(self):
-        X, y = get_dataset(self._random_state)
+        X, y = load_dataset(self._random_state)
         for kernel in self._kernels:
             clf = Stree(kernel=kernel, random_state=self._random_state)
             yp = clf.fit(X, y).predict((X[0, :].reshape(-1, X.shape[1])))
@@ -97,14 +96,14 @@ class Stree_test(unittest.TestCase):
     def test_multiple_prediction(self):
         # First 27 elements the predictions are the same as the truth
         num = 27
-        X, y = get_dataset(self._random_state)
+        X, y = load_dataset(self._random_state)
         for kernel in self._kernels:
             clf = Stree(kernel=kernel, random_state=self._random_state)
             yp = clf.fit(X, y).predict(X[:num, :])
             self.assertListEqual(y[:num].tolist(), yp.tolist())
 
     def test_score(self):
-        X, y = get_dataset(self._random_state)
+        X, y = load_dataset(self._random_state)
         accuracies = [
             0.9506666666666667,
             0.9606666666666667,
@@ -123,7 +122,7 @@ class Stree_test(unittest.TestCase):
         """Check if predicting sample by sample gives the same result as
         predicting all samples at once
         """
-        X, y = get_dataset(self._random_state)
+        X, y = load_dataset(self._random_state)
         for kernel in self._kernels:
             clf = Stree(kernel=kernel, random_state=self._random_state)
             clf.fit(X, y)
@@ -141,29 +140,30 @@ class Stree_test(unittest.TestCase):
         """Check preorder iterator
         """
         expected = [
-            "root",
-            "root - Down",
-            "root - Down - Down, <cgaf> - Leaf class=1 belief= 0.975989 counts"
-            "=(array([0, 1]), array([ 17, 691]))",
-            "root - Down - Up",
+            "root feaures=(0, 1, 2) impurity=0.5000",
+            "root - Down feaures=(0, 1, 2) impurity=0.0671",
+            "root - Down - Down, <cgaf> - Leaf class=1 belief= 0.975989 "
+            "impurity=0.0469 counts=(array([0, 1]), array([ 17, 691]))",
+            "root - Down - Up feaures=(0, 1, 2) impurity=0.3967",
             "root - Down - Up - Down, <cgaf> - Leaf class=1 belief= 0.750000 "
-            "counts=(array([0, 1]), array([1, 3]))",
+            "impurity=0.3750 counts=(array([0, 1]), array([1, 3]))",
             "root - Down - Up - Up, <pure> - Leaf class=0 belief= 1.000000 "
-            "counts=(array([0]), array([7]))",
-            "root - Up, <cgaf> - Leaf class=0 belief= 0.928297 counts=(array("
-            "[0, 1]), array([725,  56]))",
+            "impurity=0.0000 counts=(array([0]), array([7]))",
+            "root - Up, <cgaf> - Leaf class=0 belief= 0.928297 impurity=0.1331"
+            " counts=(array([0, 1]), array([725,  56]))",
         ]
         computed = []
         expected_string = ""
         clf = Stree(kernel="linear", random_state=self._random_state)
-        clf.fit(*get_dataset(self._random_state))
+        clf.fit(*load_dataset(self._random_state))
         for node in clf:
             computed.append(str(node))
             expected_string += str(node) + "\n"
         self.assertListEqual(expected, computed)
         self.assertEqual(expected_string, str(clf))
 
-    def test_is_a_sklearn_classifier(self):
+    @staticmethod
+    def test_is_a_sklearn_classifier():
         import warnings
         from sklearn.exceptions import ConvergenceWarning
 
@@ -176,12 +176,12 @@ class Stree_test(unittest.TestCase):
     def test_exception_if_C_is_negative(self):
         tclf = Stree(C=-1)
         with self.assertRaises(ValueError):
-            tclf.fit(*get_dataset(self._random_state))
+            tclf.fit(*load_dataset(self._random_state))
 
     def test_exception_if_bogus_split_criteria(self):
         tclf = Stree(split_criteria="duck")
         with self.assertRaises(ValueError):
-            tclf.fit(*get_dataset(self._random_state))
+            tclf.fit(*load_dataset(self._random_state))
 
     def test_check_max_depth_is_positive_or_None(self):
         tcl = Stree()
@@ -190,13 +190,13 @@ class Stree_test(unittest.TestCase):
         self.assertGreaterEqual(1, tcl.max_depth)
         with self.assertRaises(ValueError):
             tcl = Stree(max_depth=-1)
-            tcl.fit(*get_dataset(self._random_state))
+            tcl.fit(*load_dataset(self._random_state))
 
     def test_check_max_depth(self):
         depths = (3, 4)
         for depth in depths:
             tcl = Stree(random_state=self._random_state, max_depth=depth)
-            tcl.fit(*get_dataset(self._random_state))
+            tcl.fit(*load_dataset(self._random_state))
             self.assertEqual(depth, tcl.depth_)
 
     def test_unfitted_tree_is_iterable(self):
@@ -204,13 +204,11 @@ class Stree_test(unittest.TestCase):
         self.assertEqual(0, len(list(tcl)))
 
     def test_min_samples_split(self):
-        tcl_split = Stree(min_samples_split=3)
-        tcl_nosplit = Stree(min_samples_split=4)
         dataset = [[1], [2], [3]], [1, 1, 0]
-        tcl_split.fit(*dataset)
+        tcl_split = Stree(min_samples_split=3).fit(*dataset)
         self.assertIsNotNone(tcl_split.tree_.get_down())
         self.assertIsNotNone(tcl_split.tree_.get_up())
-        tcl_nosplit.fit(*dataset)
+        tcl_nosplit = Stree(min_samples_split=4).fit(*dataset)
         self.assertIsNone(tcl_nosplit.tree_.get_down())
         self.assertIsNone(tcl_nosplit.tree_.get_up())
 
@@ -230,7 +228,7 @@ class Stree_test(unittest.TestCase):
 
     def test_muticlass_dataset(self):
         datasets = {
-            "Synt": get_dataset(random_state=self._random_state, n_classes=3),
+            "Synt": load_dataset(random_state=self._random_state, n_classes=3),
             "Iris": load_iris(return_X_y=True),
         }
         outcomes = {
@@ -265,33 +263,72 @@ class Stree_test(unittest.TestCase):
                     outcome = outcomes[name][f"{criteria} {kernel}"]
                     self.assertAlmostEqual(outcome, clf.score(px, py))
 
-    def test_min_distance(self):
+    def test_max_features(self):
+        n_features = 16
+        expected_values = [
+            ("auto", 4),
+            ("log2", 4),
+            ("sqrt", 4),
+            (0.5, 8),
+            (3, 3),
+            (None, 16),
+        ]
         clf = Stree()
-        data = np.array(
-            [
-                [-0.1, 0.2, -0.3],
-                [0.7, 0.01, -0.1],
-                [0.7, -0.9, 0.5],
-                [0.1, 0.2, 0.3],
-            ]
-        )
-        expected = np.array([-0.1, 0.01, 0.5, 0.1])
-        computed = clf._min_distance(data, None)
-        self.assertEqual((4,), computed.shape)
-        self.assertListEqual(expected.tolist(), computed.tolist())
+        clf.n_features_ = n_features
+        for max_features, expected in expected_values:
+            clf.set_params(**dict(max_features=max_features))
+            computed = clf._initialize_max_features()
+            self.assertEqual(expected, computed)
+        # Check bogus max_features
+        values = ["duck", -0.1, 0.0]
+        for max_features in values:
+            clf.set_params(**dict(max_features=max_features))
+            with self.assertRaises(ValueError):
+                _ = clf._initialize_max_features()
 
-    def test_max_samples(self):
+    def test_get_subspaces(self):
+        dataset = np.random.random((10, 16))
+        y = np.random.randint(0, 2, 10)
+        expected_values = [
+            ("auto", 4),
+            ("log2", 4),
+            ("sqrt", 4),
+            (0.5, 8),
+            (3, 3),
+            (None, 16),
+        ]
         clf = Stree()
-        data = np.array(
-            [
-                [-0.1, 0.2, -0.3],
-                [0.7, 0.01, -0.1],
-                [0.7, -0.9, 0.5],
-                [0.1, 0.2, 0.3],
-            ]
-        )
-        expected = np.array([0.2, 0.01, -0.9, 0.2])
-        y = [1, 2, 1, 0]
-        computed = clf._max_samples(data, y)
-        self.assertEqual((4,), computed.shape)
-        self.assertListEqual(expected.tolist(), computed.tolist())
+        for max_features, expected in expected_values:
+            clf.set_params(**dict(max_features=max_features))
+            clf.fit(dataset, y)
+            computed, indices = clf.splitter_.get_subspace(
+                dataset, y, clf.max_features_
+            )
+            self.assertListEqual(
+                dataset[:, indices].tolist(), computed.tolist()
+            )
+            self.assertEqual(expected, len(indices))
+
+    def test_bogus_criterion(self):
+        clf = Stree(criterion="duck")
+        with self.assertRaises(ValueError):
+            clf.fit(*load_dataset())
+
+    def test_predict_feature_dimensions(self):
+        X = np.random.rand(10, 5)
+        y = np.random.randint(0, 2, 10)
+        clf = Stree()
+        clf.fit(X, y)
+        with self.assertRaises(ValueError):
+            clf.predict(X[:, :3])
+
+    def test_score_max_features(self):
+        X, y = load_dataset(self._random_state)
+        clf = Stree(random_state=self._random_state, max_features=2)
+        clf.fit(X, y)
+        self.assertAlmostEqual(0.9426666666666667, clf.score(X, y))
+
+    def test_bogus_splitter_parameter(self):
+        clf = Stree(splitter="duck")
+        with self.assertRaises(ValueError):
+            clf.fit(*load_dataset())

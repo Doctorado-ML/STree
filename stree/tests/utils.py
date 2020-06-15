@@ -1,10 +1,10 @@
 from sklearn.datasets import make_classification
 
 
-def get_dataset(random_state=0, n_classes=2):
+def load_dataset(random_state=0, n_classes=2, n_features=3):
     X, y = make_classification(
         n_samples=1500,
-        n_features=3,
+        n_features=n_features,
         n_informative=3,
         n_redundant=0,
         n_repeated=0,
