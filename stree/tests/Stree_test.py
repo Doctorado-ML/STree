@@ -67,9 +67,8 @@ class Stree_test(unittest.TestCase):
             clf.fit(*load_dataset(self._random_state))
             self._check_tree(clf.tree_)
 
-    def _find_out(
-        self, px: np.array, x_original: np.array, y_original
-    ) -> list:
+    @staticmethod
+    def _find_out(px: np.array, x_original: np.array, y_original) -> list:
         """Find the original values of y for a given array of samples
 
         Arguments:
@@ -163,7 +162,8 @@ class Stree_test(unittest.TestCase):
         self.assertListEqual(expected, computed)
         self.assertEqual(expected_string, str(clf))
 
-    def test_is_a_sklearn_classifier(self):
+    @staticmethod
+    def test_is_a_sklearn_classifier():
         import warnings
         from sklearn.exceptions import ConvergenceWarning
 

@@ -13,8 +13,8 @@ class Splitter_test(unittest.TestCase):
         self._random_state = 1
         super().__init__(*args, **kwargs)
 
+    @staticmethod
     def build(
-        self,
         clf=LinearSVC(),
         min_samples_split=0,
         splitter_type="random",

@@ -268,7 +268,8 @@ class Splitter:
             data = self.decision_criteria(data, node._y)
         self._down = data > 0
 
-    def _distances(self, node: Snode, data: np.ndarray) -> np.array:
+    @staticmethod
+    def _distances(node: Snode, data: np.ndarray) -> np.array:
         """Compute distances of the samples to the hyperplane of the node
 
         :param node: node containing the svm classifier
@@ -498,7 +499,8 @@ class Stree(BaseEstimator, ClassifierMixin):
             )
         )
 
-    def _reorder_results(self, y: np.array, indices: np.array) -> np.array:
+    @staticmethod
+    def _reorder_results(y: np.array, indices: np.array) -> np.array:
         """Reorder an array based on the array of indices passed
 
         :param y: data untidy
@@ -579,7 +581,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         X, y = check_X_y(X, y)
         y_pred = self.predict(X).reshape(y.shape)
         # Compute accuracy for each possible representation
-        y_type, y_true, y_pred = _check_targets(y, y_pred)
+        _, y_true, y_pred = _check_targets(y, y_pred)
         check_consistent_length(y_true, y_pred, sample_weight)
         score = y_true == y_pred
         return _weighted_sum(score, sample_weight, normalize=True)
