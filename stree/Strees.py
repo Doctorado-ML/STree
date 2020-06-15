@@ -193,8 +193,8 @@ class Splitter:
     def information_gain(
         self, labels_up: np.array, labels_dn: np.array
     ) -> float:
-        card_up = labels_up.shape[0]
-        card_dn = labels_dn.shape[0]
+        card_up = labels_up.shape[0] if labels_up is not None else 0
+        card_dn = labels_dn.shape[0] if labels_dn is not None else 0
         samples = card_up + card_dn
         up = card_up / samples * self.criterion_function(labels_up)
         dn = card_dn / samples * self.criterion_function(labels_dn)
