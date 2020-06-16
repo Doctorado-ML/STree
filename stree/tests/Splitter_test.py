@@ -46,7 +46,11 @@ class Splitter_test(unittest.TestCase):
             self.build(clf=None)
         for splitter_type in ["best", "random"]:
             for criterion in ["gini", "entropy"]:
-                for criteria in ["min_distance", "max_samples"]:
+                for criteria in [
+                    "min_distance",
+                    "max_samples",
+                    "max_distance",
+                ]:
                     tcl = self.build(
                         splitter_type=splitter_type,
                         criterion=criterion,
@@ -57,30 +61,66 @@ class Splitter_test(unittest.TestCase):
                     self.assertEqual(criteria, tcl._criteria)
 
     def test_gini(self):
-        y = [0, 1, 1, 1, 1, 1, 0, 0, 0, 1]
-        expected = 0.48
-        self.assertEqual(expected, Splitter._gini(y))
-        tcl = self.build(criterion="gini")
-        self.assertEqual(expected, tcl.criterion_function(y))
+        expected_values = [
+            ([0, 1, 1, 1, 1, 1, 0, 0, 0, 1], 0.48),
+            ([0, 1, 1, 2, 2, 3, 4, 5, 3, 2, 1, 1], 0.7777777777777778),
+            ([0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 2, 2, 2], 0.520408163265306),
+            ([0, 0, 1, 1, 1, 1, 0, 0], 0.5),
+            ([0, 0, 1, 1, 2, 2, 3, 3], 0.75),
+            ([0, 0, 1, 1, 1, 1, 1, 1], 0.375),
+            ([0], 0),
+            ([1, 1, 1, 1], 0),
+        ]
+        for labels, expected in expected_values:
+            self.assertAlmostEqual(expected, Splitter._gini(labels))
+            tcl = self.build(criterion="gini")
+            self.assertAlmostEqual(expected, tcl.criterion_function(labels))
 
     def test_entropy(self):
-        y = [0, 1, 1, 1, 1, 1, 0, 0, 0, 1]
-        expected = 0.9709505944546686
-        self.assertAlmostEqual(expected, Splitter._entropy(y))
-        tcl = self.build(criterion="entropy")
-        self.assertEqual(expected, tcl.criterion_function(y))
+        expected_values = [
+            ([0, 1, 1, 1, 1, 1, 0, 0, 0, 1], 0.9709505944546686),
+            ([0, 1, 1, 2, 2, 3, 4, 5, 3, 2, 1, 1], 0.9111886696810589),
+            ([0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 2, 2, 2], 0.8120406807940999),
+            ([0, 0, 1, 1, 1, 1, 0, 0], 1),
+            ([0, 0, 1, 1, 2, 2, 3, 3], 1),
+            ([0, 0, 1, 1, 1, 1, 1, 1], 0.8112781244591328),
+            ([1], 0),
+            ([0, 0, 0, 0], 0),
+        ]
+        for labels, expected in expected_values:
+            self.assertAlmostEqual(expected, Splitter._entropy(labels))
+            tcl = self.build(criterion="entropy")
+            self.assertAlmostEqual(expected, tcl.criterion_function(labels))
 
     def test_information_gain(self):
-        yu = np.array([0, 1, 1, 1, 1, 1])
-        yd = np.array([0, 0, 0, 1])
-        values_expected = [
-            ("gini", 0.31666666666666665),
-            ("entropy", 0.7145247027726656),
+        expected_values = [
+            (
+                [0, 1, 1, 1, 1, 1],
+                [0, 0, 0, 1],
+                0.16333333333333333,
+                0.25642589168200297,
+            ),
+            (
+                [0, 1, 1, 2, 2, 3, 4, 5, 3, 2, 1, 1],
+                [5, 3, 2, 1, 1],
+                0.007381776239907684,
+                -0.03328610916207225,
+            ),
+            ([], [], 0.0, 0.0),
+            ([1], [], 0.0, 0.0),
+            ([], [1], 0.0, 0.0),
+            ([0, 0, 0, 0], [0, 0], 0.0, 0.0),
+            ([], [1, 1, 1, 2], 0.0, 0.0),
         ]
-        for criterion, expected in values_expected:
-            tcl = self.build(criterion=criterion)
-            computed = tcl.information_gain(yu, yd)
-            self.assertAlmostEqual(expected, computed)
+        for yu, yd, expected_gini, expected_entropy in expected_values:
+            yu = np.array(yu, dtype=np.int32)
+            yd = np.array(yd, dtype=np.int32)
+            tcl = self.build(criterion="gini")
+            computed = tcl.information_gain(np.append(yu, yd), yu, yd)
+            self.assertAlmostEqual(expected_gini, computed)
+            tcl = self.build(criterion="entropy")
+            computed = tcl.information_gain(np.append(yu, yd), yu, yd)
+            self.assertAlmostEqual(expected_entropy, computed)
 
     def test_max_samples(self):
         tcl = self.build(criteria="max_samples")
@@ -113,27 +153,52 @@ class Splitter_test(unittest.TestCase):
         self.assertEqual((4,), computed.shape)
         self.assertListEqual(expected.tolist(), computed.tolist())
 
+    def test_max_distance(self):
+        tcl = self.build(criteria="max_distance")
+        data = np.array(
+            [
+                [-0.1, 0.2, -0.3],
+                [0.7, 0.01, -0.1],
+                [0.7, -0.9, 0.5],
+                [0.1, 0.2, 0.3],
+            ]
+        )
+        expected = np.array([-0.3, 0.7, -0.9, 0.3])
+        computed = tcl._max_distance(data, None)
+        self.assertEqual((4,), computed.shape)
+        self.assertListEqual(expected.tolist(), computed.tolist())
+
     def test_splitter_parameter(self):
         expected_values = [
-            [1, 7, 9],
-            [1, 7, 9],
-            [1, 7, 9],
-            [1, 7, 9],
-            [0, 5, 6],
-            [0, 5, 6],
-            [0, 5, 6],
-            [0, 5, 6],
+            [1, 5, 6],  # random gini    min_distance
+            [1, 2, 3],  # random gini    max_samples
+            [0, 2, 3],  # random gini    max_distance
+            [2, 4, 6],  # random entropy min_distance
+            [2, 5, 6],  # random entropy max_samples
+            [0, 4, 6],  # random entropy max_distance
+            [3, 4, 6],  # best   gini    min_distance
+            [3, 4, 6],  # best   gini    max_samples
+            [1, 4, 6],  # best   gini    max_distance
+            [3, 4, 6],  # best   entropy min_distance
+            [3, 4, 6],  # best   entropy max_samples
+            [1, 4, 6],  # best   entropy max_distance
         ]
-        X, y = load_dataset(self._random_state, n_features=12)
-        for splitter_type in ["best", "random"]:
+        X, y = load_dataset(self._random_state, n_features=7, n_classes=3)
+        rn = 0
+        for splitter_type in ["random", "best"]:
             for criterion in ["gini", "entropy"]:
-                for criteria in ["min_distance", "max_samples"]:
+                for criteria in [
+                    "min_distance",
+                    "max_samples",
+                    "max_distance",
+                ]:
                     tcl = self.build(
                         splitter_type=splitter_type,
                         criterion=criterion,
                         criteria=criteria,
-                        random_state=self._random_state,
+                        random_state=rn,
                     )
+                    rn += 3
                     expected = expected_values.pop(0)
                     dataset, computed = tcl.get_subspace(X, y, max_features=3)
                     self.assertListEqual(expected, list(computed))

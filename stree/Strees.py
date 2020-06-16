@@ -10,6 +10,7 @@ import os
 import numbers
 import random
 import warnings
+from math import log
 from itertools import combinations
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
@@ -163,10 +164,10 @@ class Splitter:
                 f"criterion must be gini or entropy got({criterion})"
             )
 
-        if criteria not in ["min_distance", "max_samples"]:
+        if criteria not in ["min_distance", "max_samples", "max_distance"]:
             raise ValueError(
-                f"split_criteria has to be min_distance or \
-                max_samples got ({criteria})"
+                "split_criteria has to be min_distance "
+                f"max_distance or max_samples got ({criteria})"
             )
 
         if splitter_type not in ["random", "best"]:
@@ -186,24 +187,47 @@ class Splitter:
 
     @staticmethod
     def _entropy(y: np.array) -> float:
-        _, count = np.unique(y, return_counts=True)
-        proportion = count / np.sum(count)
-        return -np.sum(proportion * np.log2(proportion))
+        n_labels = len(y)
+        if n_labels <= 1:
+            return 0
+        counts = np.bincount(y)
+        proportions = counts / n_labels
+        n_classes = np.count_nonzero(proportions)
+        if n_classes <= 1:
+            return 0
+        entropy = 0.0
+        # Compute standard entropy.
+        for prop in proportions:
+            if prop != 0.0:
+                entropy -= prop * log(prop, n_classes)
+        return entropy
 
     def information_gain(
-        self, labels_up: np.array, labels_dn: np.array
+        self, labels: np.array, labels_up: np.array, labels_dn: np.array
     ) -> float:
-        card_up = labels_up.shape[0] if labels_up is not None else 0
-        card_dn = labels_dn.shape[0] if labels_dn is not None else 0
+        imp_prev = self.criterion_function(labels)
+        card_up = card_dn = imp_up = imp_dn = 0
+        if labels_up is not None:
+            card_up = labels_up.shape[0]
+            imp_up = self.criterion_function(labels_up)
+        if labels_dn is not None:
+            card_dn = labels_dn.shape[0] if labels_dn is not None else 0
+            imp_dn = self.criterion_function(labels_dn)
         samples = card_up + card_dn
-        up = card_up / samples * self.criterion_function(labels_up)
-        dn = card_dn / samples * self.criterion_function(labels_dn)
-        return up + dn
+        if samples == 0:
+            return 0
+        else:
+            result = (
+                imp_prev
+                - (card_up / samples) * imp_up
+                - (card_dn / samples) * imp_dn
+            )
+            return result
 
     def _select_best_set(
         self, dataset: np.array, labels: np.array, features_sets: list
     ) -> list:
-        min_impurity = 1
+        max_gain = 0
         selected = None
         warnings.filterwarnings("ignore", category=ConvergenceWarning)
         for feature_set in features_sets:
@@ -213,11 +237,12 @@ class Splitter:
             )
             self.partition(dataset, node)
             y1, y2 = self.part(labels)
-            impurity = self.information_gain(y1, y2)
-            if impurity < min_impurity:
-                min_impurity = impurity
+            gain = self.information_gain(labels, y1, y2)
+            if gain > max_gain:
+                max_gain = gain
                 selected = feature_set
-        return selected
+
+        return selected if selected is not None else feature_set
 
     def _get_subspaces_set(
         self, dataset: np.array, labels: np.array, max_features: int
@@ -226,7 +251,8 @@ class Splitter:
         features_sets = list(combinations(features, max_features))
         if len(features_sets) > 1:
             if self._splitter_type == "random":
-                return features_sets[random.randint(0, len(features_sets) - 1)]
+                index = random.randint(0, len(features_sets) - 1)
+                return features_sets[index]
             else:
                 return self._select_best_set(dataset, labels, features_sets)
         else:
@@ -244,6 +270,14 @@ class Splitter:
     def _min_distance(data: np.array, _) -> np.array:
         # chooses the lowest distance of every sample
         indices = np.argmin(np.abs(data), axis=1)
+        return np.array(
+            [data[x, y] for x, y in zip(range(len(data[:, 0])), indices)]
+        )
+
+    @staticmethod
+    def _max_distance(data: np.array, _) -> np.array:
+        # chooses the greatest distance of every sample
+        indices = np.argmax(np.abs(data), axis=1)
         return np.array(
             [data[x, y] for x, y in zip(range(len(data[:, 0])), indices)]
         )

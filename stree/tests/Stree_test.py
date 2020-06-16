@@ -239,6 +239,9 @@ class Stree_test(unittest.TestCase):
                 "min_distance linear": 0.9533333333333334,
                 "min_distance rbf": 0.836,
                 "min_distance poly": 0.9473333333333334,
+                "max_distance linear": 0.9533333333333334,
+                "max_distance rbf": 0.836,
+                "max_distance poly": 0.9473333333333334,
             },
             "Iris": {
                 "max_samples linear": 0.98,
@@ -247,11 +250,14 @@ class Stree_test(unittest.TestCase):
                 "min_distance linear": 0.98,
                 "min_distance rbf": 1.0,
                 "min_distance poly": 1.0,
+                "max_distance linear": 0.98,
+                "max_distance rbf": 1.0,
+                "max_distance poly": 1.0,
             },
         }
         for name, dataset in datasets.items():
             px, py = dataset
-            for criteria in ["max_samples", "min_distance"]:
+            for criteria in ["max_samples", "min_distance", "max_distance"]:
                 for kernel in self._kernels:
                     clf = Stree(
                         C=1e4,
