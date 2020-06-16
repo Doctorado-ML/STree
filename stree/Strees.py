@@ -268,29 +268,56 @@ class Splitter:
 
     @staticmethod
     def _min_distance(data: np.array, _) -> np.array:
-        # chooses the lowest distance of every sample
-        indices = np.argmin(np.abs(data), axis=1)
-        return np.array(
-            [data[x, y] for x, y in zip(range(len(data[:, 0])), indices)]
-        )
+        """Assign class to min distances
+
+        return a vector of classes so partition can separate class 0 from
+        the rest of classes, ie. class 0 goes to one splitted node and the
+        rest of classes go to the other
+        :param data: distances to hyper plane of every class
+        :type data: np.array (m, n_classes)
+        :param _: enable call compat with other measures
+        :type _: None
+        :return: vector with the class assigned to each sample
+        :rtype: np.array shape (m,)
+        """
+        return np.argmin(data, axis=1)
 
     @staticmethod
     def _max_distance(data: np.array, _) -> np.array:
-        # chooses the greatest distance of every sample
-        indices = np.argmax(np.abs(data), axis=1)
-        return np.array(
-            [data[x, y] for x, y in zip(range(len(data[:, 0])), indices)]
-        )
+        """Assign class to max distances
+
+        return a vector of classes so partition can separate class 0 from
+        the rest of classes, ie. class 0 goes to one splitted node and the
+        rest of classes go to the other
+        :param data: distances to hyper plane of every class
+        :type data: np.array (m, n_classes)
+        :param _: enable call compat with other measures
+        :type _: None
+        :return: vector with the class assigned to each sample values
+        (can be 0, 1, ...)
+        :rtype: np.array shape (m,)
+        """
+        return np.argmax(data, axis=1)
 
     @staticmethod
     def _max_samples(data: np.array, y: np.array) -> np.array:
+        """return distances of the class with more samples
+
+        :param data: distances to hyper plane of every class
+        :type data: np.array (m, n_classes)
+        :param y: vector of labels (classes)
+        :type y: np.array (m,)
+        :return: vector with distances to hyperplane (can be positive or neg.)
+        :rtype: np.array shape (m,)
+        """
         # select the class with max number of samples
         _, samples = np.unique(y, return_counts=True)
         selected = np.argmax(samples)
         return data[:, selected]
 
     def partition(self, samples: np.array, node: Snode):
-        """Set the criteria to split arrays
+        """Set the criteria to split arrays. Compute the indices of the samples
+        that should go to one side of the tree (down)
 
         """
         data = self._distances(node, samples)

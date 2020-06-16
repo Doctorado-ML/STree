@@ -1,8 +1,10 @@
 import os
 import unittest
+import warnings
 
 import numpy as np
-from sklearn.datasets import load_iris
+from sklearn.datasets import load_iris, load_wine
+from sklearn.exceptions import ConvergenceWarning
 
 from stree import Stree, Snode
 from .utils import load_dataset
@@ -59,8 +61,6 @@ class Stree_test(unittest.TestCase):
     def test_build_tree(self):
         """Check if the tree is built the same way as predictions of models
         """
-        import warnings
-
         warnings.filterwarnings("ignore")
         for kernel in self._kernels:
             clf = Stree(kernel=kernel, random_state=self._random_state)
@@ -101,22 +101,6 @@ class Stree_test(unittest.TestCase):
             clf = Stree(kernel=kernel, random_state=self._random_state)
             yp = clf.fit(X, y).predict(X[:num, :])
             self.assertListEqual(y[:num].tolist(), yp.tolist())
-
-    def test_score(self):
-        X, y = load_dataset(self._random_state)
-        accuracies = [
-            0.9506666666666667,
-            0.9606666666666667,
-            0.9433333333333334,
-        ]
-        for kernel, accuracy_expected in zip(self._kernels, accuracies):
-            clf = Stree(random_state=self._random_state, kernel=kernel,)
-            clf.fit(X, y)
-            accuracy_score = clf.score(X, y)
-            yp = clf.predict(X)
-            accuracy_computed = np.mean(yp == y)
-            self.assertEqual(accuracy_score, accuracy_computed)
-            self.assertAlmostEqual(accuracy_expected, accuracy_score)
 
     def test_single_vs_multiple_prediction(self):
         """Check if predicting sample by sample gives the same result as
@@ -164,9 +148,6 @@ class Stree_test(unittest.TestCase):
 
     @staticmethod
     def test_is_a_sklearn_classifier():
-        import warnings
-        from sklearn.exceptions import ConvergenceWarning
-
         warnings.filterwarnings("ignore", category=ConvergenceWarning)
         warnings.filterwarnings("ignore", category=RuntimeWarning)
         from sklearn.utils.estimator_checks import check_estimator
@@ -328,11 +309,97 @@ class Stree_test(unittest.TestCase):
         with self.assertRaises(ValueError):
             clf.predict(X[:, :3])
 
+    # Tests of score
+
+    def test_score_binary(self):
+        X, y = load_dataset(self._random_state)
+        accuracies = [
+            0.9506666666666667,
+            0.9606666666666667,
+            0.9433333333333334,
+        ]
+        for kernel, accuracy_expected in zip(self._kernels, accuracies):
+            clf = Stree(random_state=self._random_state, kernel=kernel,)
+            clf.fit(X, y)
+            accuracy_score = clf.score(X, y)
+            yp = clf.predict(X)
+            accuracy_computed = np.mean(yp == y)
+            self.assertEqual(accuracy_score, accuracy_computed)
+            self.assertAlmostEqual(accuracy_expected, accuracy_score)
+
     def test_score_max_features(self):
         X, y = load_dataset(self._random_state)
         clf = Stree(random_state=self._random_state, max_features=2)
         clf.fit(X, y)
         self.assertAlmostEqual(0.9426666666666667, clf.score(X, y))
+
+    def test_score_multi_class(self):
+        warnings.filterwarnings("ignore")
+        accuracies = [
+            0.8258427,  # Wine    linear min_distance
+            0.6741573,  # Wine    linear max_distance
+            0.8314607,  # Wine    linear max_samples
+            0.6629213,  # Wine    rbf   min_distance
+            1.0000000,  # Wine    rbf   max_distance
+            0.4044944,  # Wine    rbf   max_samples
+            0.9157303,  # Wine    poly  min_distance
+            1.0000000,  # Wine    poly  max_distance
+            0.7640449,  # Wine    poly  max_samples
+            0.9933333,  # Iris    linear min_distance
+            0.9666667,  # Iris    linear max_distance
+            0.9666667,  # Iris    linear max_samples
+            0.9800000,  # Iris    rbf   min_distance
+            0.9800000,  # Iris    rbf   max_distance
+            0.9800000,  # Iris    rbf   max_samples
+            1.0000000,  # Iris    poly  min_distance
+            1.0000000,  # Iris    poly  max_distance
+            1.0000000,  # Iris    poly  max_samples
+            0.8993333,  # Synthetic linear min_distance
+            0.6533333,  # Synthetic linear max_distance
+            0.9313333,  # Synthetic linear max_samples
+            0.8320000,  # Synthetic rbf   min_distance
+            0.6660000,  # Synthetic rbf   max_distance
+            0.8320000,  # Synthetic rbf   max_samples
+            0.6066667,  # Synthetic poly  min_distance
+            0.6840000,  # Synthetic poly  max_distance
+            0.6340000,  # Synthetic poly  max_samples
+        ]
+        datasets = [
+            ("Wine", load_wine(return_X_y=True)),
+            ("Iris", load_iris(return_X_y=True)),
+            (
+                "Synthetic",
+                load_dataset(self._random_state, n_classes=3, n_features=5),
+            ),
+        ]
+        for dataset_name, dataset in datasets:
+            X, y = dataset
+            for kernel in self._kernels:
+                for criteria in [
+                    "min_distance",
+                    "max_distance",
+                    "max_samples",
+                ]:
+                    clf = Stree(
+                        C=17,
+                        random_state=self._random_state,
+                        kernel=kernel,
+                        split_criteria=criteria,
+                        degree=5,
+                        gamma="auto",
+                    )
+                    clf.fit(X, y)
+                    accuracy_score = clf.score(X, y)
+                    yp = clf.predict(X)
+                    accuracy_computed = np.mean(yp == y)
+                    # print(
+                    #     "{:.7f},  # {:7} {:5} {}".format(
+                    #         accuracy_score, dataset_name, kernel, criteria
+                    #     )
+                    # )
+                    accuracy_expected = accuracies.pop(0)
+                    self.assertEqual(accuracy_score, accuracy_computed)
+                    self.assertAlmostEqual(accuracy_expected, accuracy_score)
 
     def test_bogus_splitter_parameter(self):
         clf = Stree(splitter="duck")
