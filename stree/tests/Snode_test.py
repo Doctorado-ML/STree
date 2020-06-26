@@ -33,10 +33,7 @@ class Snode_test(unittest.TestCase):
             max_card = max(card)
             min_card = min(card)
             if len(classes) > 1:
-                try:
-                    belief = max_card / (max_card + min_card)
-                except ZeroDivisionError:
-                    belief = 0.0
+                belief = max_card / (max_card + min_card)
             else:
                 belief = 1
             self.assertEqual(belief, node._belief)

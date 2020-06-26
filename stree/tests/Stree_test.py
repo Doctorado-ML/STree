@@ -41,10 +41,7 @@ class Stree_test(unittest.TestCase):
         _, count_u = np.unique(y_up, return_counts=True)
         #
         for i in unique_y:
-            try:
-                number_down = count_d[i]
-            except IndexError:
-                number_down = 0
+            number_down = count_d[i]
             try:
                 number_up = count_u[i]
             except IndexError:
@@ -66,25 +63,6 @@ class Stree_test(unittest.TestCase):
             clf = Stree(kernel=kernel, random_state=self._random_state)
             clf.fit(*load_dataset(self._random_state))
             self._check_tree(clf.tree_)
-
-    @staticmethod
-    def _find_out(px: np.array, x_original: np.array, y_original) -> list:
-        """Find the original values of y for a given array of samples
-
-        Arguments:
-            px {np.array} -- array of samples to search for
-            x_original {np.array} -- original dataset
-            y_original {[type]} -- original classes
-
-        Returns:
-            np.array -- classes of the given samples
-        """
-        res = []
-        for needle in px:
-            for row in range(x_original.shape[0]):
-                if all(x_original[row, :] == needle):
-                    res.append(y_original[row])
-        return res
 
     def test_single_prediction(self):
         X, y = load_dataset(self._random_state)
@@ -405,3 +383,34 @@ class Stree_test(unittest.TestCase):
         clf = Stree(splitter="duck")
         with self.assertRaises(ValueError):
             clf.fit(*load_dataset())
+
+    def test_weights_removing_class(self):
+        # This patch solves an stderr message from sklearn svm lib
+        # "WARNING: class label x specified in weight is not found"
+        X = np.array(
+            [
+                [0.1, 0.1],
+                [0.1, 0.2],
+                [0.2, 0.1],
+                [5, 6],
+                [8, 9],
+                [6, 7],
+                [0.2, 0.2],
+            ]
+        )
+        y = np.array([0, 0, 0, 1, 1, 1, 0])
+        epsilon = 1e-5
+        weights = [1, 1, 1, 0, 0, 0, 1]
+        weights = np.array(weights, dtype="float64")
+        weights_epsilon = [x + epsilon for x in weights]
+        weights_no_zero = np.array([1, 1, 1, 0, 0, 2, 1])
+        original = weights_no_zero.copy()
+        clf = Stree()
+        clf.fit(X, y)
+        node = clf.train(X, y, weights, 1, "test",)
+        # if a class is lost with zero weights the patch adds epsilon
+        self.assertListEqual(weights.tolist(), weights_epsilon)
+        self.assertListEqual(node._sample_weight.tolist(), weights_epsilon)
+        # zero weights are ok when they don't erase a class
+        _ = clf.train(X, y, weights_no_zero, 1, "test")
+        self.assertListEqual(weights_no_zero.tolist(), original.tolist())
