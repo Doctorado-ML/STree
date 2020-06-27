@@ -218,7 +218,7 @@ class Splitter:
             imp_dn = self.criterion_function(labels_dn)
         samples = card_up + card_dn
         if samples == 0:
-            return 0
+            return 0.0
         else:
             result = (
                 imp_prev
@@ -244,7 +244,6 @@ class Splitter:
             if gain > max_gain:
                 max_gain = gain
                 selected = feature_set
-
         return selected if selected is not None else feature_set
 
     def _get_subspaces_set(
@@ -257,6 +256,9 @@ class Splitter:
                 index = random.randint(0, len(features_sets) - 1)
                 return features_sets[index]
             else:
+                # get only 3 sets at most
+                if len(features_sets) > 3:
+                    features_sets = random.sample(features_sets, 3)
                 return self._select_best_set(dataset, labels, features_sets)
         else:
             return features_sets[0]

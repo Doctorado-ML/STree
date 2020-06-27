@@ -1,11 +1,11 @@
 import os
 import unittest
+import random
 
 import numpy as np
-from sklearn.svm import LinearSVC
-
+from sklearn.svm import SVC
+from sklearn.datasets import load_wine
 from stree import Splitter
-from .utils import load_dataset
 
 
 class Splitter_test(unittest.TestCase):
@@ -15,7 +15,7 @@ class Splitter_test(unittest.TestCase):
 
     @staticmethod
     def build(
-        clf=LinearSVC(),
+        clf=SVC,
         min_samples_split=0,
         splitter_type="random",
         criterion="gini",
@@ -23,7 +23,7 @@ class Splitter_test(unittest.TestCase):
         random_state=None,
     ):
         return Splitter(
-            clf=clf,
+            clf=clf(random_state=random_state, kernel="rbf"),
             min_samples_split=min_samples_split,
             splitter_type=splitter_type,
             criterion=criterion,
@@ -43,7 +43,7 @@ class Splitter_test(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.build(criteria="duck")
         with self.assertRaises(ValueError):
-            self.build(clf=None)
+            _ = Splitter(clf=None)
         for splitter_type in ["best", "random"]:
             for criterion in ["gini", "entropy"]:
                 for criteria in [
@@ -178,26 +178,23 @@ class Splitter_test(unittest.TestCase):
 
     def test_splitter_parameter(self):
         expected_values = [
-            [1, 2],  # random gini    min_distance
-            [0, 2],  # random gini    max_samples
-            [1, 3],  # random gini    max_distance
-            [1, 2],  # random entropy min_distance
-            [1, 2],  # random entropy max_samples
-            [0, 2],  # random entropy max_distance
-            [1, 2],  # best   gini    min_distance
-            [0, 2],  # best   gini    max_samples
-            [0, 2],  # best   gini    max_distance
-            [0, 1],  # best   entropy min_distance
-            [0, 1],  # best   entropy max_samples
-            [0, 1],  # best   entropy max_distance
+            [2, 3, 5, 7],  # best   entropy min_distance
+            [0, 2, 4, 5],  # best   entropy max_samples
+            [0, 2, 8, 12],  # best   entropy max_distance
+            [1, 2, 5, 12],  # best   gini    min_distance
+            [0, 3, 4, 10],  # best   gini    max_samples
+            [1, 2, 9, 12],  # best   gini    max_distance
+            [3, 9, 11, 12],  # random entropy min_distance
+            [1, 5, 6, 9],  # random entropy max_samples
+            [1, 2, 4, 8],  # random entropy max_distance
+            [2, 6, 7, 12],  # random gini    min_distance
+            [3, 9, 10, 11],  # random gini    max_samples
+            [2, 5, 8, 12],  # random gini    max_distance
         ]
-        X, y = load_dataset(self._random_state, n_features=6, n_classes=3)
-        from sklearn.datasets import load_iris
-
-        X, y = load_iris(return_X_y=True)
+        X, y = load_wine(return_X_y=True)
         rn = 0
-        for splitter_type in ["random", "best"]:
-            for criterion in ["gini", "entropy"]:
+        for splitter_type in ["best", "random"]:
+            for criterion in ["entropy", "gini"]:
                 for criteria in [
                     "min_distance",
                     "max_samples",
@@ -207,11 +204,11 @@ class Splitter_test(unittest.TestCase):
                         splitter_type=splitter_type,
                         criterion=criterion,
                         criteria=criteria,
-                        random_state=rn,
                     )
-                    rn += 3
                     expected = expected_values.pop(0)
-                    dataset, computed = tcl.get_subspace(X, y, max_features=2)
+                    random.seed(rn)
+                    rn += 1
+                    dataset, computed = tcl.get_subspace(X, y, max_features=4)
                     # print(
                     #     "{},  # {:7s}{:8s}{:15s}".format(
                     #         list(computed), splitter_type, criterion,
