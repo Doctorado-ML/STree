@@ -414,3 +414,24 @@ class Stree_test(unittest.TestCase):
         # zero weights are ok when they don't erase a class
         _ = clf.train(X, y, weights_no_zero, 1, "test")
         self.assertListEqual(weights_no_zero.tolist(), original.tolist())
+
+    def test_build_predictor(self):
+        X, y = load_dataset(self._random_state)
+        clf = Stree(random_state=self._random_state)
+        with self.assertRaises(ValueError):
+            clf.tree_ = None
+            clf._build_predictor()
+        clf.fit(X, y)
+        node = clf.tree_.get_down().get_down()
+        expected_impurity = 0.04686951386893923
+        expected_class = 1
+        expected_belief = 0.9759887005649718
+        self.assertAlmostEqual(expected_impurity, node._impurity)
+        self.assertAlmostEqual(expected_belief, node._belief)
+        self.assertEqual(expected_class, node._class)
+        node._belief = 0.0
+        node._class = None
+        clf._build_predictor()
+        node = clf.tree_.get_down().get_down()
+        self.assertAlmostEqual(expected_belief, node._belief)
+        self.assertEqual(expected_class, node._class)
