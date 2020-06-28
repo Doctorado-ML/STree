@@ -4,7 +4,7 @@ import random
 
 import numpy as np
 from sklearn.svm import SVC
-from sklearn.datasets import load_wine
+from sklearn.datasets import load_wine, load_iris
 from stree import Splitter
 
 
@@ -175,6 +175,14 @@ class Splitter_test(unittest.TestCase):
         computed = tcl._max_distance(data, None)
         self.assertEqual((4,), computed.shape)
         self.assertListEqual(expected.tolist(), computed.tolist())
+
+    def test_best_splitter_few_sets(self):
+        X, y = load_iris(return_X_y=True)
+        X = np.delete(X, 3, 1)
+        tcl = self.build(splitter_type="best", random_state=self._random_state)
+        dataset, computed = tcl.get_subspace(X, y, max_features=2)
+        self.assertListEqual([0, 2], list(computed))
+        self.assertListEqual(X[:, computed].tolist(), dataset.tolist())
 
     def test_splitter_parameter(self):
         expected_values = [
