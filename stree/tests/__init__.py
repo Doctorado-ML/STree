@@ -1,3 +1,4 @@
+# type: ignore
 from .Stree_test import Stree_test
 from .Snode_test import Snode_test
 from .Splitter_test import Splitter_test

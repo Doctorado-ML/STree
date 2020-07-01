@@ -1,3 +1,4 @@
+# type: ignore
 import os
 import unittest
 import warnings
@@ -239,7 +240,7 @@ class Stree_test(unittest.TestCase):
             (None, 16),
         ]
         clf = Stree()
-        clf.n_features_ = n_features
+        clf.n_features_in_ = n_features
         for max_features, expected in expected_values:
             clf.set_params(**dict(max_features=max_features))
             computed = clf._initialize_max_features()
