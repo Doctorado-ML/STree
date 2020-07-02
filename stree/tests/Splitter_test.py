@@ -44,7 +44,12 @@ class Splitter_test(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.build(criteria="duck")
         with self.assertRaises(ValueError):
-            _ = Splitter(clf=None)
+            _ = Splitter(
+                clf=None,
+                splitter_type="random",
+                criterion="gini",
+                criteria="min_distance",
+            )
         for splitter_type in ["best", "random"]:
             for criterion in ["gini", "entropy"]:
                 for criteria in [

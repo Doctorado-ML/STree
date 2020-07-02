@@ -27,8 +27,23 @@ from sklearn.utils.validation import (  # type: ignore
 
 
 class Snode:
-    """Nodes of the tree that keeps the svm classifier and if testing the
-    dataset assigned to it
+    """Stores the information of each node of the tree
+
+        :param clf: classifier used in the node to split data
+        :type clf: Union[SVC, LinearSVC]
+        :param X: dataset passed to the node (only stored in tests)
+        :type X: np.ndarray
+        :param y: labels of the dataset
+        :type y: np.ndarray
+        :param features: supsace of features taken by the classifier to split
+        :type features: np.array
+        :param impurity: the gini/entropy measure
+        :type impurity: float
+        :param title: description of the node
+        :type title: str
+        :param weight: weights applied to dataset (only stored in tests),
+         defaults to None
+        :type weight: np.ndarray, optional
     """
 
     def __init__(
@@ -40,7 +55,10 @@ class Snode:
         impurity: float,
         title: str,
         weight: np.ndarray = None,
-    ):
+    ) -> None:
+        """constructor method
+        """
+
         self._clf: Union[SVC, LinearSVC] = clf
         self._title: str = title
         self._belief: float = 0.0
@@ -60,6 +78,13 @@ class Snode:
 
     @classmethod
     def copy(cls, node: Snode) -> Snode:
+        """Clone the node
+
+        :param node: source node
+        :type node: Snode
+        :return: cloned node
+        :rtype: Snode
+        """
         return cls(
             node._clf,
             node._X,
@@ -70,18 +95,43 @@ class Snode:
         )
 
     def set_down(self, son: Snode) -> None:
+        """Sets the left/down son of the node
+
+        :param son: the son of the node
+        :type son: Snode
+        """
         self._down = son
 
     def set_up(self, son: Snode) -> None:
+        """Sets the right/up son of the node
+
+        :param son: the son of the node
+        :type son: Snode
+        """
         self._up = son
 
     def is_leaf(self) -> bool:
+        """Test if the node is a leaf in the tree
+
+        :return: node is leaf or not
+        :rtype: bool
+        """
         return self._up is None and self._down is None
 
     def get_down(self) -> Optional[Snode]:
+        """Get the left/down son of the node if exists or None
+
+        :return: the son selected
+        :rtype: Optional[Snode]
+        """
         return self._down
 
     def get_up(self) -> Optional[Snode]:
+        """Get the right/up son of the node if exists or None
+
+        :return: the son selected
+        :rtype: Optional[Snode]
+        """
         return self._up
 
     def make_predictor(self) -> None:
@@ -104,6 +154,11 @@ class Snode:
                 self._class = None
 
     def __str__(self) -> str:
+        """Return information of the node useful to represent the tree
+
+        :return: description of the node
+        :rtype: str
+        """
         if self.is_leaf():
             count_values = np.unique(self._y, return_counts=True)
             result = (
@@ -121,17 +176,33 @@ class Snode:
 
 class Siterator:
     """Stree preorder iterator
+
+    :param tree: tree to iterate with
+    :type tree: Optional[Snode]
     """
 
-    def __init__(self, tree: Optional[Snode]):
+    def __init__(self, tree: Optional[Snode]) -> None:
+        """constructor method
+        """
         self._stack: List[Snode] = []
         self._push(tree)
 
     def _push(self, node: Optional[Snode]) -> None:
+        """Store the node in the stack of pending nodes
+
+        :param node: the node to store
+        :type node: Optional[Snode]
+        """
         if node is not None:
             self._stack.append(node)
 
     def __next__(self) -> Snode:
+        """Gets the next node of the tree in preorder
+
+        :raises StopIteration: if no nodes left
+        :return: the next node
+        :rtype: Snode
+        """
         if len(self._stack) == 0:
             raise StopIteration()
         node = self._stack.pop()
@@ -143,13 +214,32 @@ class Siterator:
 class Splitter:
     def __init__(
         self,
-        clf: Union[SVC, LinearSVC] = None,
-        criterion: str = "",
-        splitter_type: str = "",
-        criteria: str = "",
+        clf: Union[SVC, LinearSVC],
+        criterion: str,
+        splitter_type: str,
+        criteria: str,
         min_samples_split: int = 0,
         random_state: Optional[int] = None,
-    ):
+    ) -> None:
+        """Splits datasets based on different criteria
+
+        :param clf: classifier used to split, defaults to None
+        :type clf: Union[SVC, LinearSVC]
+        :param criterion: impurity criteria {gini, entropy}
+        :type criterion: str
+        :param splitter_type: result selection {random, best}
+        :type splitter_type: str
+        :param criteria: split criteria {min or max distance or max samples}
+        :type criteria: str
+        :param min_samples_split: min number of samples to split, default 0
+        :type min_samples_split: int, optional
+        :param random_state: random seed, defaults to None
+        :type random_state: Optional[int], optional
+        :raises ValueError: if classifier is None
+        :raises ValueError: if criterion is not gini or entropy
+        :raises ValueError: if criteria is not min or max distance or max samp
+        :raises ValueError: if splitter_type is not best or random
+        """
         self._clf: Union[SVC, LinearSVC] = clf
         self._random_state: Optional[int] = random_state
         if random_state is not None:
@@ -180,16 +270,37 @@ class Splitter:
         self.criterion_function = getattr(self, f"_{self._criterion}")
         self.decision_criteria = getattr(self, f"_{self._criteria}")
 
-    def impurity(self, y: np.array) -> np.array:
-        return self.criterion_function(y)
+    def impurity(self, y: np.array) -> float:
+        """Apply the criterion function entropy or gini
+
+        :param y: labels to compute impurity
+        :type y: np.array
+        :return: the impurity w.r.t. the labels
+        :rtype: float
+        """
+        return float(self.criterion_function(y))
 
     @staticmethod
     def _gini(y: np.array) -> float:
+        """compute gini impurity on the labels
+
+        :param y: labels
+        :type y: np.array
+        :return: impurity
+        :rtype: float
+        """
         _, count = np.unique(y, return_counts=True)
         return float(1 - np.sum(np.square(count / np.sum(count))))
 
     @staticmethod
     def _entropy(y: np.array) -> float:
+        """compute entropy on the labels
+
+        :param y: labels
+        :type y: np.array
+        :return: impurity
+        :rtype: float
+        """
         n_labels = len(y)
         if n_labels <= 1:
             return 0
@@ -208,6 +319,17 @@ class Splitter:
     def information_gain(
         self, labels: np.array, labels_up: np.array, labels_dn: np.array
     ) -> float:
+        """compute information gain with a proposed split
+
+        :param labels: labels to split
+        :type labels: np.array
+        :param labels_up: splitted labels up
+        :type labels_up: np.array
+        :param labels_dn: splitted labels down
+        :type labels_dn: np.array
+        :return: a measure of the information gained with this split
+        :rtype: float
+        """
         imp_prev = self.criterion_function(labels)
         card_up = card_dn = imp_up = imp_dn = 0
         if labels_up is not None:
@@ -233,6 +355,17 @@ class Splitter:
         labels: np.array,
         features_sets: List[Tuple[int, ...]],
     ) -> Tuple[int, ...]:
+        """Select the subset of features that best splits the dataset
+
+        :param dataset: samples dataset
+        :type dataset: np.array
+        :param labels: labels of the dataset
+        :type labels: np.array
+        :param features_sets: List with combinations of features
+        :type features_sets: List[Tuple[int, ...]]
+        :return: selected subset
+        :rtype: Tuple[int, ...]
+        """
         max_gain: float = 0.0
         selected: Union[Tuple[int, ...], None] = None
         warnings.filterwarnings("ignore", category=ConvergenceWarning)
@@ -251,7 +384,18 @@ class Splitter:
 
     def _get_subspaces_set(
         self, dataset: np.array, labels: np.array, max_features: int
-    ) -> np.array:
+    ) -> Tuple[int, ...]:
+        """select the subspace set according to given conditions
+
+        :param dataset: dataset to extract features
+        :type dataset: np.array
+        :param labels: labels of the dataset
+        :type labels: np.array
+        :param max_features: number of features to group
+        :type max_features: int
+        :return: selected subset of features
+        :rtype: Tuple[int, ...]
+        """
         features = range(dataset.shape[1])
         features_sets = list(combinations(features, max_features))
         if len(features_sets) > 1:
@@ -268,8 +412,12 @@ class Splitter:
 
     def get_subspace(
         self, dataset: np.array, labels: np.array, max_features: int
-    ) -> Tuple[np.array, np.array]:
-        """Return the best subspace to make a split
+    ) -> Tuple[np.array, Tuple[int, ...]]:
+        """Return subspace to make a split
+
+        :return: dataset with only selected features and the indices of the
+         features
+        :rtype: Tuple[int, ...]
         """
         indices = self._get_subspaces_set(dataset, labels, max_features)
         return dataset[:, indices], indices
@@ -300,7 +448,7 @@ class Splitter:
         :param data: distances to hyper plane of every class
         :type data: np.array (m, n_classes)
         :param _: enable call compat with other measures
-        :type _: None
+        :type _: np.array
         :return: vector with the class assigned to each sample values
         (can be 0, 1, ...)
         :rtype: np.array shape (m,)
@@ -314,7 +462,7 @@ class Splitter:
         :param data: distances to hyper plane of every class
         :type data: np.array (m, n_classes)
         :param y: vector of labels (classes)
-        :type y: np.array (m,)
+        :type y: np.array shape (m,)
         :return: vector with distances to hyperplane (can be positive or neg.)
         :rtype: np.array shape (m,)
         """
@@ -327,6 +475,10 @@ class Splitter:
         """Set the criteria to split arrays. Compute the indices of the samples
         that should go to one side of the tree (down)
 
+        :param samples: dataset
+        :type samples: np.array
+        :param node: node used to split the dataset
+        :type node: Snode
         """
         data = self._distances(node, samples)
         if data.shape[0] < self._min_samples_split:
@@ -359,7 +511,7 @@ class Splitter:
         :param down: indices to use to split array
         :type down: np.array
         :return: list with two splits of the array
-        :rtype: list
+        :rtype: Tuple[np.array, np.array]
         """
         up = ~self._down
         return (
@@ -558,7 +710,7 @@ class Stree(BaseEstimator, ClassifierMixin):  # type: ignore
         run_tree(self.tree_)
 
     def _build_clf(self) -> Union[LinearSVC, SVC]:
-        """ Build the correct classifier for the node
+        """ Build the selected classifier for the node
         """
         return (
             LinearSVC(
@@ -589,8 +741,7 @@ class Stree(BaseEstimator, ClassifierMixin):  # type: ignore
         :return: array y ordered
         :rtype: np.array
         """
-        # return array of same type given in y
-        y_ordered = y.copy()
+        y_ordered = np.zeros(y.shape, dtype=y.dtype)
         indices = indices.astype(int)
         for i, index in enumerate(indices):
             y_ordered[index] = y[i]
@@ -607,7 +758,18 @@ class Stree(BaseEstimator, ClassifierMixin):  # type: ignore
 
         def predict_class(
             xp: np.array, indices: np.array, node: Optional[Snode]
-        ) -> np.array:
+        ) -> Tuple[np.array, np.array]:
+            """Recursive function to get predictions for every dataset sample
+
+            :param xp: dataset
+            :type xp: np.array
+            :param indices: indices of the samples in the original dataset
+            :type indices: np.array
+            :param node: node to process dataset
+            :type node: Optional[Snode]
+            :return: the predictions and the indices of the predictions
+            :rtype: Tuple[np.array, np.array]
+            """
             if xp is None:
                 return [], []
             if node.is_leaf():  # type: ignore
@@ -664,6 +826,13 @@ class Stree(BaseEstimator, ClassifierMixin):  # type: ignore
         return output
 
     def _initialize_max_features(self) -> int:
+        """Initializa the value of the max_features atribute used in splits
+
+        :raises ValueError: if not a valid value supplied
+        :raises ValueError: if an invalid float value supplied
+        :return: Number of features to use in each split
+        :rtype: int
+        """
         if isinstance(self.max_features, str):
             if self.max_features == "auto":
                 max_features = max(1, int(np.sqrt(self.n_features_in_)))
