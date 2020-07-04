@@ -133,3 +133,8 @@ dmypy.json
 .pre-commit-config.yaml
 
 **.csv
+
+# sphinx
+_build
+_static
+_templates

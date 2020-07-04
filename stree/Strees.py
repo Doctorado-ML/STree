@@ -425,10 +425,10 @@ class Splitter:
     @staticmethod
     def _min_distance(data: np.array, _: np.array) -> np.array:
         """Assign class to min distances
-
         return a vector of classes so partition can separate class 0 from
         the rest of classes, ie. class 0 goes to one splitted node and the
         rest of classes go to the other
+
         :param data: distances to hyper plane of every class
         :type data: np.array (m, n_classes)
         :param _: enable call compat with other measures
@@ -441,10 +441,10 @@ class Splitter:
     @staticmethod
     def _max_distance(data: np.array, _: np.array) -> np.array:
         """Assign class to max distances
-
         return a vector of classes so partition can separate class 0 from
         the rest of classes, ie. class 0 goes to one splitted node and the
         rest of classes go to the other
+
         :param data: distances to hyper plane of every class
         :type data: np.array (m, n_classes)
         :param _: enable call compat with other measures
@@ -491,14 +491,15 @@ class Splitter:
 
     @staticmethod
     def _distances(node: Snode, data: np.ndarray) -> np.array:
-        """Compute distances of the samples to the hyperplane of the node
+        """Compute distances of the samples to each hyperplane of the node (one
+         per class if number of classes is greater than 2)
 
         :param node: node containing the svm classifier
         :type node: Snode
         :param data: samples to find out distance to hyperplane
         :type data: np.ndarray
         :return: array of shape (m, 1) with the distances of every sample to
-        the hyperplane of the node
+         the hyperplane of the node
         :rtype: np.array
         """
         return node._clf.decision_function(data[:, node._features])
@@ -567,7 +568,7 @@ class Stree(BaseEstimator, ClassifierMixin):  # type: ignore
         :type X: np.array
         :param y: samples labels
         :type y: np.array
-        :param sample_weight: weights of the samples. Rescale C per sample.
+        :param sample_weight: weights of the samples. Rescale C per sample. \
         Hi' weights force the classifier to put more emphasis on these points
         :type sample_weight: np.array optional
         :raises ValueError: if parameters C or max_depth are out of bounds
@@ -629,7 +630,7 @@ class Stree(BaseEstimator, ClassifierMixin):  # type: ignore
         :type X: np.ndarray
         :param y: samples labels
         :type y: np.ndarray
-        :param sample_weight: weight of samples. Rescale C per sample.
+        :param sample_weight: weight of samples. Rescale C per sample. \
         Hi weights force the classifier to put more emphasis on these points.
         :type sample_weight: np.ndarray
         :param depth: actual depth in the tree
@@ -721,6 +722,7 @@ class Stree(BaseEstimator, ClassifierMixin):  # type: ignore
             )
             if self.kernel == "linear"
             else SVC(
+                random_state=self.random_state,
                 kernel=self.kernel,
                 max_iter=self.max_iter,
                 tol=self.tol,
