@@ -120,8 +120,7 @@ class Snode:
 
 
 class Siterator:
-    """Stree preorder iterator
-    """
+    """Stree preorder iterator"""
 
     def __init__(self, tree: Snode):
         self._stack = []
@@ -167,20 +166,22 @@ class Splitter:
                 f"criterion must be gini or entropy got({criterion})"
             )
 
-        if criteria not in ["min_distance", "max_samples", "max_distance"]:
+        if criteria not in [
+            "max_samples",
+            "impurity",
+        ]:
             raise ValueError(
-                "split_criteria has to be min_distance "
-                f"max_distance or max_samples got ({criteria})"
+                f"criteria has to be max_samples or impurity; got ({criteria})"
             )
 
         if splitter_type not in ["random", "best"]:
             raise ValueError(
-                f"splitter must be either random or best got({splitter_type})"
+                f"splitter must be either random or best, got({splitter_type})"
             )
         self.criterion_function = getattr(self, f"_{self._criterion}")
         self.decision_criteria = getattr(self, f"_{self._criteria}")
 
-    def impurity(self, y: np.array) -> np.array:
+    def partition_impurity(self, y: np.array) -> np.array:
         return self.criterion_function(y)
 
     @staticmethod
@@ -266,34 +267,13 @@ class Splitter:
     def get_subspace(
         self, dataset: np.array, labels: np.array, max_features: int
     ) -> list:
-        """Return the best subspace to make a split
-        """
+        """Return the best/random subspace to make a split"""
         indices = self._get_subspaces_set(dataset, labels, max_features)
         return dataset[:, indices], indices
 
-    @staticmethod
-    def _min_distance(data: np.array, _) -> np.array:
-        """Assign class to min distances
+    def _impurity(self, data: np.array, _) -> np.array:
+        """return distances of the class whose partition has less impurity
 
-        return a vector of classes so partition can separate class 0 from
-        the rest of classes, ie. class 0 goes to one splitted node and the
-        rest of classes go to the other
-        :param data: distances to hyper plane of every class
-        :type data: np.array (m, n_classes)
-        :param _: enable call compat with other measures
-        :type _: None
-        :return: vector with the class assigned to each sample
-        :rtype: np.array shape (m,)
-        """
-        return np.argmin(data, axis=1)
-
-    @staticmethod
-    def _max_distance(data: np.array, _) -> np.array:
-        """Assign class to max distances
-
-        return a vector of classes so partition can separate class 0 from
-        the rest of classes, ie. class 0 goes to one splitted node and the
-        rest of classes go to the other
         :param data: distances to hyper plane of every class
         :type data: np.array (m, n_classes)
         :param _: enable call compat with other measures
@@ -302,7 +282,18 @@ class Splitter:
         (can be 0, 1, ...)
         :rtype: np.array shape (m,)
         """
-        return np.argmax(data, axis=1)
+        min_impurity = float("inf")
+        selected = 0
+        y = data.copy()
+        y[data <= 0] = 0
+        y[data > 0] = 1
+        y = y.astype(int)
+        for col in range(data.shape[1]):
+            impurity_of_class = self.partition_impurity(y[col])
+            if impurity_of_class < min_impurity:
+                selected = col
+                min_impurity = impurity_of_class
+        return data[:, selected]
 
     @staticmethod
     def _max_samples(data: np.array, y: np.array) -> np.array:
@@ -325,12 +316,15 @@ class Splitter:
         that should go to one side of the tree (down)
 
         """
+        # data contains the distances of every sample to every class hyperplane
+        # array of (m, nc) nc = # classes
         data = self._distances(node, samples)
         if data.shape[0] < self._min_samples_split:
             self._down = np.ones((data.shape[0]), dtype=bool)
             return
         if data.ndim > 1:
             # split criteria for multiclass
+            # Convert data to a (m, 1) array selecting values for samples
             data = self.decision_criteria(data, node._y)
         self._down = data > 0
 
@@ -342,8 +336,8 @@ class Splitter:
         :type node: Snode
         :param data: samples to find out distance to hyperplane
         :type data: np.ndarray
-        :return: array of shape (m, 1) with the distances of every sample to
-        the hyperplane of the node
+        :return: array of shape (m, nc) with the distances of every sample to
+        the hyperplane of every class. nc = # of classes
         :rtype: np.array
         """
         return node._clf.decision_function(data[:, node._features])
@@ -521,7 +515,7 @@ class Stree(BaseEstimator, ClassifierMixin):
             if np.unique(y_next).shape[0] != self.n_classes_:
                 sample_weight += 1e-5
         clf.fit(Xs, y, sample_weight=sample_weight)
-        impurity = self.splitter_.impurity(y)
+        impurity = self.splitter_.partition_impurity(y)
         node = Snode(clf, X, y, features, impurity, title, sample_weight)
         self.depth_ = max(depth, self.depth_)
         self.splitter_.partition(X, node)
@@ -544,8 +538,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         return node
 
     def _build_predictor(self):
-        """Process the leaves to make them predictors
-        """
+        """Process the leaves to make them predictors"""
 
         def run_tree(node: Snode):
             if node.is_leaf():
@@ -557,8 +550,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         run_tree(self.tree_)
 
     def _build_clf(self):
-        """ Build the correct classifier for the node
-        """
+        """Build the correct classifier for the node"""
         return (
             LinearSVC(
                 max_iter=self.max_iter,

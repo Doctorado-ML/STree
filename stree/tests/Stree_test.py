@@ -56,8 +56,7 @@ class Stree_test(unittest.TestCase):
         self._check_tree(node.get_up())
 
     def test_build_tree(self):
-        """Check if the tree is built the same way as predictions of models
-        """
+        """Check if the tree is built the same way as predictions of models"""
         warnings.filterwarnings("ignore")
         for kernel in self._kernels:
             clf = Stree(kernel=kernel, random_state=self._random_state)
@@ -99,8 +98,7 @@ class Stree_test(unittest.TestCase):
             self.assertListEqual(yp_line.tolist(), yp_once.tolist())
 
     def test_iterator_and_str(self):
-        """Check preorder iterator
-        """
+        """Check preorder iterator"""
         expected = [
             "root feaures=(0, 1, 2) impurity=0.5000",
             "root - Down feaures=(0, 1, 2) impurity=0.0671",
@@ -195,28 +193,22 @@ class Stree_test(unittest.TestCase):
                 "max_samples linear": 0.9533333333333334,
                 "max_samples rbf": 0.836,
                 "max_samples poly": 0.9473333333333334,
-                "min_distance linear": 0.9533333333333334,
-                "min_distance rbf": 0.836,
-                "min_distance poly": 0.9473333333333334,
-                "max_distance linear": 0.9533333333333334,
-                "max_distance rbf": 0.836,
-                "max_distance poly": 0.9473333333333334,
+                "impurity linear": 0.9533333333333334,
+                "impurity rbf": 0.836,
+                "impurity poly": 0.9473333333333334,
             },
             "Iris": {
                 "max_samples linear": 0.98,
                 "max_samples rbf": 1.0,
                 "max_samples poly": 1.0,
-                "min_distance linear": 0.98,
-                "min_distance rbf": 1.0,
-                "min_distance poly": 1.0,
-                "max_distance linear": 0.98,
-                "max_distance rbf": 1.0,
-                "max_distance poly": 1.0,
+                "impurity linear": 0.98,
+                "impurity rbf": 1,
+                "impurity poly": 1,
             },
         }
         for name, dataset in datasets.items():
             px, py = dataset
-            for criteria in ["max_samples", "min_distance", "max_distance"]:
+            for criteria in ["max_samples", "impurity"]:
                 for kernel in self._kernels:
                     clf = Stree(
                         C=1e4,
@@ -225,6 +217,7 @@ class Stree_test(unittest.TestCase):
                         random_state=self._random_state,
                     )
                     clf.fit(px, py)
+                    print(f"{name} {criteria} {kernel}")
                     outcome = outcomes[name][f"{criteria} {kernel}"]
                     self.assertAlmostEqual(outcome, clf.score(px, py))
 
@@ -297,7 +290,10 @@ class Stree_test(unittest.TestCase):
             0.9433333333333334,
         ]
         for kernel, accuracy_expected in zip(self._kernels, accuracies):
-            clf = Stree(random_state=self._random_state, kernel=kernel,)
+            clf = Stree(
+                random_state=self._random_state,
+                kernel=kernel,
+            )
             clf.fit(X, y)
             accuracy_score = clf.score(X, y)
             yp = clf.predict(X)
@@ -314,32 +310,23 @@ class Stree_test(unittest.TestCase):
     def test_score_multi_class(self):
         warnings.filterwarnings("ignore")
         accuracies = [
-            0.8258427,  # Wine    linear min_distance
-            0.6741573,  # Wine    linear max_distance
+            0.651685393258427,  # Wine    linear impurity
             0.8314607,  # Wine    linear max_samples
-            0.6629213,  # Wine    rbf   min_distance
-            1.0000000,  # Wine    rbf   max_distance
+            0.6629213483146067,  # Wine    rbf   impurity
             0.4044944,  # Wine    rbf   max_samples
-            0.9157303,  # Wine    poly  min_distance
-            1.0000000,  # Wine    poly  max_distance
+            0.9157303,  # Wine    poly  impurity
             0.7640449,  # Wine    poly  max_samples
-            0.9933333,  # Iris    linear min_distance
-            0.9666667,  # Iris    linear max_distance
+            0.9933333,  # Iris    linear impurity
             0.9666667,  # Iris    linear max_samples
-            0.9800000,  # Iris    rbf   min_distance
-            0.9800000,  # Iris    rbf   max_distance
+            0.9800000,  # Iris    rbf   impurity
             0.9800000,  # Iris    rbf   max_samples
-            1.0000000,  # Iris    poly  min_distance
-            1.0000000,  # Iris    poly  max_distance
+            1.0000000,  # Iris    poly  impurity
             1.0000000,  # Iris    poly  max_samples
-            0.8993333,  # Synthetic linear min_distance
-            0.6533333,  # Synthetic linear max_distance
+            0.8993333,  # Synthetic linear impurity
             0.9313333,  # Synthetic linear max_samples
-            0.8320000,  # Synthetic rbf   min_distance
-            0.6660000,  # Synthetic rbf   max_distance
+            0.8320000,  # Synthetic rbf   impurity
             0.8320000,  # Synthetic rbf   max_samples
-            0.6066667,  # Synthetic poly  min_distance
-            0.6840000,  # Synthetic poly  max_distance
+            0.6066667,  # Synthetic poly  impurity
             0.6340000,  # Synthetic poly  max_samples
         ]
         datasets = [
@@ -354,8 +341,7 @@ class Stree_test(unittest.TestCase):
             X, y = dataset
             for kernel in self._kernels:
                 for criteria in [
-                    "min_distance",
-                    "max_distance",
+                    "impurity",
                     "max_samples",
                 ]:
                     clf = Stree(
@@ -407,7 +393,13 @@ class Stree_test(unittest.TestCase):
         original = weights_no_zero.copy()
         clf = Stree()
         clf.fit(X, y)
-        node = clf.train(X, y, weights, 1, "test",)
+        node = clf.train(
+            X,
+            y,
+            weights,
+            1,
+            "test",
+        )
         # if a class is lost with zero weights the patch adds epsilon
         self.assertListEqual(weights.tolist(), weights_epsilon)
         self.assertListEqual(node._sample_weight.tolist(), weights_epsilon)
