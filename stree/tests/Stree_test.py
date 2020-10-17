@@ -217,7 +217,7 @@ class Stree_test(unittest.TestCase):
                         random_state=self._random_state,
                     )
                     clf.fit(px, py)
-                    print(f"{name} {criteria} {kernel}")
+                    # print(f"{name} {criteria} {kernel}")
                     outcome = outcomes[name][f"{criteria} {kernel}"]
                     self.assertAlmostEqual(outcome, clf.score(px, py))
 
@@ -310,23 +310,23 @@ class Stree_test(unittest.TestCase):
     def test_score_multi_class(self):
         warnings.filterwarnings("ignore")
         accuracies = [
-            0.651685393258427,  # Wine    linear impurity
+            0.7022472,  # Wine    linear impurity
             0.8314607,  # Wine    linear max_samples
-            0.6629213483146067,  # Wine    rbf   impurity
+            0.4044944,  # Wine    rbf   impurity
             0.4044944,  # Wine    rbf   max_samples
-            0.9157303,  # Wine    poly  impurity
+            0.3988764,  # Wine    poly  impurity
             0.7640449,  # Wine    poly  max_samples
-            0.9933333,  # Iris    linear impurity
+            0.6600000,  # Iris    linear impurity
             0.9666667,  # Iris    linear max_samples
-            0.9800000,  # Iris    rbf   impurity
+            0.3333333,  # Iris    rbf   impurity
             0.9800000,  # Iris    rbf   max_samples
-            1.0000000,  # Iris    poly  impurity
+            0.3333333,  # Iris    poly  impurity
             1.0000000,  # Iris    poly  max_samples
-            0.8993333,  # Synthetic linear impurity
+            0.7153333,  # Synthetic linear impurity
             0.9313333,  # Synthetic linear max_samples
-            0.8320000,  # Synthetic rbf   impurity
+            0.4806667,  # Synthetic rbf   impurity
             0.8320000,  # Synthetic rbf   max_samples
-            0.6066667,  # Synthetic poly  impurity
+            0.4786667,  # Synthetic poly  impurity
             0.6340000,  # Synthetic poly  max_samples
         ]
         datasets = [

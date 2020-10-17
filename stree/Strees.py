@@ -57,6 +57,7 @@ class Snode:
         )
         self._features = features
         self._impurity = impurity
+        self._partition_column: int = -1
 
     @classmethod
     def copy(cls, node: "Snode") -> "Snode":
@@ -68,6 +69,12 @@ class Snode:
             node._impurity,
             node._title,
         )
+
+    def set_partition_column(self, col: int):
+        self._partition_column = col
+
+    def get_partition_column(self) -> int:
+        return self._partition_column
 
     def set_down(self, son):
         self._down = son
@@ -239,7 +246,7 @@ class Splitter:
             node = Snode(
                 self._clf, dataset, labels, feature_set, 0.0, "subset"
             )
-            self.partition(dataset, node)
+            self.partition(dataset, node, train=True)
             y1, y2 = self.part(labels)
             gain = self.information_gain(labels, y1, y2)
             if gain > max_gain:
@@ -272,7 +279,7 @@ class Splitter:
         return dataset[:, indices], indices
 
     def _impurity(self, data: np.array, _) -> np.array:
-        """return distances of the class whose partition has less impurity
+        """return column of dataset to be taken into account to split dataset
 
         :param data: distances to hyper plane of every class
         :type data: np.array (m, n_classes)
@@ -289,15 +296,15 @@ class Splitter:
         y[data > 0] = 1
         y = y.astype(int)
         for col in range(data.shape[1]):
-            impurity_of_class = self.partition_impurity(y[col])
+            impurity_of_class = self.partition_impurity(y[:, col])
             if impurity_of_class < min_impurity:
                 selected = col
                 min_impurity = impurity_of_class
-        return data[:, selected]
+        return selected
 
     @staticmethod
     def _max_samples(data: np.array, y: np.array) -> np.array:
-        """return distances of the class with more samples
+        """return column of dataset to be taken into account to split dataset
 
         :param data: distances to hyper plane of every class
         :type data: np.array (m, n_classes)
@@ -308,10 +315,9 @@ class Splitter:
         """
         # select the class with max number of samples
         _, samples = np.unique(y, return_counts=True)
-        selected = np.argmax(samples)
-        return data[:, selected]
+        return np.argmax(samples)
 
-    def partition(self, samples: np.array, node: Snode):
+    def partition(self, samples: np.array, node: Snode, train: bool):
         """Set the criteria to split arrays. Compute the indices of the samples
         that should go to one side of the tree (down)
 
@@ -325,7 +331,16 @@ class Splitter:
         if data.ndim > 1:
             # split criteria for multiclass
             # Convert data to a (m, 1) array selecting values for samples
-            data = self.decision_criteria(data, node._y)
+            if train:
+                # in train time we have to compute the column to take into
+                # account to split the dataset
+                col = self.decision_criteria(data, node._y)
+                node.set_partition_column(col)
+            else:
+                # in predcit time just use the column computed in train time
+                # is taking the classifier of class <col>
+                col = node.get_partition_column()
+            data = data[:, col]
         self._down = data > 0
 
     @staticmethod
@@ -344,6 +359,7 @@ class Splitter:
 
     def part(self, origin: np.array) -> list:
         """Split an array in two based on indices (down) and its complement
+        partition has to be called first to establish down indices
 
         :param origin: dataset to split
         :type origin: np.array
@@ -377,7 +393,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         tol: float = 1e-4,
         degree: int = 3,
         gamma="scale",
-        split_criteria: str = "max_samples",
+        split_criteria: str = "impurity",
         criterion: str = "gini",
         min_samples_split: int = 0,
         max_features=None,
@@ -518,7 +534,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         impurity = self.splitter_.partition_impurity(y)
         node = Snode(clf, X, y, features, impurity, title, sample_weight)
         self.depth_ = max(depth, self.depth_)
-        self.splitter_.partition(X, node)
+        self.splitter_.partition(X, node, True)
         X_U, X_D = self.splitter_.part(X)
         y_u, y_d = self.splitter_.part(y)
         sw_u, sw_d = self.splitter_.part(sample_weight)
@@ -605,7 +621,7 @@ class Stree(BaseEstimator, ClassifierMixin):
                 # set a class for every sample in dataset
                 prediction = np.full((xp.shape[0], 1), node._class)
                 return prediction, indices
-            self.splitter_.partition(xp, node)
+            self.splitter_.partition(xp, node, train=False)
             x_u, x_d = self.splitter_.part(xp)
             i_u, i_d = self.splitter_.part(indices)
             prx_u, prin_u = predict_class(x_u, i_u, node.get_up())

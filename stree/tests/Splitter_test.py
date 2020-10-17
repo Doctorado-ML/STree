@@ -134,13 +134,17 @@ class Splitter_test(unittest.TestCase):
                 [0.7, 0.01, -0.1],
                 [0.7, -0.9, 0.5],
                 [0.1, 0.2, 0.3],
+                [-0.1, 0.2, 0.3],
+                [-0.1, 0.2, 0.3],
             ]
         )
-        expected = np.array([0.2, 0.01, -0.9, 0.2])
-        y = [1, 2, 1, 0]
+        expected = np.array([-0.1, 0.7, 0.7, 0.1, -0.1, -0.1])
+        y = [1, 2, 1, 0, 0, 0]
         computed = tcl._max_samples(data, y)
-        self.assertEqual((4,), computed.shape)
-        self.assertListEqual(expected.tolist(), computed.tolist())
+        self.assertEqual(0, computed)
+        computed_data = data[:, computed]
+        self.assertEqual((6,), computed_data.shape)
+        self.assertListEqual(expected.tolist(), computed_data.tolist())
 
     def test_impurity(self):
         tcl = self.build(criteria="impurity")
@@ -150,12 +154,16 @@ class Splitter_test(unittest.TestCase):
                 [0.7, 0.01, -0.1],
                 [0.7, -0.9, 0.5],
                 [0.1, 0.2, 0.3],
+                [-0.1, 0.2, 0.3],
+                [-0.1, 0.2, 0.3],
             ]
         )
-        expected = np.array([-0.1, 0.7, 0.7, 0.1])
+        expected = np.array([0.2, 0.01, -0.9, 0.2, 0.2, 0.2])
         computed = tcl._impurity(data, None)
-        self.assertEqual((4,), computed.shape)
-        self.assertListEqual(expected.tolist(), computed.tolist())
+        self.assertEqual(1, computed)
+        computed_data = data[:, computed]
+        self.assertEqual((6,), computed_data.shape)
+        self.assertListEqual(expected.tolist(), computed_data.tolist())
 
     def test_best_splitter_few_sets(self):
         X, y = load_iris(return_X_y=True)
@@ -168,9 +176,9 @@ class Splitter_test(unittest.TestCase):
     def test_splitter_parameter(self):
         expected_values = [
             [0, 1, 7, 9],  # best   entropy max_samples
-            [3, 8, 10, 11],  # best   entropy impurity
+            [0, 2, 4, 5],  # best   entropy impurity
             [0, 2, 8, 12],  # best   gini    max_samples
-            [1, 2, 5, 12],  # best   gini    impurity
+            [4, 5, 9, 12],  # best   gini    impurity
             [1, 2, 5, 10],  # random entropy max_samples
             [4, 8, 9, 12],  # random entropy impurity
             [3, 9, 11, 12],  # random gini    max_samples
