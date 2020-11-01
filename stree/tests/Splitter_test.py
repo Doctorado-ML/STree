@@ -138,7 +138,7 @@ class Splitter_test(unittest.TestCase):
                 [-0.1, 0.2, 0.3],
             ]
         )
-        expected = np.array([-0.1, 0.7, 0.7, 0.1, -0.1, -0.1])
+        expected = data[:, 0]
         y = [1, 2, 1, 0, 0, 0]
         computed = tcl._max_samples(data, y)
         self.assertEqual(0, computed)
@@ -158,9 +158,10 @@ class Splitter_test(unittest.TestCase):
                 [-0.1, 0.2, 0.3],
             ]
         )
-        expected = np.array([0.2, 0.01, -0.9, 0.2, 0.2, 0.2])
-        computed = tcl._impurity(data, None)
-        self.assertEqual(1, computed)
+        expected = data[:, 2]
+        y = np.array([1, 2, 1, 0, 0, 0])
+        computed = tcl._impurity(data, y)
+        self.assertEqual(2, computed)
         computed_data = data[:, computed]
         self.assertEqual((6,), computed_data.shape)
         self.assertListEqual(expected.tolist(), computed_data.tolist())
@@ -176,9 +177,9 @@ class Splitter_test(unittest.TestCase):
     def test_splitter_parameter(self):
         expected_values = [
             [0, 1, 7, 9],  # best   entropy max_samples
-            [0, 2, 4, 5],  # best   entropy impurity
+            [3, 8, 10, 11],  # best   entropy impurity
             [0, 2, 8, 12],  # best   gini    max_samples
-            [4, 5, 9, 12],  # best   gini    impurity
+            [1, 2, 5, 12],  # best   gini    impurity
             [1, 2, 5, 10],  # random entropy max_samples
             [4, 8, 9, 12],  # random entropy impurity
             [3, 9, 11, 12],  # random gini    max_samples

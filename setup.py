@@ -1,6 +1,6 @@
 import setuptools
 
-__version__ = "0.9rc5"
+__version__ = "0.9rc6"
 __author__ = "Ricardo Montañana Gómez"
 
 

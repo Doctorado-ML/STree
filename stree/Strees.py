@@ -100,9 +100,8 @@ class Snode:
         classes, card = np.unique(self._y, return_counts=True)
         if len(classes) > 1:
             max_card = max(card)
-            min_card = min(card)
             self._class = classes[card == max_card][0]
-            self._belief = max_card / (max_card + min_card)
+            self._belief = max_card / np.sum(card)
         else:
             self._belief = 1
             try:
@@ -111,18 +110,18 @@ class Snode:
                 self._class = None
 
     def __str__(self) -> str:
+        count_values = np.unique(self._y, return_counts=True)
         if self.is_leaf():
-            count_values = np.unique(self._y, return_counts=True)
-            result = (
+            return (
                 f"{self._title} - Leaf class={self._class} belief="
                 f"{self._belief: .6f} impurity={self._impurity:.4f} "
                 f"counts={count_values}"
             )
-            return result
         else:
             return (
                 f"{self._title} feaures={self._features} impurity="
-                f"{self._impurity:.4f}"
+                f"{self._impurity:.4f} "
+                f"counts={count_values}"
             )
 
 
@@ -273,33 +272,31 @@ class Splitter:
 
     def get_subspace(
         self, dataset: np.array, labels: np.array, max_features: int
-    ) -> list:
+    ) -> tuple:
         """Return the best/random subspace to make a split"""
         indices = self._get_subspaces_set(dataset, labels, max_features)
         return dataset[:, indices], indices
 
-    def _impurity(self, data: np.array, _) -> np.array:
+    def _impurity(self, data: np.array, y: np.array) -> np.array:
         """return column of dataset to be taken into account to split dataset
 
         :param data: distances to hyper plane of every class
         :type data: np.array (m, n_classes)
-        :param _: enable call compat with other measures
-        :type _: None
+        :param y: vector of labels (classes)
+        :type y: np.array (m,)
         :return: vector with the class assigned to each sample values
-        (can be 0, 1, ...)
+        (can be 0, 1, ...) -1 if none produces information gain
         :rtype: np.array shape (m,)
         """
-        min_impurity = float("inf")
-        selected = 0
-        y = data.copy()
-        y[data <= 0] = 0
-        y[data > 0] = 1
-        y = y.astype(int)
+        max_gain = 0
+        selected = -1
         for col in range(data.shape[1]):
-            impurity_of_class = self.partition_impurity(y[:, col])
-            if impurity_of_class < min_impurity:
+            tup = y[data[:, col] > 0]
+            tdn = y[data[:, col] <= 0]
+            info_gain = self.information_gain(y, tup, tdn)
+            if info_gain > max_gain:
                 selected = col
-                min_impurity = impurity_of_class
+                max_gain = info_gain
         return selected
 
     @staticmethod
@@ -326,7 +323,8 @@ class Splitter:
         # array of (m, nc) nc = # classes
         data = self._distances(node, samples)
         if data.shape[0] < self._min_samples_split:
-            self._down = np.ones((data.shape[0]), dtype=bool)
+            # there aren't enough samples to split
+            self._up = np.ones((data.shape[0]), dtype=bool)
             return
         if data.ndim > 1:
             # split criteria for multiclass
@@ -340,8 +338,28 @@ class Splitter:
                 # in predcit time just use the column computed in train time
                 # is taking the classifier of class <col>
                 col = node.get_partition_column()
+                if col == -1:
+                    # No partition is producing information gain
+                    data = np.ones(data.shape)
             data = data[:, col]
-        self._down = data > 0
+        self._up = data > 0
+
+    def part(self, origin: np.array) -> list:
+        """Split an array in two based on indices (down) and its complement
+        partition has to be called first to establish down indices
+
+        :param origin: dataset to split
+        :type origin: np.array
+        :param down: indices to use to split array
+        :type down: np.array
+        :return: list with two splits of the array
+        :rtype: list
+        """
+        down = ~self._up
+        return [
+            origin[self._up] if any(self._up) else None,
+            origin[down] if any(down) else None,
+        ]
 
     @staticmethod
     def _distances(node: Snode, data: np.ndarray) -> np.array:
@@ -357,23 +375,6 @@ class Splitter:
         """
         return node._clf.decision_function(data[:, node._features])
 
-    def part(self, origin: np.array) -> list:
-        """Split an array in two based on indices (down) and its complement
-        partition has to be called first to establish down indices
-
-        :param origin: dataset to split
-        :type origin: np.array
-        :param down: indices to use to split array
-        :type down: np.array
-        :return: list with two splits of the array
-        :rtype: list
-        """
-        up = ~self._down
-        return [
-            origin[up] if any(up) else None,
-            origin[self._down] if any(self._down) else None,
-        ]
-
 
 class Stree(BaseEstimator, ClassifierMixin):
     """Estimator that is based on binary trees of svm nodes
@@ -387,14 +388,14 @@ class Stree(BaseEstimator, ClassifierMixin):
         self,
         C: float = 1.0,
         kernel: str = "linear",
-        max_iter: int = 1000,
+        max_iter: int = 1e5,
         random_state: int = None,
         max_depth: int = None,
         tol: float = 1e-4,
         degree: int = 3,
         gamma="scale",
         split_criteria: str = "impurity",
-        criterion: str = "gini",
+        criterion: str = "entropy",
         min_samples_split: int = 0,
         max_features=None,
         splitter: str = "random",
