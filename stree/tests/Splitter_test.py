@@ -19,7 +19,7 @@ class Splitter_test(unittest.TestCase):
         min_samples_split=0,
         splitter_type="random",
         criterion="gini",
-        criteria="min_distance",
+        criteria="max_samples",
         random_state=None,
     ):
         return Splitter(
@@ -46,11 +46,7 @@ class Splitter_test(unittest.TestCase):
             _ = Splitter(clf=None)
         for splitter_type in ["best", "random"]:
             for criterion in ["gini", "entropy"]:
-                for criteria in [
-                    "min_distance",
-                    "max_samples",
-                    "max_distance",
-                ]:
+                for criteria in ["max_samples", "impurity"]:
                     tcl = self.build(
                         splitter_type=splitter_type,
                         criterion=criterion,
@@ -138,43 +134,37 @@ class Splitter_test(unittest.TestCase):
                 [0.7, 0.01, -0.1],
                 [0.7, -0.9, 0.5],
                 [0.1, 0.2, 0.3],
+                [-0.1, 0.2, 0.3],
+                [-0.1, 0.2, 0.3],
             ]
         )
-        expected = np.array([0.2, 0.01, -0.9, 0.2])
-        y = [1, 2, 1, 0]
+        expected = data[:, 0]
+        y = [1, 2, 1, 0, 0, 0]
         computed = tcl._max_samples(data, y)
-        self.assertEqual((4,), computed.shape)
-        self.assertListEqual(expected.tolist(), computed.tolist())
+        self.assertEqual(0, computed)
+        computed_data = data[:, computed]
+        self.assertEqual((6,), computed_data.shape)
+        self.assertListEqual(expected.tolist(), computed_data.tolist())
 
-    def test_min_distance(self):
-        tcl = self.build()
+    def test_impurity(self):
+        tcl = self.build(criteria="impurity")
         data = np.array(
             [
                 [-0.1, 0.2, -0.3],
                 [0.7, 0.01, -0.1],
                 [0.7, -0.9, 0.5],
                 [0.1, 0.2, 0.3],
+                [-0.1, 0.2, 0.3],
+                [-0.1, 0.2, 0.3],
             ]
         )
-        expected = np.array([2, 2, 1, 0])
-        computed = tcl._min_distance(data, None)
-        self.assertEqual((4,), computed.shape)
-        self.assertListEqual(expected.tolist(), computed.tolist())
-
-    def test_max_distance(self):
-        tcl = self.build(criteria="max_distance")
-        data = np.array(
-            [
-                [-0.1, 0.2, -0.3],
-                [0.7, 0.01, -0.1],
-                [0.7, -0.9, 0.5],
-                [0.1, 0.2, 0.3],
-            ]
-        )
-        expected = np.array([1, 0, 0, 2])
-        computed = tcl._max_distance(data, None)
-        self.assertEqual((4,), computed.shape)
-        self.assertListEqual(expected.tolist(), computed.tolist())
+        expected = data[:, 2]
+        y = np.array([1, 2, 1, 0, 0, 0])
+        computed = tcl._impurity(data, y)
+        self.assertEqual(2, computed)
+        computed_data = data[:, computed]
+        self.assertEqual((6,), computed_data.shape)
+        self.assertListEqual(expected.tolist(), computed_data.tolist())
 
     def test_best_splitter_few_sets(self):
         X, y = load_iris(return_X_y=True)
@@ -186,27 +176,22 @@ class Splitter_test(unittest.TestCase):
 
     def test_splitter_parameter(self):
         expected_values = [
-            [2, 3, 5, 7],  # best   entropy min_distance
-            [0, 2, 4, 5],  # best   entropy max_samples
-            [0, 2, 8, 12],  # best   entropy max_distance
-            [1, 2, 5, 12],  # best   gini    min_distance
-            [0, 3, 4, 10],  # best   gini    max_samples
-            [1, 2, 9, 12],  # best   gini    max_distance
-            [3, 9, 11, 12],  # random entropy min_distance
-            [1, 5, 6, 9],  # random entropy max_samples
-            [1, 2, 4, 8],  # random entropy max_distance
-            [2, 6, 7, 12],  # random gini    min_distance
-            [3, 9, 10, 11],  # random gini    max_samples
-            [2, 5, 8, 12],  # random gini    max_distance
+            [0, 1, 7, 9],  # best   entropy max_samples
+            [3, 8, 10, 11],  # best   entropy impurity
+            [0, 2, 8, 12],  # best   gini    max_samples
+            [1, 2, 5, 12],  # best   gini    impurity
+            [1, 2, 5, 10],  # random entropy max_samples
+            [4, 8, 9, 12],  # random entropy impurity
+            [3, 9, 11, 12],  # random gini    max_samples
+            [1, 5, 6, 9],  # random gini    impurity
         ]
         X, y = load_wine(return_X_y=True)
         rn = 0
         for splitter_type in ["best", "random"]:
             for criterion in ["entropy", "gini"]:
                 for criteria in [
-                    "min_distance",
                     "max_samples",
-                    "max_distance",
+                    "impurity",
                 ]:
                     tcl = self.build(
                         splitter_type=splitter_type,
@@ -219,8 +204,10 @@ class Splitter_test(unittest.TestCase):
                     dataset, computed = tcl.get_subspace(X, y, max_features=4)
                     # print(
                     #     "{},  # {:7s}{:8s}{:15s}".format(
-                    #         list(computed), splitter_type, criterion,
-                    #           criteria,
+                    #         list(computed),
+                    #         splitter_type,
+                    #         criterion,
+                    #         criteria,
                     #     )
                     # )
                     self.assertListEqual(expected, list(computed))

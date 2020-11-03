@@ -5,6 +5,7 @@ import warnings
 import numpy as np
 from sklearn.datasets import load_iris, load_wine
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.svm import LinearSVC
 
 from stree import Stree, Snode
 from .utils import load_dataset
@@ -41,23 +42,22 @@ class Stree_test(unittest.TestCase):
         _, count_u = np.unique(y_up, return_counts=True)
         #
         for i in unique_y:
-            number_down = count_d[i]
+            number_up = count_u[i]
             try:
-                number_up = count_u[i]
+                number_down = count_d[i]
             except IndexError:
-                number_up = 0
+                number_down = 0
             self.assertEqual(count_y[i], number_down + number_up)
         # Is the partition made the same as the prediction?
         # as the node is not a leaf...
         _, count_yp = np.unique(y_prediction, return_counts=True)
-        self.assertEqual(count_yp[0], y_up.shape[0])
-        self.assertEqual(count_yp[1], y_down.shape[0])
+        self.assertEqual(count_yp[1], y_up.shape[0])
+        self.assertEqual(count_yp[0], y_down.shape[0])
         self._check_tree(node.get_down())
         self._check_tree(node.get_up())
 
     def test_build_tree(self):
-        """Check if the tree is built the same way as predictions of models
-        """
+        """Check if the tree is built the same way as predictions of models"""
         warnings.filterwarnings("ignore")
         for kernel in self._kernels:
             clf = Stree(kernel=kernel, random_state=self._random_state)
@@ -99,20 +99,22 @@ class Stree_test(unittest.TestCase):
             self.assertListEqual(yp_line.tolist(), yp_once.tolist())
 
     def test_iterator_and_str(self):
-        """Check preorder iterator
-        """
+        """Check preorder iterator"""
         expected = [
-            "root feaures=(0, 1, 2) impurity=0.5000",
-            "root - Down feaures=(0, 1, 2) impurity=0.0671",
-            "root - Down - Down, <cgaf> - Leaf class=1 belief= 0.975989 "
-            "impurity=0.0469 counts=(array([0, 1]), array([ 17, 691]))",
-            "root - Down - Up feaures=(0, 1, 2) impurity=0.3967",
-            "root - Down - Up - Down, <cgaf> - Leaf class=1 belief= 0.750000 "
-            "impurity=0.3750 counts=(array([0, 1]), array([1, 3]))",
-            "root - Down - Up - Up, <pure> - Leaf class=0 belief= 1.000000 "
-            "impurity=0.0000 counts=(array([0]), array([7]))",
-            "root - Up, <cgaf> - Leaf class=0 belief= 0.928297 impurity=0.1331"
-            " counts=(array([0, 1]), array([725,  56]))",
+            "root feaures=(0, 1, 2) impurity=1.0000 counts=(array([0, 1]), arr"
+            "ay([750, 750]))",
+            "root - Down, <cgaf> - Leaf class=0 belief= 0.928297 impurity=0.37"
+            "22 counts=(array([0, 1]), array([725,  56]))",
+            "root - Up feaures=(0, 1, 2) impurity=0.2178 counts=(array([0, 1])"
+            ", array([ 25, 694]))",
+            "root - Up - Down feaures=(0, 1, 2) impurity=0.8454 counts=(array("
+            "[0, 1]), array([8, 3]))",
+            "root - Up - Down - Down, <pure> - Leaf class=0 belief= 1.000000 i"
+            "mpurity=0.0000 counts=(array([0]), array([7]))",
+            "root - Up - Down - Up, <cgaf> - Leaf class=1 belief= 0.750000 imp"
+            "urity=0.8113 counts=(array([0, 1]), array([1, 3]))",
+            "root - Up - Up, <cgaf> - Leaf class=1 belief= 0.975989 impurity=0"
+            ".1634 counts=(array([0, 1]), array([ 17, 691]))",
         ]
         computed = []
         expected_string = ""
@@ -188,44 +190,43 @@ class Stree_test(unittest.TestCase):
     def test_muticlass_dataset(self):
         datasets = {
             "Synt": load_dataset(random_state=self._random_state, n_classes=3),
-            "Iris": load_iris(return_X_y=True),
+            "Iris": load_wine(return_X_y=True),
         }
         outcomes = {
             "Synt": {
-                "max_samples linear": 0.9533333333333334,
-                "max_samples rbf": 0.836,
-                "max_samples poly": 0.9473333333333334,
-                "min_distance linear": 0.9533333333333334,
-                "min_distance rbf": 0.836,
-                "min_distance poly": 0.9473333333333334,
-                "max_distance linear": 0.9533333333333334,
-                "max_distance rbf": 0.836,
-                "max_distance poly": 0.9473333333333334,
+                "max_samples linear": 0.9606666666666667,
+                "max_samples rbf": 0.7133333333333334,
+                "max_samples poly": 0.49066666666666664,
+                "impurity linear": 0.9606666666666667,
+                "impurity rbf": 0.7133333333333334,
+                "impurity poly": 0.49066666666666664,
             },
             "Iris": {
-                "max_samples linear": 0.98,
-                "max_samples rbf": 1.0,
-                "max_samples poly": 1.0,
-                "min_distance linear": 0.98,
-                "min_distance rbf": 1.0,
-                "min_distance poly": 1.0,
-                "max_distance linear": 0.98,
-                "max_distance rbf": 1.0,
-                "max_distance poly": 1.0,
+                "max_samples linear": 1.0,
+                "max_samples rbf": 0.6910112359550562,
+                "max_samples poly": 0.6966292134831461,
+                "impurity linear": 1,
+                "impurity rbf": 0.6910112359550562,
+                "impurity poly": 0.6966292134831461,
             },
         }
+
         for name, dataset in datasets.items():
             px, py = dataset
-            for criteria in ["max_samples", "min_distance", "max_distance"]:
+            for criteria in ["max_samples", "impurity"]:
                 for kernel in self._kernels:
                     clf = Stree(
-                        C=1e4,
-                        max_iter=1e4,
+                        C=55,
+                        max_iter=1e5,
                         kernel=kernel,
                         random_state=self._random_state,
                     )
                     clf.fit(px, py)
                     outcome = outcomes[name][f"{criteria} {kernel}"]
+                    # print(
+                    #     f"{name} {criteria} {kernel} {outcome} {clf.score(px"
+                    #     ", py)}"
+                    # )
                     self.assertAlmostEqual(outcome, clf.score(px, py))
 
     def test_max_features(self):
@@ -297,7 +298,10 @@ class Stree_test(unittest.TestCase):
             0.9433333333333334,
         ]
         for kernel, accuracy_expected in zip(self._kernels, accuracies):
-            clf = Stree(random_state=self._random_state, kernel=kernel,)
+            clf = Stree(
+                random_state=self._random_state,
+                kernel=kernel,
+            )
             clf.fit(X, y)
             accuracy_score = clf.score(X, y)
             yp = clf.predict(X)
@@ -309,75 +313,7 @@ class Stree_test(unittest.TestCase):
         X, y = load_dataset(self._random_state)
         clf = Stree(random_state=self._random_state, max_features=2)
         clf.fit(X, y)
-        self.assertAlmostEqual(0.9426666666666667, clf.score(X, y))
-
-    def test_score_multi_class(self):
-        warnings.filterwarnings("ignore")
-        accuracies = [
-            0.8258427,  # Wine    linear min_distance
-            0.6741573,  # Wine    linear max_distance
-            0.8314607,  # Wine    linear max_samples
-            0.6629213,  # Wine    rbf   min_distance
-            1.0000000,  # Wine    rbf   max_distance
-            0.4044944,  # Wine    rbf   max_samples
-            0.9157303,  # Wine    poly  min_distance
-            1.0000000,  # Wine    poly  max_distance
-            0.7640449,  # Wine    poly  max_samples
-            0.9933333,  # Iris    linear min_distance
-            0.9666667,  # Iris    linear max_distance
-            0.9666667,  # Iris    linear max_samples
-            0.9800000,  # Iris    rbf   min_distance
-            0.9800000,  # Iris    rbf   max_distance
-            0.9800000,  # Iris    rbf   max_samples
-            1.0000000,  # Iris    poly  min_distance
-            1.0000000,  # Iris    poly  max_distance
-            1.0000000,  # Iris    poly  max_samples
-            0.8993333,  # Synthetic linear min_distance
-            0.6533333,  # Synthetic linear max_distance
-            0.9313333,  # Synthetic linear max_samples
-            0.8320000,  # Synthetic rbf   min_distance
-            0.6660000,  # Synthetic rbf   max_distance
-            0.8320000,  # Synthetic rbf   max_samples
-            0.6066667,  # Synthetic poly  min_distance
-            0.6840000,  # Synthetic poly  max_distance
-            0.6340000,  # Synthetic poly  max_samples
-        ]
-        datasets = [
-            ("Wine", load_wine(return_X_y=True)),
-            ("Iris", load_iris(return_X_y=True)),
-            (
-                "Synthetic",
-                load_dataset(self._random_state, n_classes=3, n_features=5),
-            ),
-        ]
-        for dataset_name, dataset in datasets:
-            X, y = dataset
-            for kernel in self._kernels:
-                for criteria in [
-                    "min_distance",
-                    "max_distance",
-                    "max_samples",
-                ]:
-                    clf = Stree(
-                        C=17,
-                        random_state=self._random_state,
-                        kernel=kernel,
-                        split_criteria=criteria,
-                        degree=5,
-                        gamma="auto",
-                    )
-                    clf.fit(X, y)
-                    accuracy_score = clf.score(X, y)
-                    yp = clf.predict(X)
-                    accuracy_computed = np.mean(yp == y)
-                    # print(
-                    #     "{:.7f},  # {:7} {:5} {}".format(
-                    #         accuracy_score, dataset_name, kernel, criteria
-                    #     )
-                    # )
-                    accuracy_expected = accuracies.pop(0)
-                    self.assertEqual(accuracy_score, accuracy_computed)
-                    self.assertAlmostEqual(accuracy_expected, accuracy_score)
+        self.assertAlmostEqual(0.944, clf.score(X, y))
 
     def test_bogus_splitter_parameter(self):
         clf = Stree(splitter="duck")
@@ -407,10 +343,102 @@ class Stree_test(unittest.TestCase):
         original = weights_no_zero.copy()
         clf = Stree()
         clf.fit(X, y)
-        node = clf.train(X, y, weights, 1, "test",)
+        node = clf.train(
+            X,
+            y,
+            weights,
+            1,
+            "test",
+        )
         # if a class is lost with zero weights the patch adds epsilon
         self.assertListEqual(weights.tolist(), weights_epsilon)
         self.assertListEqual(node._sample_weight.tolist(), weights_epsilon)
         # zero weights are ok when they don't erase a class
         _ = clf.train(X, y, weights_no_zero, 1, "test")
         self.assertListEqual(weights_no_zero.tolist(), original.tolist())
+
+    def test_multiclass_classifier_integrity(self):
+        """Checks if the multiclass operation is done right"""
+        X, y = load_iris(return_X_y=True)
+        clf = Stree(random_state=0)
+        clf.fit(X, y)
+        score = clf.score(X, y)
+        # Check accuracy of the whole model
+        self.assertAlmostEquals(0.98, score, 5)
+        svm = LinearSVC(random_state=0)
+        svm.fit(X, y)
+        self.assertAlmostEquals(0.9666666666666667, svm.score(X, y), 5)
+        data = svm.decision_function(X)
+        expected = [
+            0.4444444444444444,
+            0.35777777777777775,
+            0.4569777777777778,
+        ]
+        ty = data.copy()
+        ty[data <= 0] = 0
+        ty[data > 0] = 1
+        ty = ty.astype(int)
+        for i in range(3):
+            self.assertAlmostEquals(
+                expected[i],
+                clf.splitter_._gini(ty[:, i]),
+            )
+        # 1st Branch
+        # up has to have 50 samples of class 0
+        # down should have 100 [50, 50]
+        up = data[:, 2] > 0
+        resup = np.unique(y[up], return_counts=True)
+        resdn = np.unique(y[~up], return_counts=True)
+        self.assertListEqual([1, 2], resup[0].tolist())
+        self.assertListEqual([3, 50], resup[1].tolist())
+        self.assertListEqual([0, 1], resdn[0].tolist())
+        self.assertListEqual([50, 47], resdn[1].tolist())
+        # 2nd Branch
+        # up  should have 53 samples of classes [1, 2] [3, 50]
+        # down shoud have 47 samples of class 1
+        node_up = clf.tree_.get_down().get_up()
+        node_dn = clf.tree_.get_down().get_down()
+        resup = np.unique(node_up._y, return_counts=True)
+        resdn = np.unique(node_dn._y, return_counts=True)
+        self.assertListEqual([1, 2], resup[0].tolist())
+        self.assertListEqual([3, 50], resup[1].tolist())
+        self.assertListEqual([1], resdn[0].tolist())
+        self.assertListEqual([47], resdn[1].tolist())
+
+    def test_score_multiclass_rbf(self):
+        X, y = load_dataset(
+            random_state=self._random_state,
+            n_classes=3,
+            n_features=5,
+            n_samples=500,
+        )
+        clf = Stree(kernel="rbf", random_state=self._random_state)
+        self.assertEqual(0.824, clf.fit(X, y).score(X, y))
+        X, y = load_wine(return_X_y=True)
+        self.assertEqual(0.6741573033707865, clf.fit(X, y).score(X, y))
+
+    def test_score_multiclass_poly(self):
+        X, y = load_dataset(
+            random_state=self._random_state,
+            n_classes=3,
+            n_features=5,
+            n_samples=500,
+        )
+        clf = Stree(
+            kernel="poly", random_state=self._random_state, C=10, degree=5
+        )
+        self.assertEqual(0.786, clf.fit(X, y).score(X, y))
+        X, y = load_wine(return_X_y=True)
+        self.assertEqual(0.702247191011236, clf.fit(X, y).score(X, y))
+
+    def test_score_multiclass_linear(self):
+        X, y = load_dataset(
+            random_state=self._random_state,
+            n_classes=3,
+            n_features=5,
+            n_samples=1500,
+        )
+        clf = Stree(kernel="linear", random_state=self._random_state)
+        self.assertEqual(0.9533333333333334, clf.fit(X, y).score(X, y))
+        X, y = load_wine(return_X_y=True)
+        self.assertEqual(0.9550561797752809, clf.fit(X, y).score(X, y))

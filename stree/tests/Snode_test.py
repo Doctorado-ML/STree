@@ -40,12 +40,13 @@ class Snode_test(unittest.TestCase):
             # Check Class
             class_computed = classes[card == max_card]
             self.assertEqual(class_computed, node._class)
+            # Check Partition column
+            self.assertEqual(node._partition_column, -1)
 
         check_leave(self._clf.tree_)
 
     def test_nodes_coefs(self):
-        """Check if the nodes of the tree have the right attributes filled
-        """
+        """Check if the nodes of the tree have the right attributes filled"""
 
         def run_tree(node: Snode):
             if node._belief < 1:
@@ -54,16 +55,19 @@ class Snode_test(unittest.TestCase):
                 self.assertIsNotNone(node._clf.coef_)
             if node.is_leaf():
                 return
-            run_tree(node.get_down())
             run_tree(node.get_up())
+            run_tree(node.get_down())
 
-        run_tree(self._clf.tree_)
+        model = Stree(self._random_state)
+        model.fit(*load_dataset(self._random_state, 3, 4))
+        run_tree(model.tree_)
 
     def test_make_predictor_on_leaf(self):
         test = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], [], 0.0, "test")
         test.make_predictor()
         self.assertEqual(1, test._class)
         self.assertEqual(0.75, test._belief)
+        self.assertEqual(-1, test._partition_column)
 
     def test_make_predictor_on_not_leaf(self):
         test = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], [], 0.0, "test")
@@ -71,11 +75,14 @@ class Snode_test(unittest.TestCase):
         test.make_predictor()
         self.assertIsNone(test._class)
         self.assertEqual(0, test._belief)
+        self.assertEqual(-1, test._partition_column)
+        self.assertEqual(-1, test.get_up()._partition_column)
 
     def test_make_predictor_on_leaf_bogus_data(self):
         test = Snode(None, [1, 2, 3, 4], [], [], 0.0, "test")
         test.make_predictor()
         self.assertIsNone(test._class)
+        self.assertEqual(-1, test._partition_column)
 
     def test_copy_node(self):
         px = [1, 2, 3, 4]
@@ -86,3 +93,4 @@ class Snode_test(unittest.TestCase):
         self.assertListEqual(computed._y, py)
         self.assertEqual("test", computed._title)
         self.assertIsInstance(computed._clf, Stree)
+        self.assertEqual(test._partition_column, computed._partition_column)
