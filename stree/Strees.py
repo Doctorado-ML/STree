@@ -11,7 +11,6 @@ import numbers
 import random
 import warnings
 from math import log
-from itertools import combinations
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.svm import SVC, LinearSVC
@@ -253,19 +252,26 @@ class Splitter:
                 selected = feature_set
         return selected if selected is not None else feature_set
 
+    @staticmethod
+    def _generate_spaces(features: int, max_features: int) -> list:
+        comb = set()
+        # Generate at most 3 combinations
+        set_length = 1 if max_features == features else 3
+        while len(comb) < set_length:
+            comb.add(
+                tuple(sorted(random.sample(range(features), max_features)))
+            )
+        return list(comb)
+
     def _get_subspaces_set(
         self, dataset: np.array, labels: np.array, max_features: int
     ) -> np.array:
-        features = range(dataset.shape[1])
-        features_sets = list(combinations(features, max_features))
+        features_sets = self._generate_spaces(dataset.shape[1], max_features)
         if len(features_sets) > 1:
             if self._splitter_type == "random":
                 index = random.randint(0, len(features_sets) - 1)
                 return features_sets[index]
             else:
-                # get only 3 sets at most
-                if len(features_sets) > 3:
-                    features_sets = random.sample(features_sets, 3)
                 return self._select_best_set(dataset, labels, features_sets)
         else:
             return features_sets[0]

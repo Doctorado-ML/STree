@@ -176,14 +176,14 @@ class Splitter_test(unittest.TestCase):
 
     def test_splitter_parameter(self):
         expected_values = [
-            [0, 1, 7, 9],  # best   entropy max_samples
-            [3, 8, 10, 11],  # best   entropy impurity
-            [0, 2, 8, 12],  # best   gini    max_samples
-            [1, 2, 5, 12],  # best   gini    impurity
-            [1, 2, 5, 10],  # random entropy max_samples
-            [4, 8, 9, 12],  # random entropy impurity
-            [3, 9, 11, 12],  # random gini    max_samples
-            [1, 5, 6, 9],  # random gini    impurity
+            [0, 4, 6, 12],  # best   entropy max_samples
+            [1, 3, 6, 10],  # best   entropy impurity
+            [0, 1, 5, 11],  # best   gini    max_samples
+            [0, 1, 7, 9],  # best   gini    impurity
+            [0, 4, 6, 8],  # random entropy max_samples
+            [4, 5, 8, 9],  # random entropy impurity
+            [0, 4, 10, 12],  # random gini    max_samples
+            [1, 5, 8, 12],  # random gini    impurity
         ]
         X, y = load_wine(return_X_y=True)
         rn = 0
