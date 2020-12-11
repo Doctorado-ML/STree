@@ -166,6 +166,14 @@ class Splitter_test(unittest.TestCase):
         self.assertEqual((6,), computed_data.shape)
         self.assertListEqual(expected.tolist(), computed_data.tolist())
 
+    def test_generate_subspaces(self):
+        features = 250
+        for max_features in range(2, features):
+            num = len(Splitter._generate_spaces(features, max_features))
+            self.assertEqual(5, num)
+        self.assertEqual(3, len(Splitter._generate_spaces(3, 2)))
+        self.assertEqual(4, len(Splitter._generate_spaces(4, 3)))
+
     def test_best_splitter_few_sets(self):
         X, y = load_iris(return_X_y=True)
         X = np.delete(X, 3, 1)
@@ -176,14 +184,14 @@ class Splitter_test(unittest.TestCase):
 
     def test_splitter_parameter(self):
         expected_values = [
-            [0, 4, 6, 12],  # best   entropy max_samples
+            [1, 4, 9, 12],  # best   entropy max_samples
             [1, 3, 6, 10],  # best   entropy impurity
-            [0, 1, 5, 11],  # best   gini    max_samples
-            [0, 1, 7, 9],  # best   gini    impurity
-            [0, 4, 6, 8],  # random entropy max_samples
-            [4, 5, 8, 9],  # random entropy impurity
-            [0, 4, 10, 12],  # random gini    max_samples
-            [1, 5, 8, 12],  # random gini    impurity
+            [6, 8, 10, 12],  # best   gini    max_samples
+            [7, 8, 10, 11],  # best   gini    impurity
+            [0, 3, 8, 12],  # random entropy max_samples
+            [0, 3, 9, 11],  # random entropy impurity
+            [0, 4, 7, 12],  # random gini    max_samples
+            [0, 2, 5, 6],  # random gini    impurity
         ]
         X, y = load_wine(return_X_y=True)
         rn = 0

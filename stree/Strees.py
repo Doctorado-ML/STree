@@ -10,7 +10,8 @@ import os
 import numbers
 import random
 import warnings
-from math import log
+from math import log, factorial
+from typing import Optional
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.svm import SVC, LinearSVC
@@ -255,8 +256,14 @@ class Splitter:
     @staticmethod
     def _generate_spaces(features: int, max_features: int) -> list:
         comb = set()
-        # Generate at most 3 combinations
-        set_length = 1 if max_features == features else 3
+        # Generate at most 5 combinations
+        if max_features == features:
+            set_length = 1
+        else:
+            number = factorial(features) / (
+                factorial(max_features) * factorial(features - max_features)
+            )
+            set_length = min(5, number)
         while len(comb) < set_length:
             comb.add(
                 tuple(sorted(random.sample(range(features), max_features)))
@@ -494,7 +501,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         sample_weight: np.ndarray,
         depth: int,
         title: str,
-    ) -> Snode:
+    ) -> Optional[Snode]:
         """Recursive function to split the original dataset into predictor
         nodes (leaves)
 
