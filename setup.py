@@ -30,7 +30,7 @@ setuptools.setup(
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
         "Intended Audience :: Science/Research",
     ],
-    install_requires=["scikit-learn>=0.23.0", "numpy", "ipympl"],
+    install_requires=["scikit-learn==0.23.2", "numpy", "ipympl"],
     test_suite="stree.tests",
     zip_safe=False,
 )
