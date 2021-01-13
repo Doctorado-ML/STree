@@ -286,7 +286,18 @@ class Splitter:
     def get_subspace(
         self, dataset: np.array, labels: np.array, max_features: int
     ) -> tuple:
-        """Return the best/random subspace to make a split"""
+        """Return a subspace of the selected dataset of max_features length.
+        Depending on hyperparmeter
+
+        :param dataset: [description]
+        :type dataset: np.array
+        :param labels: [description]
+        :type labels: np.array
+        :param max_features: [description]
+        :type max_features: int
+        :return: [description]
+        :rtype: tuple
+        """
         indices = self._get_subspaces_set(dataset, labels, max_features)
         return dataset[:, indices], indices
 
@@ -328,7 +339,7 @@ class Splitter:
 
     def partition(self, samples: np.array, node: Snode, train: bool):
         """Set the criteria to split arrays. Compute the indices of the samples
-        that should go to one side of the tree (down)
+        that should go to one side of the tree (up)
 
         """
         # data contains the distances of every sample to every class hyperplane
@@ -428,6 +439,7 @@ class Stree(BaseEstimator, ClassifierMixin):
 
     def _more_tags(self) -> dict:
         """Required by sklearn to supply features of the classifier
+        make mandatory the labels array
 
         :return: the tag required
         :rtype: dict
