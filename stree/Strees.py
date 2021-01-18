@@ -3,7 +3,7 @@ __author__ = "Ricardo Montañana Gómez"
 __copyright__ = "Copyright 2020, Ricardo Montañana Gómez"
 __license__ = "MIT"
 __version__ = "0.9"
-Build an oblique tree classifier based on SVM Trees
+Build an oblique tree classifier based on SVM nodes
 """
 
 import os
@@ -197,6 +197,18 @@ class Splitter:
 
     @staticmethod
     def _entropy(y: np.array) -> float:
+        """Compute entropy of a labels set
+
+        Parameters
+        ----------
+        y : np.array
+            set of labels
+
+        Returns
+        -------
+        float
+            entropy
+        """
         n_labels = len(y)
         if n_labels <= 1:
             return 0
@@ -215,6 +227,22 @@ class Splitter:
     def information_gain(
         self, labels: np.array, labels_up: np.array, labels_dn: np.array
     ) -> float:
+        """Compute information gain of a split candidate
+
+        Parameters
+        ----------
+        labels : np.array
+            labels of the dataset
+        labels_up : np.array
+            labels of one side
+        labels_dn : np.array
+            labels on the other side
+
+        Returns
+        -------
+        float
+            information gain
+        """
         imp_prev = self.criterion_function(labels)
         card_up = card_dn = imp_up = imp_dn = 0
         if labels_up is not None:
@@ -255,6 +283,20 @@ class Splitter:
 
     @staticmethod
     def _generate_spaces(features: int, max_features: int) -> list:
+        """Generate at most 5 feature random combinations
+
+        Parameters
+        ----------
+        features : int
+            number of features in each combination
+        max_features : int
+            number of features in dataset
+
+        Returns
+        -------
+        list
+            list with up to 5 combination of features randomly selected
+        """
         comb = set()
         # Generate at most 5 combinations
         if max_features == features:
@@ -273,6 +315,24 @@ class Splitter:
     def _get_subspaces_set(
         self, dataset: np.array, labels: np.array, max_features: int
     ) -> np.array:
+        """Compute the indices of the features selected by splitter depending
+        on the self._splitter_type hyper parameter
+
+        Parameters
+        ----------
+        dataset : np.array
+            array of samples
+        labels : np.array
+            labels of the dataset
+        max_features : int
+            number of features of the subspace
+            (<= number of features in dataset)
+
+        Returns
+        -------
+        np.array
+            indices of the features selected
+        """
         features_sets = self._generate_spaces(dataset.shape[1], max_features)
         if len(features_sets) > 1:
             if self._splitter_type == "random":
@@ -289,14 +349,20 @@ class Splitter:
         """Return a subspace of the selected dataset of max_features length.
         Depending on hyperparmeter
 
-        :param dataset: [description]
-        :type dataset: np.array
-        :param labels: [description]
-        :type labels: np.array
-        :param max_features: [description]
-        :type max_features: int
-        :return: [description]
-        :rtype: tuple
+        Parameters
+        ----------
+        dataset : np.array
+            array of samples (# samples, # features)
+        labels : np.array
+            labels of the dataset
+        max_features : int
+            number of features to form the subspace
+
+        Returns
+        -------
+        tuple
+            tuple with the dataset with only the features selected  and the
+            indices of the features selected
         """
         indices = self._get_subspaces_set(dataset, labels, max_features)
         return dataset[:, indices], indices
@@ -304,12 +370,17 @@ class Splitter:
     def _impurity(self, data: np.array, y: np.array) -> np.array:
         """return column of dataset to be taken into account to split dataset
 
-        :param data: distances to hyper plane of every class
-        :type data: np.array (m, n_classes)
-        :param y: vector of labels (classes)
-        :type y: np.array (m,)
-        :return: column of dataset to be taken into account to split dataset
-        :rtype: int
+        Parameters
+        ----------
+        data : np.array
+            distances to hyper plane of every class
+        y : np.array
+            vector of labels (classes)
+
+        Returns
+        -------
+        np.array
+            column of dataset to be taken into account to split dataset
         """
         max_gain = 0
         selected = -1
@@ -326,12 +397,17 @@ class Splitter:
     def _max_samples(data: np.array, y: np.array) -> np.array:
         """return column of dataset to be taken into account to split dataset
 
-        :param data: distances to hyper plane of every class
-        :type data: np.array (m, n_classes)
-        :param y: vector of labels (classes)
-        :type y: np.array (m,)
-        :return: column of dataset to be taken into account to split dataset
-        :rtype: int
+        Parameters
+        ----------
+        data : np.array
+            distances to hyper plane of every class
+        y : np.array
+            column of dataset to be taken into account to split dataset
+
+        Returns
+        -------
+        np.array
+            column of dataset to be taken into account to split dataset
         """
         # select the class with max number of samples
         _, samples = np.unique(y, return_counts=True)
@@ -340,7 +416,6 @@ class Splitter:
     def partition(self, samples: np.array, node: Snode, train: bool):
         """Set the criteria to split arrays. Compute the indices of the samples
         that should go to one side of the tree (up)
-
         """
         # data contains the distances of every sample to every class hyperplane
         # array of (m, nc) nc = # classes
@@ -368,15 +443,18 @@ class Splitter:
         self._up = data > 0
 
     def part(self, origin: np.array) -> list:
-        """Split an array in two based on indices (down) and its complement
-        partition has to be called first to establish down indices
+        """Split an array in two based on indices (self._up) and its complement
+        partition has to be called first to establish up indices
 
-        :param origin: dataset to split
-        :type origin: np.array
-        :param down: indices to use to split array
-        :type down: np.array
-        :return: list with two splits of the array
-        :rtype: list
+        Parameters
+        ----------
+        origin : np.array
+            dataset to split
+
+        Returns
+        -------
+        list
+            list with two splits of the array
         """
         down = ~self._up
         return [
@@ -388,13 +466,18 @@ class Splitter:
     def _distances(node: Snode, data: np.ndarray) -> np.array:
         """Compute distances of the samples to the hyperplane of the node
 
-        :param node: node containing the svm classifier
-        :type node: Snode
-        :param data: samples to find out distance to hyperplane
-        :type data: np.ndarray
-        :return: array of shape (m, nc) with the distances of every sample to
-        the hyperplane of every class. nc = # of classes
-        :rtype: np.array
+        Parameters
+        ----------
+        node : Snode
+            node containing the svm classifier
+        data : np.ndarray
+            samples to compute distance to hyperplane
+
+        Returns
+        -------
+        np.array
+            array of shape (m, nc) with the distances of every sample to
+            the hyperplane of every class. nc = # of classes
         """
         return node._clf.decision_function(data[:, node._features])
 
@@ -451,16 +534,19 @@ class Stree(BaseEstimator, ClassifierMixin):
     ) -> "Stree":
         """Build the tree based on the dataset of samples and its labels
 
-        :param X: dataset of samples to make predictions
-        :type X: np.array
-        :param y: samples labels
-        :type y: np.array
-        :param sample_weight: weights of the samples. Rescale C per sample.
-        Hi' weights force the classifier to put more emphasis on these points
-        :type sample_weight: np.array optional
-        :raises ValueError: if parameters C or max_depth are out of bounds
-        :return: itself to be able to chain actions: fit().predict() ...
-        :rtype: Stree
+        Returns
+        -------
+        Stree
+            itself to be able to chain actions: fit().predict() ...
+
+        Raises
+        ------
+        ValueError
+            if C < 0
+        ValueError
+            if max_depth < 1
+        ValueError
+            if all samples have 0 or negative weights
         """
         # Check parameters are Ok.
         if self.C < 0:
@@ -483,6 +569,10 @@ class Stree(BaseEstimator, ClassifierMixin):
         sample_weight = _check_sample_weight(
             sample_weight, X, dtype=np.float64
         )
+        if not any(sample_weight):
+            raise ValueError(
+                "Invalid input - all samples have zero or negative weights."
+            )
         check_classification_targets(y)
         # Initialize computed parameters
         self.splitter_ = Splitter(
@@ -504,6 +594,8 @@ class Stree(BaseEstimator, ClassifierMixin):
         self.max_features_ = self._initialize_max_features()
         self.tree_ = self.train(X, y, sample_weight, 1, "root")
         self._build_predictor()
+        self.X_ = X
+        self.y_ = y
         return self
 
     def train(
@@ -517,19 +609,23 @@ class Stree(BaseEstimator, ClassifierMixin):
         """Recursive function to split the original dataset into predictor
         nodes (leaves)
 
-        :param X: samples dataset
-        :type X: np.ndarray
-        :param y: samples labels
-        :type y: np.ndarray
-        :param sample_weight: weight of samples. Rescale C per sample.
-        Hi weights force the classifier to put more emphasis on these points.
-        :type sample_weight: np.ndarray
-        :param depth: actual depth in the tree
-        :type depth: int
-        :param title: description of the node
-        :type title: str
-        :return: binary tree
-        :rtype: Snode
+        Parameters
+        ----------
+        X : np.ndarray
+            samples dataset
+        y : np.ndarray
+            samples labels
+        sample_weight : np.ndarray
+            weight of samples. Rescale C per sample.
+        depth : int
+            actual depth in the tree
+        title : str
+            description of the node
+
+        Returns
+        -------
+        Optional[Snode]
+            binary tree
         """
         if depth > self.__max_depth:
             return None
@@ -614,12 +710,17 @@ class Stree(BaseEstimator, ClassifierMixin):
     def _reorder_results(y: np.array, indices: np.array) -> np.array:
         """Reorder an array based on the array of indices passed
 
-        :param y: data untidy
-        :type y: np.array
-        :param indices: indices used to set order
-        :type indices: np.array
-        :return: array y ordered
-        :rtype: np.array
+        Parameters
+        ----------
+        y : np.array
+            data untidy
+        indices : np.array
+            indices used to set order
+
+        Returns
+        -------
+        np.array
+            array y ordered
         """
         # return array of same type given in y
         y_ordered = y.copy()
@@ -631,10 +732,22 @@ class Stree(BaseEstimator, ClassifierMixin):
     def predict(self, X: np.array) -> np.array:
         """Predict labels for each sample in dataset passed
 
-        :param X: dataset of samples
-        :type X: np.array
-        :return: array of labels
-        :rtype: np.array
+        Parameters
+        ----------
+        X : np.array
+            dataset of samples
+
+        Returns
+        -------
+        np.array
+            array of labels
+
+        Raises
+        ------
+        ValueError
+            if dataset with inconsistent number of features
+        NotFittedError
+            if model is not fitted
         """
 
         def predict_class(
@@ -676,15 +789,19 @@ class Stree(BaseEstimator, ClassifierMixin):
     ) -> float:
         """Compute accuracy of the prediction
 
-        :param X: dataset of samples to make predictions
-        :type X: np.array
-        :param y_true: samples labels
-        :type y_true: np.array
-        :param sample_weight: weights of the samples. Rescale C per sample.
-        Hi' weights force the classifier to put more emphasis on these points
-        :type sample_weight: np.array optional
-        :return: accuracy of the prediction
-        :rtype: float
+        Parameters
+        ----------
+        X : np.array
+            dataset of samples to make predictions
+        y : np.array
+            samples labels
+        sample_weight : np.array, optional
+            weights of the samples. Rescale C per sample, by default None
+
+        Returns
+        -------
+        float
+            accuracy of the prediction
         """
         # sklearn check
         check_is_fitted(self)
@@ -701,8 +818,10 @@ class Stree(BaseEstimator, ClassifierMixin):
         """Create an iterator to be able to visit the nodes of the tree in
         preorder, can make a list with all the nodes in preorder
 
-        :return: an iterator, can for i in... and list(...)
-        :rtype: Siterator
+        Returns
+        -------
+        Siterator
+            an iterator, can for i in... and list(...)
         """
         try:
             tree = self.tree_
@@ -713,8 +832,10 @@ class Stree(BaseEstimator, ClassifierMixin):
     def __str__(self) -> str:
         """String representation of the tree
 
-        :return: description of nodes in the tree in preorder
-        :rtype: str
+        Returns
+        -------
+        str
+            description of nodes in the tree in preorder
         """
         output = ""
         for i in self:

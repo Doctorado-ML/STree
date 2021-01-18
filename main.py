@@ -8,7 +8,7 @@ random_state = 1
 X, y = load_iris(return_X_y=True)
 
 Xtrain, Xtest, ytrain, ytest = train_test_split(
-    X, y, test_size=0.2, random_state=random_state
+    X, y, test_size=0.3, random_state=random_state
 )
 
 now = time.time()
