@@ -629,6 +629,12 @@ class Stree(BaseEstimator, ClassifierMixin):
         """
         if depth > self.__max_depth:
             return None
+        # Mask samples with 0 weight
+        if any(sample_weight == 0):
+            indices_zero = sample_weight == 0
+            X = X[~indices_zero, :]
+            y = y[~indices_zero]
+            sample_weight = sample_weight[~indices_zero]
         if np.unique(y).shape[0] == 1:
             # only 1 class => pure dataset
             return Snode(
@@ -643,14 +649,6 @@ class Stree(BaseEstimator, ClassifierMixin):
         # Train the model
         clf = self._build_clf()
         Xs, features = self.splitter_.get_subspace(X, y, self.max_features_)
-        # solve WARNING: class label 0 specified in weight is not found
-        # in bagging
-        if any(sample_weight == 0):
-            indices = sample_weight == 0
-            y_next = y[~indices]
-            # touch weights if removing any class
-            if np.unique(y_next).shape[0] != self.n_classes_:
-                sample_weight += 1e-5
         clf.fit(Xs, y, sample_weight=sample_weight)
         impurity = self.splitter_.partition_impurity(y)
         node = Snode(clf, X, y, features, impurity, title, sample_weight)

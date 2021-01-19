@@ -413,39 +413,29 @@ class Stree_test(unittest.TestCase):
         with self.assertRaises(ValueError):
             Stree().fit(X, y, np.zeros(len(y)))
 
-    def test_weights_removing_class(self):
-        # This patch solves an stderr message from sklearn svm lib
-        # "WARNING: class label x specified in weight is not found"
+    def test_mask_samples_weighted_zero(self):
         X = np.array(
             [
-                [0.1, 0.1],
-                [0.1, 0.2],
-                [0.2, 0.1],
-                [5, 6],
-                [8, 9],
-                [6, 7],
-                [0.2, 0.2],
+                [1, 1],
+                [1, 1],
+                [1, 1],
+                [2, 2],
+                [2, 2],
+                [2, 2],
+                [3, 3],
+                [3, 3],
+                [3, 3],
             ]
         )
-        y = np.array([0, 0, 0, 1, 1, 1, 0])
-        epsilon = 1e-5
-        weights = [1, 1, 1, 0, 0, 0, 1]
-        weights = np.array(weights, dtype="float64")
-        weights_epsilon = [x + epsilon for x in weights]
-        weights_no_zero = np.array([1, 1, 1, 0, 0, 2, 1])
-        original = weights_no_zero.copy()
-        clf = Stree()
-        clf.fit(X, y)
-        node = clf.train(
-            X,
-            y,
-            weights,
-            1,
-            "test",
-        )
-        # if a class is lost with zero weights the patch adds epsilon
-        self.assertListEqual(weights.tolist(), weights_epsilon)
-        self.assertListEqual(node._sample_weight.tolist(), weights_epsilon)
-        # zero weights are ok when they don't erase a class
-        _ = clf.train(X, y, weights_no_zero, 1, "test")
-        self.assertListEqual(weights_no_zero.tolist(), original.tolist())
+        y = np.array([1, 1, 1, 2, 2, 2, 5, 5, 5])
+        yw = np.array([1, 1, 1, 5, 5, 5, 5, 5, 5])
+        w = [1, 1, 1, 0, 0, 0, 1, 1, 1]
+        model1 = Stree().fit(X, y)
+        model2 = Stree().fit(X, y, w)
+        predict1 = model1.predict(X)
+        predict2 = model2.predict(X)
+        self.assertListEqual(y.tolist(), predict1.tolist())
+        self.assertListEqual(yw.tolist(), predict2.tolist())
+        self.assertEqual(model1.score(X, y), 1)
+        self.assertAlmostEqual(model2.score(X, y), 0.66666667)
+        self.assertEqual(model2.score(X, y, w), 1)
