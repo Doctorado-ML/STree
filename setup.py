@@ -1,6 +1,6 @@
 import setuptools
 
-__version__ = "0.9rc6"
+__version__ = "1.0rc1"
 __author__ = "Ricardo Montañana Gómez"
 
 
@@ -30,7 +30,7 @@ setuptools.setup(
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
         "Intended Audience :: Science/Research",
     ],
-    install_requires=["scikit-learn==0.23.2", "numpy", "ipympl"],
+    install_requires=["scikit-learn", "numpy", "ipympl"],
     test_suite="stree.tests",
     zip_safe=False,
 )
