@@ -26,8 +26,10 @@ class Stree_test(unittest.TestCase):
         correct number of labels and its sons have the right number of elements
         in their dataset
 
-        Arguments:
-            node {Snode} -- node to check
+        Parameters
+        ----------
+        node : Snode
+            node to check
         """
         if node.is_leaf():
             return
@@ -320,43 +322,6 @@ class Stree_test(unittest.TestCase):
         with self.assertRaises(ValueError):
             clf.fit(*load_dataset())
 
-    def test_weights_removing_class(self):
-        # This patch solves an stderr message from sklearn svm lib
-        # "WARNING: class label x specified in weight is not found"
-        X = np.array(
-            [
-                [0.1, 0.1],
-                [0.1, 0.2],
-                [0.2, 0.1],
-                [5, 6],
-                [8, 9],
-                [6, 7],
-                [0.2, 0.2],
-            ]
-        )
-        y = np.array([0, 0, 0, 1, 1, 1, 0])
-        epsilon = 1e-5
-        weights = [1, 1, 1, 0, 0, 0, 1]
-        weights = np.array(weights, dtype="float64")
-        weights_epsilon = [x + epsilon for x in weights]
-        weights_no_zero = np.array([1, 1, 1, 0, 0, 2, 1])
-        original = weights_no_zero.copy()
-        clf = Stree()
-        clf.fit(X, y)
-        node = clf.train(
-            X,
-            y,
-            weights,
-            1,
-            "test",
-        )
-        # if a class is lost with zero weights the patch adds epsilon
-        self.assertListEqual(weights.tolist(), weights_epsilon)
-        self.assertListEqual(node._sample_weight.tolist(), weights_epsilon)
-        # zero weights are ok when they don't erase a class
-        _ = clf.train(X, y, weights_no_zero, 1, "test")
-        self.assertListEqual(weights_no_zero.tolist(), original.tolist())
-
     def test_multiclass_classifier_integrity(self):
         """Checks if the multiclass operation is done right"""
         X, y = load_iris(return_X_y=True)
@@ -442,3 +407,45 @@ class Stree_test(unittest.TestCase):
         self.assertEqual(0.9533333333333334, clf.fit(X, y).score(X, y))
         X, y = load_wine(return_X_y=True)
         self.assertEqual(0.9550561797752809, clf.fit(X, y).score(X, y))
+
+    def test_zero_all_sample_weights(self):
+        X, y = load_dataset(self._random_state)
+        with self.assertRaises(ValueError):
+            Stree().fit(X, y, np.zeros(len(y)))
+
+    def test_weights_removing_class(self):
+        # This patch solves an stderr message from sklearn svm lib
+        # "WARNING: class label x specified in weight is not found"
+        X = np.array(
+            [
+                [0.1, 0.1],
+                [0.1, 0.2],
+                [0.2, 0.1],
+                [5, 6],
+                [8, 9],
+                [6, 7],
+                [0.2, 0.2],
+            ]
+        )
+        y = np.array([0, 0, 0, 1, 1, 1, 0])
+        epsilon = 1e-5
+        weights = [1, 1, 1, 0, 0, 0, 1]
+        weights = np.array(weights, dtype="float64")
+        weights_epsilon = [x + epsilon for x in weights]
+        weights_no_zero = np.array([1, 1, 1, 0, 0, 2, 1])
+        original = weights_no_zero.copy()
+        clf = Stree()
+        clf.fit(X, y)
+        node = clf.train(
+            X,
+            y,
+            weights,
+            1,
+            "test",
+        )
+        # if a class is lost with zero weights the patch adds epsilon
+        self.assertListEqual(weights.tolist(), weights_epsilon)
+        self.assertListEqual(node._sample_weight.tolist(), weights_epsilon)
+        # zero weights are ok when they don't erase a class
+        _ = clf.train(X, y, weights_no_zero, 1, "test")
+        self.assertListEqual(weights_no_zero.tolist(), original.tolist())

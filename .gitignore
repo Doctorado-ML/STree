@@ -133,3 +133,4 @@ dmypy.json
 .pre-commit-config.yaml
 
 **.csv
+.virtual_documents
