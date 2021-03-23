@@ -635,6 +635,7 @@ class Stree(BaseEstimator, ClassifierMixin):
             X = X[~indices_zero, :]
             y = y[~indices_zero]
             sample_weight = sample_weight[~indices_zero]
+        self.depth_ = max(depth, self.depth_)
         if np.unique(y).shape[0] == 1:
             # only 1 class => pure dataset
             return Snode(
@@ -652,7 +653,6 @@ class Stree(BaseEstimator, ClassifierMixin):
         clf.fit(Xs, y, sample_weight=sample_weight)
         impurity = self.splitter_.partition_impurity(y)
         node = Snode(clf, X, y, features, impurity, title, sample_weight)
-        self.depth_ = max(depth, self.depth_)
         self.splitter_.partition(X, node, True)
         X_U, X_D = self.splitter_.part(X)
         y_u, y_d = self.splitter_.part(y)
@@ -668,8 +668,14 @@ class Stree(BaseEstimator, ClassifierMixin):
                 title=title + ", <cgaf>",
                 weight=sample_weight,
             )
-        node.set_up(self.train(X_U, y_u, sw_u, depth + 1, title + " - Up"))
-        node.set_down(self.train(X_D, y_d, sw_d, depth + 1, title + " - Down"))
+        node.set_up(
+            self.train(X_U, y_u, sw_u, depth + 1, title + f" - Up({depth+1})")
+        )
+        node.set_down(
+            self.train(
+                X_D, y_d, sw_d, depth + 1, title + f" - Down({depth+1})"
+            )
+        )
         return node
 
     def _build_predictor(self):
