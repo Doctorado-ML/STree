@@ -454,3 +454,22 @@ class Stree_test(unittest.TestCase):
         clf = Stree(random_state=self._random_state)
         clf.fit(X, y)
         self.assertEqual(7, clf.depth_)
+
+    def test_nodes_leaves(self):
+        X, y = load_dataset(
+            random_state=self._random_state,
+            n_classes=3,
+            n_features=5,
+            n_samples=1500,
+        )
+        clf = Stree(random_state=self._random_state)
+        clf.fit(X, y)
+        nodes, leaves = clf.nodes_leaves()
+        self.assertEqual(12, nodes)
+        self.assertEquals(13, leaves)
+        X, y = load_wine(return_X_y=True)
+        clf = Stree(random_state=self._random_state)
+        clf.fit(X, y)
+        nodes, leaves = clf.nodes_leaves()
+        self.assertEqual(8, nodes)
+        self.assertEquals(9, leaves)
