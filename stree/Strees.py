@@ -818,6 +818,23 @@ class Stree(BaseEstimator, ClassifierMixin):
         score = y_true == y_pred
         return _weighted_sum(score, sample_weight, normalize=True)
 
+    def nodes_leaves(self) -> tuple:
+        """Compute the number of nodes and leaves in the built tree
+
+        Returns
+        -------
+        [tuple]
+            tuple with the number of nodes and the number of leaves
+        """
+        nodes = 0
+        leaves = 0
+        for node in self:
+            if node.is_leaf():
+                leaves += 1
+            else:
+                nodes += 1
+        return nodes, leaves
+
     def __iter__(self) -> Siterator:
         """Create an iterator to be able to visit the nodes of the tree in
         preorder, can make a list with all the nodes in preorder
