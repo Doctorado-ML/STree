@@ -69,6 +69,31 @@ class Snode_test(unittest.TestCase):
         self.assertEqual(0.75, test._belief)
         self.assertEqual(-1, test._partition_column)
 
+    def test_set_title(self):
+        test = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], [], 0.0, "test")
+        self.assertEqual("test", test.get_title())
+        test.set_title("another")
+        self.assertEqual("another", test.get_title())
+
+    def test_set_classifier(self):
+        test = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], [], 0.0, "test")
+        clf = Stree()
+        self.assertIsNone(test.get_classifier())
+        test.set_classifier(clf)
+        self.assertEqual(clf, test.get_classifier())
+
+    def test_set_impurity(self):
+        test = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], [], 0.0, "test")
+        self.assertEqual(0.0, test.get_impurity())
+        test.set_impurity(54.7)
+        self.assertEqual(54.7, test.get_impurity())
+
+    def test_set_features(self):
+        test = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], [0, 1], 0.0, "test")
+        self.assertListEqual([0, 1], test.get_features())
+        test.set_features([1, 2])
+        self.assertListEqual([1, 2], test.get_features())
+
     def test_make_predictor_on_not_leaf(self):
         test = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], [], 0.0, "test")
         test.set_up(Snode(None, [1], [1], [], 0.0, "another_test"))
