@@ -460,9 +460,9 @@ class Splitter:
                 # in predcit time just use the column computed in train time
                 # is taking the classifier of class <col>
                 col = node.get_partition_column()
-                if col == -1:
-                    # No partition is producing information gain
-                    data = np.ones(data.shape)
+            if col == -1:
+                # No partition is producing information gain
+                data = np.ones(data.shape)
             data = data[:, col]
         self._up = data > 0
 
