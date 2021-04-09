@@ -473,3 +473,21 @@ class Stree_test(unittest.TestCase):
         nodes, leaves = clf.nodes_leaves()
         self.assertEqual(4, nodes)
         self.assertEquals(5, leaves)
+
+    def test_nodes_leaves_artificial(self):
+        n1 = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], [], 0.0, "test1")
+        n2 = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], [], 0.0, "test2")
+        n3 = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], [], 0.0, "test3")
+        n4 = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], [], 0.0, "test4")
+        n5 = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], [], 0.0, "test5")
+        n6 = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], [], 0.0, "test6")
+        n1.set_up(n2)
+        n2.set_up(n3)
+        n2.set_down(n4)
+        n3.set_up(n5)
+        n4.set_down(n6)
+        clf = Stree(random_state=self._random_state)
+        clf.tree_ = n1
+        nodes, leaves = clf.nodes_leaves()
+        self.assertEqual(4, nodes)
+        self.assertEqual(2, leaves)
