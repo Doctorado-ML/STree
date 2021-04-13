@@ -841,10 +841,9 @@ class Stree(BaseEstimator, ClassifierMixin):
         nodes = 0
         leaves = 0
         for node in self:
+            nodes += 1
             if node.is_leaf():
                 leaves += 1
-            else:
-                nodes += 1
         return nodes, leaves
 
     def __iter__(self) -> Siterator:
