@@ -296,6 +296,23 @@ class Splitter:
     def _select_best_set(
         self, dataset: np.array, labels: np.array, features_sets: list
     ) -> list:
+        """Return the best set of features among feature_sets, the criterion is
+        the information gain
+
+        Parameters
+        ----------
+        dataset : np.array
+            array of samples (# samples, # features)
+        labels : np.array
+            array of labels
+        features_sets : list
+            list of features sets to check
+
+        Returns
+        -------
+        list
+            best feature set
+        """
         max_gain = 0
         selected = None
         warnings.filterwarnings("ignore", category=ConvergenceWarning)
@@ -447,6 +464,15 @@ class Splitter:
     def partition(self, samples: np.array, node: Snode, train: bool):
         """Set the criteria to split arrays. Compute the indices of the samples
         that should go to one side of the tree (up)
+
+        Parameters
+        ----------
+        samples : np.array
+            array of samples (# samples, # features)
+        node : Snode
+            Node of the tree where partition is going to be made
+        train : bool
+            Train time - True / Test time - False
         """
         # data contains the distances of every sample to every class hyperplane
         # array of (m, nc) nc = # classes
