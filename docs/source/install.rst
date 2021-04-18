@@ -3,7 +3,7 @@ Install
 
 The main stable release
 
-``pip install stree```
+``pip install stree``
 
 or the last development branch
 
