@@ -12,19 +12,18 @@
 #
 import os
 import sys
-from typing import List
 
 sys.path.insert(0, os.path.abspath("../../stree/"))
 
 
 # -- Project information -----------------------------------------------------
 
-project = "stree"
-copyright = "2020, Ricardo Montañana Gómez"
+project = "STree"
+copyright = "2021, Ricardo Montañana Gómez"
 author = "Ricardo Montañana Gómez"
 
 # The full version, including alpha/beta/rc tags
-release = "0.9rc6"
+release = "1.0"
 
 
 # -- General configuration ---------------------------------------------------
@@ -32,7 +31,7 @@ release = "0.9rc6"
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["sphinx.ext.autodoc"]
+extensions = ["myst_parser", "sphinx.ext.autodoc"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -40,7 +39,7 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns: List[str] = []
+exclude_patterns = []
 
 
 # -- Options for HTML output -------------------------------------------------
