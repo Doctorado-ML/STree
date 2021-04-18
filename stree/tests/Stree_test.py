@@ -378,9 +378,14 @@ class Stree_test(unittest.TestCase):
             n_samples=500,
         )
         clf = Stree(kernel="rbf", random_state=self._random_state)
+        clf2 = Stree(
+            kernel="rbf", random_state=self._random_state, normalize=True
+        )
         self.assertEqual(0.768, clf.fit(X, y).score(X, y))
+        self.assertEqual(0.814, clf2.fit(X, y).score(X, y))
         X, y = load_wine(return_X_y=True)
         self.assertEqual(0.6741573033707865, clf.fit(X, y).score(X, y))
+        self.assertEqual(1.0, clf2.fit(X, y).score(X, y))
 
     def test_score_multiclass_poly(self):
         X, y = load_dataset(
@@ -392,9 +397,16 @@ class Stree_test(unittest.TestCase):
         clf = Stree(
             kernel="poly", random_state=self._random_state, C=10, degree=5
         )
+        clf2 = Stree(
+            kernel="poly",
+            random_state=self._random_state,
+            normalize=True,
+        )
         self.assertEqual(0.786, clf.fit(X, y).score(X, y))
+        self.assertEqual(0.818, clf2.fit(X, y).score(X, y))
         X, y = load_wine(return_X_y=True)
         self.assertEqual(0.702247191011236, clf.fit(X, y).score(X, y))
+        self.assertEqual(0.6067415730337079, clf2.fit(X, y).score(X, y))
 
     def test_score_multiclass_linear(self):
         X, y = load_dataset(
@@ -405,8 +417,14 @@ class Stree_test(unittest.TestCase):
         )
         clf = Stree(kernel="linear", random_state=self._random_state)
         self.assertEqual(0.9533333333333334, clf.fit(X, y).score(X, y))
+        # Check with context based standardization
+        clf2 = Stree(
+            kernel="linear", random_state=self._random_state, normalize=True
+        )
+        self.assertEqual(0.9526666666666667, clf2.fit(X, y).score(X, y))
         X, y = load_wine(return_X_y=True)
         self.assertEqual(0.9831460674157303, clf.fit(X, y).score(X, y))
+        self.assertEqual(1.0, clf2.fit(X, y).score(X, y))
 
     def test_zero_all_sample_weights(self):
         X, y = load_dataset(self._random_state)

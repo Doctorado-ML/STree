@@ -1,8 +1,6 @@
 import os
 import unittest
-
 import numpy as np
-
 from stree import Stree, Snode
 from .utils import load_dataset
 
@@ -119,3 +117,5 @@ class Snode_test(unittest.TestCase):
         self.assertEqual("test", computed._title)
         self.assertIsInstance(computed._clf, Stree)
         self.assertEqual(test._partition_column, computed._partition_column)
+        self.assertEqual(test._sample_weight, computed._sample_weight)
+        self.assertEqual(test._scaler, computed._scaler)
