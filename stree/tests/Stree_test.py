@@ -484,13 +484,13 @@ class Stree_test(unittest.TestCase):
         clf.fit(X, y)
         nodes, leaves = clf.nodes_leaves()
         self.assertEqual(25, nodes)
-        self.assertEquals(13, leaves)
+        self.assertEqual(13, leaves)
         X, y = load_wine(return_X_y=True)
         clf = Stree(random_state=self._random_state)
         clf.fit(X, y)
         nodes, leaves = clf.nodes_leaves()
         self.assertEqual(9, nodes)
-        self.assertEquals(5, leaves)
+        self.assertEqual(5, leaves)
 
     def test_nodes_leaves_artificial(self):
         n1 = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], [], 0.0, "test1")

@@ -144,12 +144,11 @@ class Snode:
                 f"{self._belief: .6f} impurity={self._impurity:.4f} "
                 f"counts={count_values}"
             )
-        else:
-            return (
-                f"{self._title} feaures={self._features} impurity="
-                f"{self._impurity:.4f} "
-                f"counts={count_values}"
-            )
+        return (
+            f"{self._title} feaures={self._features} impurity="
+            f"{self._impurity:.4f} "
+            f"counts={count_values}"
+        )
 
 
 class Siterator:
@@ -384,10 +383,8 @@ class Splitter:
             if self._splitter_type == "random":
                 index = random.randint(0, len(features_sets) - 1)
                 return features_sets[index]
-            else:
-                return self._select_best_set(dataset, labels, features_sets)
-        else:
-            return features_sets[0]
+            return self._select_best_set(dataset, labels, features_sets)
+        return features_sets[0]
 
     def get_subspace(
         self, dataset: np.array, labels: np.array, max_features: int
