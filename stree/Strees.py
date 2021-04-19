@@ -734,7 +734,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         return node
 
     def _build_clf(self):
-        """Build the correct classifier for the node"""
+        """Build the right classifier for the node"""
         return (
             LinearSVC(
                 max_iter=self.max_iter,
@@ -750,6 +750,7 @@ class Stree(BaseEstimator, ClassifierMixin):
                 C=self.C,
                 gamma=self.gamma,
                 degree=self.degree,
+                random_state=self.random_state,
             )
         )
 
