@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath("../../stree/"))
 # -- Project information -----------------------------------------------------
 
 project = "STree"
-copyright = "2021, Ricardo Montañana Gómez"
+copyright = "2020 - 2021, Ricardo Montañana Gómez"
 author = "Ricardo Montañana Gómez"
 
 # The full version, including alpha/beta/rc tags
