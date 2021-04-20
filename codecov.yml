@@ -1,8 +1,8 @@
-overage:
+coverage:
   status:
     project:
       default:
-        target: 90%
+        target: 100%
 comment:
   layout: "reach, diff, flags, files"
   behavior: default
