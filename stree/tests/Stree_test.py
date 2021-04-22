@@ -21,6 +21,21 @@ class Stree_test(unittest.TestCase):
     def setUp(cls):
         os.environ["TESTING"] = "1"
 
+    def test_valid_kernels(self):
+        valid_kernels = ["linear", "rbf", "poly", "sigmoid"]
+        X, y = load_dataset()
+        for kernel in valid_kernels:
+            clf = Stree(kernel=kernel)
+            clf.fit(X, y)
+            self.assertIsNotNone(clf.tree_)
+
+    def test_bogus_kernel(self):
+        kernel = "other"
+        X, y = load_dataset()
+        clf = Stree(kernel=kernel)
+        with self.assertRaises(ValueError):
+            clf.fit(X, y)
+
     def _check_tree(self, node: Snode):
         """Check recursively that the nodes that are not leaves have the
         correct number of labels and its sons have the right number of elements

@@ -619,7 +619,9 @@ class Stree(BaseEstimator, ClassifierMixin):
                 f"Maximum depth has to be greater than 1... got (max_depth=\
                     {self.max_depth})"
             )
-
+        kernels = ["linear", "rbf", "poly", "sigmoid"]
+        if self.kernel not in kernels:
+            raise ValueError(f"Kernel {self.kernel} not in {kernels}")
         check_classification_targets(y)
         X, y = check_X_y(X, y)
         sample_weight = _check_sample_weight(
