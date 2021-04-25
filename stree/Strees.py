@@ -1,9 +1,5 @@
 """
-__author__ = "Ricardo Montañana Gómez"
-__copyright__ = "Copyright 2020, Ricardo Montañana Gómez"
-__license__ = "MIT"
-__version__ = "0.9"
-Build an oblique tree classifier based on SVM nodes
+Oblique decision tree classifier based on SVM nodes
 """
 
 import os
