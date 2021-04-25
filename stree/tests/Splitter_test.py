@@ -6,6 +6,7 @@ import numpy as np
 from sklearn.svm import SVC
 from sklearn.datasets import load_wine, load_iris
 from stree import Splitter
+from .utils import load_dataset
 
 
 class Splitter_test(unittest.TestCase):
@@ -17,7 +18,7 @@ class Splitter_test(unittest.TestCase):
     def build(
         clf=SVC,
         min_samples_split=0,
-        splitter_type="random",
+        feature_select="random",
         criterion="gini",
         criteria="max_samples",
         random_state=None,
@@ -25,7 +26,7 @@ class Splitter_test(unittest.TestCase):
         return Splitter(
             clf=clf(random_state=random_state, kernel="rbf"),
             min_samples_split=min_samples_split,
-            splitter_type=splitter_type,
+            feature_select=feature_select,
             criterion=criterion,
             criteria=criteria,
             random_state=random_state,
@@ -39,20 +40,20 @@ class Splitter_test(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.build(criterion="duck")
         with self.assertRaises(ValueError):
-            self.build(splitter_type="duck")
+            self.build(feature_select="duck")
         with self.assertRaises(ValueError):
             self.build(criteria="duck")
         with self.assertRaises(ValueError):
             _ = Splitter(clf=None)
-        for splitter_type in ["best", "random"]:
+        for feature_select in ["best", "random"]:
             for criterion in ["gini", "entropy"]:
                 for criteria in ["max_samples", "impurity"]:
                     tcl = self.build(
-                        splitter_type=splitter_type,
+                        feature_select=feature_select,
                         criterion=criterion,
                         criteria=criteria,
                     )
-                    self.assertEqual(splitter_type, tcl._splitter_type)
+                    self.assertEqual(feature_select, tcl._feature_select)
                     self.assertEqual(criterion, tcl._criterion)
                     self.assertEqual(criteria, tcl._criteria)
 
@@ -177,32 +178,34 @@ class Splitter_test(unittest.TestCase):
     def test_best_splitter_few_sets(self):
         X, y = load_iris(return_X_y=True)
         X = np.delete(X, 3, 1)
-        tcl = self.build(splitter_type="best", random_state=self._random_state)
+        tcl = self.build(
+            feature_select="best", random_state=self._random_state
+        )
         dataset, computed = tcl.get_subspace(X, y, max_features=2)
         self.assertListEqual([0, 2], list(computed))
         self.assertListEqual(X[:, computed].tolist(), dataset.tolist())
 
     def test_splitter_parameter(self):
         expected_values = [
-            [1, 4, 9, 12],  # best   entropy max_samples
-            [1, 3, 6, 10],  # best   entropy impurity
-            [6, 8, 10, 12],  # best   gini    max_samples
-            [7, 8, 10, 11],  # best   gini    impurity
+            [0, 6, 11, 12],  # best   entropy max_samples
+            [0, 6, 11, 12],  # best   entropy impurity
+            [0, 6, 11, 12],  # best   gini    max_samples
+            [0, 6, 11, 12],  # best   gini    impurity
             [0, 3, 8, 12],  # random entropy max_samples
-            [0, 3, 9, 11],  # random entropy impurity
-            [0, 4, 7, 12],  # random gini    max_samples
-            [0, 2, 5, 6],  # random gini    impurity
+            [0, 3, 7, 12],  # random entropy impurity
+            [1, 7, 9, 12],  # random gini    max_samples
+            [1, 5, 8, 12],  # random gini    impurity
         ]
         X, y = load_wine(return_X_y=True)
         rn = 0
-        for splitter_type in ["best", "random"]:
+        for feature_select in ["best", "random"]:
             for criterion in ["entropy", "gini"]:
                 for criteria in [
                     "max_samples",
                     "impurity",
                 ]:
                     tcl = self.build(
-                        splitter_type=splitter_type,
+                        feature_select=feature_select,
                         criterion=criterion,
                         criteria=criteria,
                     )
@@ -213,7 +216,7 @@ class Splitter_test(unittest.TestCase):
                     # print(
                     #     "{},  # {:7s}{:8s}{:15s}".format(
                     #         list(computed),
-                    #         splitter_type,
+                    #         feature_select,
                     #         criterion,
                     #         criteria,
                     #     )
@@ -222,3 +225,18 @@ class Splitter_test(unittest.TestCase):
                     self.assertListEqual(
                         X[:, computed].tolist(), dataset.tolist()
                     )
+
+    def test_get_best_subspaces(self):
+        results = [
+            (4, [3, 4, 11, 13]),
+            (7, [1, 3, 4, 5, 11, 13, 16]),
+            (9, [1, 3, 4, 5, 7, 10, 11, 13, 16]),
+        ]
+        X, y = load_dataset(n_features=20)
+        for k, expected in results:
+            tcl = self.build(
+                feature_select="best",
+            )
+            Xs, computed = tcl.get_subspace(X, y, k)
+            self.assertListEqual(expected, list(computed))
+            self.assertListEqual(X[:, expected].tolist(), Xs.tolist())
