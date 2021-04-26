@@ -1,9 +1,5 @@
 """
-__author__ = "Ricardo Montañana Gómez"
-__copyright__ = "Copyright 2020, Ricardo Montañana Gómez"
-__license__ = "MIT"
-__version__ = "0.9"
-Build an oblique tree classifier based on SVM nodes
+Oblique decision tree classifier based on SVM nodes
 """
 
 import os
@@ -17,7 +13,6 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.svm import SVC, LinearSVC
 from sklearn.feature_selection import SelectKBest
 from sklearn.preprocessing import StandardScaler
-from sklearn.utils import check_consistent_length
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.validation import (
@@ -26,7 +21,6 @@ from sklearn.utils.validation import (
     check_is_fitted,
     _check_sample_weight,
 )
-from sklearn.metrics._classification import _weighted_sum, _check_targets
 
 
 class Snode:
@@ -147,12 +141,11 @@ class Snode:
                 f"{self._belief: .6f} impurity={self._impurity:.4f} "
                 f"counts={count_values}"
             )
-        else:
-            return (
-                f"{self._title} feaures={self._features} impurity="
-                f"{self._impurity:.4f} "
-                f"counts={count_values}"
-            )
+        return (
+            f"{self._title} feaures={self._features} impurity="
+            f"{self._impurity:.4f} "
+            f"counts={count_values}"
+        )
 
 
 class Siterator:
@@ -298,6 +291,23 @@ class Splitter:
     def _select_best_set(
         self, dataset: np.array, labels: np.array, features_sets: list
     ) -> list:
+        """Return the best set of features among feature_sets, the criterion is
+        the information gain
+
+        Parameters
+        ----------
+        dataset : np.array
+            array of samples (# samples, # features)
+        labels : np.array
+            array of labels
+        features_sets : list
+            list of features sets to check
+
+        Returns
+        -------
+        list
+            best feature set
+        """
         max_gain = 0
         selected = None
         warnings.filterwarnings("ignore", category=ConvergenceWarning)
@@ -451,6 +461,15 @@ class Splitter:
     def partition(self, samples: np.array, node: Snode, train: bool):
         """Set the criteria to split arrays. Compute the indices of the samples
         that should go to one side of the tree (up)
+
+        Parameters
+        ----------
+        samples : np.array
+            array of samples (# samples, # features)
+        node : Snode
+            Node of the tree where partition is going to be made
+        train : bool
+            Train time - True / Test time - False
         """
         # data contains the distances of every sample to every class hyperplane
         # array of (m, nc) nc = # classes
@@ -602,7 +621,9 @@ class Stree(BaseEstimator, ClassifierMixin):
                 f"Maximum depth has to be greater than 1... got (max_depth=\
                     {self.max_depth})"
             )
-
+        kernels = ["linear", "rbf", "poly", "sigmoid"]
+        if self.kernel not in kernels:
+            raise ValueError(f"Kernel {self.kernel} not in {kernels}")
         check_classification_targets(y)
         X, y = check_X_y(X, y)
         sample_weight = _check_sample_weight(
@@ -633,7 +654,6 @@ class Stree(BaseEstimator, ClassifierMixin):
         self.n_features_in_ = X.shape[1]
         self.max_features_ = self._initialize_max_features()
         self.tree_ = self.train(X, y, sample_weight, 1, "root")
-        self._build_predictor()
         self.X_ = X
         self.y_ = y
         return self
@@ -681,6 +701,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         if np.unique(y).shape[0] == 1:
             # only 1 class => pure dataset
             node.set_title(title + ", <pure>")
+            node.make_predictor()
             return node
         # Train the model
         clf = self._build_clf()
@@ -699,6 +720,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         if X_U is None or X_D is None:
             # didn't part anything
             node.set_title(title + ", <cgaf>")
+            node.make_predictor()
             return node
         node.set_up(
             self.train(X_U, y_u, sw_u, depth + 1, title + f" - Up({depth+1})")
@@ -710,20 +732,8 @@ class Stree(BaseEstimator, ClassifierMixin):
         )
         return node
 
-    def _build_predictor(self):
-        """Process the leaves to make them predictors"""
-
-        def run_tree(node: Snode):
-            if node.is_leaf():
-                node.make_predictor()
-                return
-            run_tree(node.get_down())
-            run_tree(node.get_up())
-
-        run_tree(self.tree_)
-
     def _build_clf(self):
-        """Build the correct classifier for the node"""
+        """Build the right classifier for the node"""
         return (
             LinearSVC(
                 max_iter=self.max_iter,
@@ -739,6 +749,7 @@ class Stree(BaseEstimator, ClassifierMixin):
                 C=self.C,
                 gamma=self.gamma,
                 degree=self.degree,
+                random_state=self.random_state,
             )
         )
 
@@ -819,36 +830,6 @@ class Stree(BaseEstimator, ClassifierMixin):
             .ravel()
         )
         return self.classes_[result]
-
-    def score(
-        self, X: np.array, y: np.array, sample_weight: np.array = None
-    ) -> float:
-        """Compute accuracy of the prediction
-
-        Parameters
-        ----------
-        X : np.array
-            dataset of samples to make predictions
-        y : np.array
-            samples labels
-        sample_weight : np.array, optional
-            weights of the samples. Rescale C per sample, by default None
-
-        Returns
-        -------
-        float
-            accuracy of the prediction
-        """
-        # sklearn check
-        check_is_fitted(self)
-        check_classification_targets(y)
-        X, y = check_X_y(X, y)
-        y_pred = self.predict(X).reshape(y.shape)
-        # Compute accuracy for each possible representation
-        _, y_true, y_pred = _check_targets(y, y_pred)
-        check_consistent_length(y_true, y_pred, sample_weight)
-        score = y_true == y_pred
-        return _weighted_sum(score, sample_weight, normalize=True)
 
     def nodes_leaves(self) -> tuple:
         """Compute the number of nodes and leaves in the built tree

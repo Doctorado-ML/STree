@@ -1,7 +1,5 @@
 import setuptools
-
-__version__ = "1.0rc1"
-__author__ = "Ricardo Montañana Gómez"
+import stree
 
 
 def readme():
@@ -9,22 +7,23 @@ def readme():
         return f.read()
 
 
+VERSION = stree.__version__
 setuptools.setup(
     name="STree",
-    version=__version__,
-    license="MIT License",
+    version=stree.__version__,
+    license=stree.__license__,
     description="Oblique decision tree with svm nodes",
     long_description=readme(),
     long_description_content_type="text/markdown",
     packages=setuptools.find_packages(),
-    url="https://github.com/doctorado-ml/stree",
-    author=__author__,
-    author_email="ricardo.montanana@alu.uclm.es",
+    url=stree.__url__,
+    author=stree.__author__,
+    author_email=stree.__author_email__,
     keywords="scikit-learn oblique-classifier oblique-decision-tree decision-\
     tree svm svc",
     classifiers=[
-        "Development Status :: 4 - Beta",
-        "License :: OSI Approved :: MIT License",
+        "Development Status :: 5 - Production/Stable",
+        "License :: OSI Approved :: " + stree.__license__,
         "Programming Language :: Python :: 3.8",
         "Natural Language :: English",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",

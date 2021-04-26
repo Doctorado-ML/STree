@@ -1,43 +1,9 @@
-![CI](https://github.com/Doctorado-ML/STree/workflows/CI/badge.svg)
-[![codecov](https://codecov.io/gh/doctorado-ml/stree/branch/master/graph/badge.svg)](https://codecov.io/gh/doctorado-ml/stree)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/35fa3dfd53a24a339344b33d9f9f2f3d)](https://www.codacy.com/gh/Doctorado-ML/STree?utm_source=github.com&utm_medium=referral&utm_content=Doctorado-ML/STree&utm_campaign=Badge_Grade)
-
-# Stree
-
-Oblique Tree classifier based on SVM nodes. The nodes are built and splitted with sklearn SVC models. Stree is a sklearn estimator and can be integrated in pipelines, grid searches, etc.
-
-![Stree](https://raw.github.com/doctorado-ml/stree/master/example.png)
-
-## Installation
-
-```bash
-pip install git+https://github.com/doctorado-ml/stree
-```
-
-## Documentation
-
-Can be found in
-
-## Examples
-
-### Jupyter notebooks
-
-- [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/Doctorado-ML/STree/master?urlpath=lab/tree/notebooks/benchmark.ipynb) Benchmark
-
-- [![benchmark](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Doctorado-ML/STree/blob/master/notebooks/benchmark.ipynb) Benchmark
-
-- [![features](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Doctorado-ML/STree/blob/master/notebooks/features.ipynb) Some features
-
-- [![Gridsearch](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Doctorado-ML/STree/blob/master/notebooks/gridsearch.ipynb) Gridsearch
-
-- [![Ensemble](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Doctorado-ML/STree/blob/master/notebooks/ensemble.ipynb) Ensembles
-
-## Hyperparameters
+# Hyperparameters
 
 |     | **Hyperparameter** | **Type/Values**                                        | **Default** | **Meaning**                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | --- | ------------------ | ------------------------------------------------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | \*  | C                  | \<float\>                                              | 1.0         | Regularization parameter. The strength of the regularization is inversely proportional to C. Must be strictly positive.                                                                                                                                                                                                                                                                                                                              |
-| \*  | kernel             | {"linear", "poly", "rbf", "sigmoid"}                   | linear      | Specifies the kernel type to be used in the algorithm. It must be one of ‘linear’, ‘poly’ or ‘rbf’.                                                                                                                                                                                                                                                                                                                                                  |
+| \*  | kernel             | {"linear", "poly", "rbf"}                              | linear      | Specifies the kernel type to be used in the algorithm. It must be one of ‘linear’, ‘poly’ or ‘rbf’.                                                                                                                                                                                                                                                                                                                                                  |
 | \*  | max_iter           | \<int\>                                                | 1e5         | Hard limit on iterations within solver, or -1 for no limit.                                                                                                                                                                                                                                                                                                                                                                                          |
 | \*  | random_state       | \<int\>                                                | None        | Controls the pseudo random number generation for shuffling the data for probability estimates. Ignored when probability is False.<br>Pass an int for reproducible output across multiple function calls                                                                                                                                                                                                                                              |
 |     | max_depth          | \<int\>                                                | None        | Specifies the maximum depth of the tree                                                                                                                                                                                                                                                                                                                                                                                                              |
@@ -60,13 +26,3 @@ The decision function is applied to the dataset and distances from samples to hy
 In case of multiclass classification we have to decide which column take into account to make the split, that depends on hyperparameter _split_criteria_, if "impurity" is chosen then STree computes information gain of every split candidate using each column and chooses the one that maximize the information gain, otherwise STree choses the column with more samples with a predicted class (the column with more positive numbers in it).
 
 Once we have the column to take into account for the split, the algorithm splits samples with positive distances to hyperplane from the rest.
-
-## Tests
-
-```bash
-python -m unittest -v stree.tests
-```
-
-## License
-
-STree is [MIT](https://github.com/doctorado-ml/stree/blob/master/LICENSE) licensed
