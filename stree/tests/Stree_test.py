@@ -330,7 +330,7 @@ class Stree_test(unittest.TestCase):
         X, y = load_dataset(self._random_state)
         clf = Stree(random_state=self._random_state, max_features=2)
         clf.fit(X, y)
-        self.assertAlmostEqual(0.9246666666666666, clf.score(X, y))
+        self.assertAlmostEqual(0.9453333333333334, clf.score(X, y))
 
     def test_bogus_splitter_parameter(self):
         clf = Stree(splitter="duck")
