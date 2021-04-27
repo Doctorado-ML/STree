@@ -21,6 +21,9 @@ push:  ## Push code with tags
 test:  ## Run tests
 	python -m unittest -v stree.tests
 
+doc:  ## Update documentation
+	make -C docs --makefile=Makefile html
+
 help: ## Show help message
 	@IFS=$$'\n' ; \
 	help_lines=(`fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##/:/'`); \

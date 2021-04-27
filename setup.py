@@ -16,7 +16,11 @@ setuptools.setup(
     long_description=readme(),
     long_description_content_type="text/markdown",
     packages=setuptools.find_packages(),
-    url=stree.__url__,
+    url="https://github.com/Doctorado-ML/STree#stree",
+    project_urls={
+        "Code": "https://github.com/Doctorado-ML/STree",
+        "Documentation": "https://stree.readthedocs.io/en/latest/index.html",
+    },
     author=stree.__author__,
     author_email=stree.__author_email__,
     keywords="scikit-learn oblique-classifier oblique-decision-tree decision-\

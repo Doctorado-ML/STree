@@ -269,6 +269,12 @@ class Stree_test(unittest.TestCase):
             with self.assertRaises(ValueError):
                 _ = clf._initialize_max_features()
 
+    def test_wrong_max_features(self):
+        X, y = load_dataset(n_features=15)
+        clf = Stree(max_features=16)
+        with self.assertRaises(ValueError):
+            clf.fit(X, y)
+
     def test_get_subspaces(self):
         dataset = np.random.random((10, 16))
         y = np.random.randint(0, 2, 10)
