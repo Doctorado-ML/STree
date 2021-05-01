@@ -195,10 +195,14 @@ class Splitter_test(unittest.TestCase):
             [0, 3, 7, 12],  # random entropy impurity
             [1, 7, 9, 12],  # random gini    max_samples
             [1, 5, 8, 12],  # random gini    impurity
+            [6, 9, 11, 12],  # mutual entropy max_samples
+            [6, 9, 11, 12],  # mutual entropy impurity
+            [6, 9, 11, 12],  # mutual gini    max_samples
+            [6, 9, 11, 12],  # mutual gini    impurity
         ]
         X, y = load_wine(return_X_y=True)
         rn = 0
-        for feature_select in ["best", "random"]:
+        for feature_select in ["best", "random", "mutual"]:
             for criterion in ["entropy", "gini"]:
                 for criteria in [
                     "max_samples",
@@ -221,7 +225,7 @@ class Splitter_test(unittest.TestCase):
                     #         criteria,
                     #     )
                     # )
-                    self.assertListEqual(expected, list(computed))
+                    self.assertListEqual(expected, sorted(list(computed)))
                     self.assertListEqual(
                         X[:, computed].tolist(), dataset.tolist()
                     )
