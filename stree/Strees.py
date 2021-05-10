@@ -155,6 +155,10 @@ class Siterator:
         self._stack = []
         self._push(tree)
 
+    def __iter__(self):
+        # To complete the iterator interface
+        return self
+
     def _push(self, node: Snode):
         if node is not None:
             self._stack.append(node)
