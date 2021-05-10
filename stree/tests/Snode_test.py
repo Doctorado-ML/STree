@@ -8,7 +8,11 @@ from .utils import load_dataset
 class Snode_test(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         self._random_state = 1
-        self._clf = Stree(random_state=self._random_state)
+        self._clf = Stree(
+            random_state=self._random_state,
+            kernel="liblinear",
+            multiclass_strategy="ovr",
+        )
         self._clf.fit(*load_dataset(self._random_state))
         super().__init__(*args, **kwargs)
 
