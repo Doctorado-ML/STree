@@ -243,27 +243,27 @@ class Stree_test(unittest.TestCase):
         outcomes = {
             "Synt": {
                 "max_samples liblinear": 0.9606666666666667,
-                "max_samples linear": 0.786,
-                "max_samples rbf": 0.7133333333333334,
-                "max_samples poly": 0.618,
-                "max_samples sigmoid": 0.8826666666666667,
+                "max_samples linear": 0.9486666666666667,
+                "max_samples rbf": 0.978,
+                "max_samples poly": 0.96,
+                "max_samples sigmoid": 0.908,
                 "impurity liblinear": 0.9606666666666667,
-                "impurity linear": 0.786,
-                "impurity rbf": 0.7133333333333334,
-                "impurity poly": 0.618,
-                "impurity sigmoid": 0.8826666666666667,
+                "impurity linear": 0.9486666666666667,
+                "impurity rbf": 0.978,
+                "impurity poly": 0.96,
+                "impurity sigmoid": 0.908,
             },
             "Iris": {
                 "max_samples liblinear": 1.0,
                 "max_samples linear": 1.0,
-                "max_samples rbf": 0.6910112359550562,
-                "max_samples poly": 0.6966292134831461,
-                "max_samples sigmoid": 0.6573033707865169,
-                "impurity liblinear": 1,
-                "impurity linear": 1,
-                "impurity rbf": 0.6910112359550562,
-                "impurity poly": 0.6966292134831461,
-                "impurity sigmoid": 0.6573033707865169,
+                "max_samples rbf": 0.7808988764044944,
+                "max_samples poly": 0.8202247191011236,
+                "max_samples sigmoid": 0.7528089887640449,
+                "impurity liblinear": 1.0,
+                "impurity linear": 1.0,
+                "impurity rbf": 0.7808988764044944,
+                "impurity poly": 0.8202247191011236,
+                "impurity sigmoid": 0.7528089887640449,
             },
         }
 
@@ -274,17 +274,20 @@ class Stree_test(unittest.TestCase):
                     clf = Stree(
                         C=55,
                         max_iter=1e5,
-                        multiclass_strategy="ovr",
+                        multiclass_strategy="ovr"
+                        if kernel == "liblinear"
+                        else "ovo",
                         kernel=kernel,
                         random_state=self._random_state,
                     )
                     clf.fit(px, py)
                     outcome = outcomes[name][f"{criteria} {kernel}"]
-                    # print(
-                    #     f"{name} {criteria} {kernel} {outcome} "
-                    #     f"{clf.score(px, py)}"
-                    # )
-                    self.assertAlmostEqual(outcome, clf.score(px, py))
+                    # print(f'"{criteria} {kernel}": {clf.score(px, py)},')
+                    self.assertAlmostEqual(
+                        outcome,
+                        clf.score(px, py),
+                        f"{name} - {criteria} - {kernel}",
+                    )
 
     def test_max_features(self):
         n_features = 16
