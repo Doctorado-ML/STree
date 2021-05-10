@@ -1,6 +1,6 @@
 from .Strees import Stree, Snode, Siterator, Splitter
 
-__version__ = "1.0"
+__version__ = "1.1"
 
 __author__ = "Ricardo Montañana Gómez"
 __copyright__ = "Copyright 2020-2021, Ricardo Montañana Gómez"

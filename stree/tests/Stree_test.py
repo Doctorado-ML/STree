@@ -14,7 +14,7 @@ from .utils import load_dataset
 class Stree_test(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         self._random_state = 1
-        self._kernels = ["linear", "rbf", "poly"]
+        self._kernels = ["liblinear", "linear", "rbf", "poly", "sigmoid"]
         super().__init__(*args, **kwargs)
 
     @classmethod
@@ -22,10 +22,9 @@ class Stree_test(unittest.TestCase):
         os.environ["TESTING"] = "1"
 
     def test_valid_kernels(self):
-        valid_kernels = ["linear", "rbf", "poly", "sigmoid"]
         X, y = load_dataset()
-        for kernel in valid_kernels:
-            clf = Stree(kernel=kernel)
+        for kernel in self._kernels:
+            clf = Stree(kernel=kernel, multiclass_strategy="ovr")
             clf.fit(X, y)
             self.assertIsNotNone(clf.tree_)
 
@@ -55,14 +54,19 @@ class Stree_test(unittest.TestCase):
         # i.e. The partition algorithm didn't forget any sample
         self.assertEqual(node._y.shape[0], y_down.shape[0] + y_up.shape[0])
         unique_y, count_y = np.unique(node._y, return_counts=True)
-        _, count_d = np.unique(y_down, return_counts=True)
-        _, count_u = np.unique(y_up, return_counts=True)
+        labels_d, count_d = np.unique(y_down, return_counts=True)
+        labels_u, count_u = np.unique(y_up, return_counts=True)
+        dict_d = {label: count_d[i] for i, label in enumerate(labels_d)}
+        dict_u = {label: count_u[i] for i, label in enumerate(labels_u)}
         #
         for i in unique_y:
-            number_up = count_u[i]
             try:
-                number_down = count_d[i]
-            except IndexError:
+                number_up = dict_u[i]
+            except KeyError:
+                number_up = 0
+            try:
+                number_down = dict_d[i]
+            except KeyError:
                 number_down = 0
             self.assertEqual(count_y[i], number_down + number_up)
         # Is the partition made the same as the prediction?
@@ -77,14 +81,22 @@ class Stree_test(unittest.TestCase):
         """Check if the tree is built the same way as predictions of models"""
         warnings.filterwarnings("ignore")
         for kernel in self._kernels:
-            clf = Stree(kernel=kernel, random_state=self._random_state)
+            clf = Stree(
+                kernel="sigmoid",
+                multiclass_strategy="ovr" if kernel == "liblinear" else "ovo",
+                random_state=self._random_state,
+            )
             clf.fit(*load_dataset(self._random_state))
             self._check_tree(clf.tree_)
 
     def test_single_prediction(self):
         X, y = load_dataset(self._random_state)
         for kernel in self._kernels:
-            clf = Stree(kernel=kernel, random_state=self._random_state)
+            clf = Stree(
+                kernel=kernel,
+                multiclass_strategy="ovr" if kernel == "liblinear" else "ovo",
+                random_state=self._random_state,
+            )
             yp = clf.fit(X, y).predict((X[0, :].reshape(-1, X.shape[1])))
             self.assertEqual(yp[0], y[0])
 
@@ -92,8 +104,12 @@ class Stree_test(unittest.TestCase):
         # First 27 elements the predictions are the same as the truth
         num = 27
         X, y = load_dataset(self._random_state)
-        for kernel in self._kernels:
-            clf = Stree(kernel=kernel, random_state=self._random_state)
+        for kernel in ["liblinear", "linear", "rbf", "poly"]:
+            clf = Stree(
+                kernel=kernel,
+                multiclass_strategy="ovr" if kernel == "liblinear" else "ovo",
+                random_state=self._random_state,
+            )
             yp = clf.fit(X, y).predict(X[:num, :])
             self.assertListEqual(y[:num].tolist(), yp.tolist())
 
@@ -103,7 +119,11 @@ class Stree_test(unittest.TestCase):
         """
         X, y = load_dataset(self._random_state)
         for kernel in self._kernels:
-            clf = Stree(kernel=kernel, random_state=self._random_state)
+            clf = Stree(
+                kernel=kernel,
+                multiclass_strategy="ovr" if kernel == "liblinear" else "ovo",
+                random_state=self._random_state,
+            )
             clf.fit(X, y)
             # Compute prediction line by line
             yp_line = np.array([], dtype=int)
@@ -135,7 +155,11 @@ class Stree_test(unittest.TestCase):
         ]
         computed = []
         expected_string = ""
-        clf = Stree(kernel="linear", random_state=self._random_state)
+        clf = Stree(
+            kernel="liblinear",
+            multiclass_strategy="ovr",
+            random_state=self._random_state,
+        )
         clf.fit(*load_dataset(self._random_state))
         for node in clf:
             computed.append(str(node))
@@ -173,7 +197,12 @@ class Stree_test(unittest.TestCase):
     def test_check_max_depth(self):
         depths = (3, 4)
         for depth in depths:
-            tcl = Stree(random_state=self._random_state, max_depth=depth)
+            tcl = Stree(
+                kernel="liblinear",
+                multiclass_strategy="ovr",
+                random_state=self._random_state,
+                max_depth=depth,
+            )
             tcl.fit(*load_dataset(self._random_state))
             self.assertEqual(depth, tcl.depth_)
 
@@ -194,7 +223,7 @@ class Stree_test(unittest.TestCase):
         for kernel in self._kernels:
             clf = Stree(
                 kernel=kernel,
-                split_criteria="max_samples",
+                multiclass_strategy="ovr" if kernel == "liblinear" else "ovo",
                 random_state=self._random_state,
             )
             px = [[1, 2], [5, 6], [9, 10]]
@@ -205,26 +234,36 @@ class Stree_test(unittest.TestCase):
             self.assertListEqual(py, clf.classes_.tolist())
 
     def test_muticlass_dataset(self):
+        warnings.filterwarnings("ignore", category=ConvergenceWarning)
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
         datasets = {
             "Synt": load_dataset(random_state=self._random_state, n_classes=3),
             "Iris": load_wine(return_X_y=True),
         }
         outcomes = {
             "Synt": {
-                "max_samples linear": 0.9606666666666667,
+                "max_samples liblinear": 0.9606666666666667,
+                "max_samples linear": 0.786,
                 "max_samples rbf": 0.7133333333333334,
                 "max_samples poly": 0.618,
-                "impurity linear": 0.9606666666666667,
+                "max_samples sigmoid": 0.8826666666666667,
+                "impurity liblinear": 0.9606666666666667,
+                "impurity linear": 0.786,
                 "impurity rbf": 0.7133333333333334,
                 "impurity poly": 0.618,
+                "impurity sigmoid": 0.8826666666666667,
             },
             "Iris": {
+                "max_samples liblinear": 1.0,
                 "max_samples linear": 1.0,
                 "max_samples rbf": 0.6910112359550562,
                 "max_samples poly": 0.6966292134831461,
+                "max_samples sigmoid": 0.6573033707865169,
+                "impurity liblinear": 1,
                 "impurity linear": 1,
                 "impurity rbf": 0.6910112359550562,
                 "impurity poly": 0.6966292134831461,
+                "impurity sigmoid": 0.6573033707865169,
             },
         }
 
@@ -235,14 +274,15 @@ class Stree_test(unittest.TestCase):
                     clf = Stree(
                         C=55,
                         max_iter=1e5,
+                        multiclass_strategy="ovr",
                         kernel=kernel,
                         random_state=self._random_state,
                     )
                     clf.fit(px, py)
                     outcome = outcomes[name][f"{criteria} {kernel}"]
                     # print(
-                    #     f"{name} {criteria} {kernel} {outcome} {clf.score(px"
-                    #     ", py)}"
+                    #     f"{name} {criteria} {kernel} {outcome} "
+                    #     f"{clf.score(px, py)}"
                     # )
                     self.assertAlmostEqual(outcome, clf.score(px, py))
 
@@ -312,17 +352,19 @@ class Stree_test(unittest.TestCase):
             clf.predict(X[:, :3])
 
     # Tests of score
-
     def test_score_binary(self):
         X, y = load_dataset(self._random_state)
         accuracies = [
             0.9506666666666667,
+            0.9493333333333334,
             0.9606666666666667,
             0.9433333333333334,
+            0.9153333333333333,
         ]
         for kernel, accuracy_expected in zip(self._kernels, accuracies):
             clf = Stree(
                 random_state=self._random_state,
+                multiclass_strategy="ovr" if kernel == "liblinear" else "ovo",
                 kernel=kernel,
             )
             clf.fit(X, y)
@@ -334,7 +376,12 @@ class Stree_test(unittest.TestCase):
 
     def test_score_max_features(self):
         X, y = load_dataset(self._random_state)
-        clf = Stree(random_state=self._random_state, max_features=2)
+        clf = Stree(
+            kernel="liblinear",
+            multiclass_strategy="ovr",
+            random_state=self._random_state,
+            max_features=2,
+        )
         clf.fit(X, y)
         self.assertAlmostEqual(0.9453333333333334, clf.score(X, y))
 
@@ -346,7 +393,9 @@ class Stree_test(unittest.TestCase):
     def test_multiclass_classifier_integrity(self):
         """Checks if the multiclass operation is done right"""
         X, y = load_iris(return_X_y=True)
-        clf = Stree(random_state=0)
+        clf = Stree(
+            kernel="liblinear", multiclass_strategy="ovr", random_state=0
+        )
         clf.fit(X, y)
         score = clf.score(X, y)
         # Check accuracy of the whole model
@@ -402,10 +451,10 @@ class Stree_test(unittest.TestCase):
         clf2 = Stree(
             kernel="rbf", random_state=self._random_state, normalize=True
         )
-        self.assertEqual(0.768, clf.fit(X, y).score(X, y))
-        self.assertEqual(0.814, clf2.fit(X, y).score(X, y))
+        self.assertEqual(0.966, clf.fit(X, y).score(X, y))
+        self.assertEqual(0.964, clf2.fit(X, y).score(X, y))
         X, y = load_wine(return_X_y=True)
-        self.assertEqual(0.6741573033707865, clf.fit(X, y).score(X, y))
+        self.assertEqual(0.6685393258426966, clf.fit(X, y).score(X, y))
         self.assertEqual(1.0, clf2.fit(X, y).score(X, y))
 
     def test_score_multiclass_poly(self):
@@ -423,24 +472,78 @@ class Stree_test(unittest.TestCase):
             random_state=self._random_state,
             normalize=True,
         )
-        self.assertEqual(0.786, clf.fit(X, y).score(X, y))
-        self.assertEqual(0.818, clf2.fit(X, y).score(X, y))
+        self.assertEqual(0.946, clf.fit(X, y).score(X, y))
+        self.assertEqual(0.972, clf2.fit(X, y).score(X, y))
         X, y = load_wine(return_X_y=True)
-        self.assertEqual(0.702247191011236, clf.fit(X, y).score(X, y))
-        self.assertEqual(0.6067415730337079, clf2.fit(X, y).score(X, y))
+        self.assertEqual(0.7808988764044944, clf.fit(X, y).score(X, y))
+        self.assertEqual(1.0, clf2.fit(X, y).score(X, y))
+
+    def test_score_multiclass_liblinear(self):
+        X, y = load_dataset(
+            random_state=self._random_state,
+            n_classes=3,
+            n_features=5,
+            n_samples=500,
+        )
+        clf = Stree(
+            kernel="liblinear",
+            multiclass_strategy="ovr",
+            random_state=self._random_state,
+            C=10,
+        )
+        clf2 = Stree(
+            kernel="liblinear",
+            multiclass_strategy="ovr",
+            random_state=self._random_state,
+            normalize=True,
+        )
+        self.assertEqual(0.968, clf.fit(X, y).score(X, y))
+        self.assertEqual(0.97, clf2.fit(X, y).score(X, y))
+        X, y = load_wine(return_X_y=True)
+        self.assertEqual(1.0, clf.fit(X, y).score(X, y))
+        self.assertEqual(1.0, clf2.fit(X, y).score(X, y))
+
+    def test_score_multiclass_sigmoid(self):
+        X, y = load_dataset(
+            random_state=self._random_state,
+            n_classes=3,
+            n_features=5,
+            n_samples=500,
+        )
+        clf = Stree(kernel="sigmoid", random_state=self._random_state, C=10)
+        clf2 = Stree(
+            kernel="sigmoid",
+            random_state=self._random_state,
+            normalize=True,
+            C=10,
+        )
+        self.assertEqual(0.796, clf.fit(X, y).score(X, y))
+        self.assertEqual(0.952, clf2.fit(X, y).score(X, y))
+        X, y = load_wine(return_X_y=True)
+        self.assertEqual(0.6910112359550562, clf.fit(X, y).score(X, y))
+        self.assertEqual(0.9662921348314607, clf2.fit(X, y).score(X, y))
 
     def test_score_multiclass_linear(self):
+        warnings.filterwarnings("ignore", category=ConvergenceWarning)
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
         X, y = load_dataset(
             random_state=self._random_state,
             n_classes=3,
             n_features=5,
             n_samples=1500,
         )
-        clf = Stree(kernel="linear", random_state=self._random_state)
+        clf = Stree(
+            kernel="liblinear",
+            multiclass_strategy="ovr",
+            random_state=self._random_state,
+        )
         self.assertEqual(0.9533333333333334, clf.fit(X, y).score(X, y))
         # Check with context based standardization
         clf2 = Stree(
-            kernel="linear", random_state=self._random_state, normalize=True
+            kernel="liblinear",
+            multiclass_strategy="ovr",
+            random_state=self._random_state,
+            normalize=True,
         )
         self.assertEqual(0.9526666666666667, clf2.fit(X, y).score(X, y))
         X, y = load_wine(return_X_y=True)
@@ -467,7 +570,7 @@ class Stree_test(unittest.TestCase):
             ]
         )
         y = np.array([1, 1, 1, 2, 2, 2, 5, 5, 5])
-        yw = np.array([1, 1, 1, 5, 5, 5, 5, 5, 5])
+        yw = np.array([1, 1, 1, 1, 1, 1, 5, 5, 5])
         w = [1, 1, 1, 0, 0, 0, 1, 1, 1]
         model1 = Stree().fit(X, y)
         model2 = Stree().fit(X, y, w)
@@ -504,14 +607,14 @@ class Stree_test(unittest.TestCase):
         clf = Stree(random_state=self._random_state)
         clf.fit(X, y)
         nodes, leaves = clf.nodes_leaves()
-        self.assertEqual(25, nodes)
-        self.assertEqual(13, leaves)
+        self.assertEqual(31, nodes)
+        self.assertEqual(16, leaves)
         X, y = load_wine(return_X_y=True)
         clf = Stree(random_state=self._random_state)
         clf.fit(X, y)
         nodes, leaves = clf.nodes_leaves()
-        self.assertEqual(9, nodes)
-        self.assertEqual(5, leaves)
+        self.assertEqual(11, nodes)
+        self.assertEqual(6, leaves)
 
     def test_nodes_leaves_artificial(self):
         n1 = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], [], 0.0, "test1")
@@ -530,3 +633,27 @@ class Stree_test(unittest.TestCase):
         nodes, leaves = clf.nodes_leaves()
         self.assertEqual(6, nodes)
         self.assertEqual(2, leaves)
+
+    def test_bogus_multiclass_strategy(self):
+        clf = Stree(multiclass_strategy="other")
+        X, y = load_wine(return_X_y=True)
+        with self.assertRaises(ValueError):
+            clf.fit(X, y)
+
+    def test_multiclass_strategy(self):
+        X, y = load_wine(return_X_y=True)
+        clf_o = Stree(multiclass_strategy="ovo")
+        clf_r = Stree(multiclass_strategy="ovr")
+        score_o = clf_o.fit(X, y).score(X, y)
+        score_r = clf_r.fit(X, y).score(X, y)
+        self.assertEqual(1.0, score_o)
+        self.assertEqual(0.9269662921348315, score_r)
+
+    def test_incompatible_hyperparameters(self):
+        X, y = load_wine(return_X_y=True)
+        clf = Stree(kernel="liblinear", multiclass_strategy="ovo")
+        with self.assertRaises(ValueError):
+            clf.fit(X, y)
+        clf = Stree(multiclass_strategy="ovo", split_criteria="max_samples")
+        with self.assertRaises(ValueError):
+            clf.fit(X, y)
