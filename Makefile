@@ -24,6 +24,9 @@ test:  ## Run tests
 doc:  ## Update documentation
 	make -C docs --makefile=Makefile html
 
+doc-clean:  ## Update documentation
+	make -C docs --makefile=Makefile clean
+
 help: ## Show help message
 	@IFS=$$'\n' ; \
 	help_lines=(`fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##/:/'`); \
