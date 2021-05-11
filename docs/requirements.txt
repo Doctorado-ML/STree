@@ -1,3 +1,4 @@
 sphinx
 sphinx-rtd-theme
 myst-parser
+git+https://github.com/doctorado-ml/stree

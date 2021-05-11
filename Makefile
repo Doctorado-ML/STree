@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
-.PHONY: coverage deps help lint push test
+.PHONY: coverage deps help lint push test doc build
 
 coverage:  ## Run tests with coverage
 	coverage erase
@@ -23,6 +23,10 @@ test:  ## Run tests
 
 doc:  ## Update documentation
 	make -C docs --makefile=Makefile html
+
+build:  ## Build package
+	rm -fr dist/*
+	python setup.py sdist bdist_wheel
 
 doc-clean:  ## Update documentation
 	make -C docs --makefile=Makefile clean

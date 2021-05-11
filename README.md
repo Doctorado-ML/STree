@@ -3,7 +3,7 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/35fa3dfd53a24a339344b33d9f9f2f3d)](https://www.codacy.com/gh/Doctorado-ML/STree?utm_source=github.com&utm_medium=referral&utm_content=Doctorado-ML/STree&utm_campaign=Badge_Grade)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/Doctorado-ML/STree.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Doctorado-ML/STree/context:python)
 
-# Stree
+# STree
 
 Oblique Tree classifier based on SVM nodes. The nodes are built and splitted with sklearn SVC models. Stree is a sklearn estimator and can be integrated in pipelines, grid searches, etc.
 
