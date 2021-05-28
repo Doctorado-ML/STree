@@ -6,7 +6,7 @@ import numpy as np
 from sklearn.svm import SVC
 from sklearn.datasets import load_wine, load_iris
 from stree import Splitter
-from .utils import load_dataset
+from .utils import load_dataset, load_disc_dataset
 
 
 class Splitter_test(unittest.TestCase):
@@ -242,5 +242,31 @@ class Splitter_test(unittest.TestCase):
                 feature_select="best",
             )
             Xs, computed = tcl.get_subspace(X, y, k)
+            self.assertListEqual(expected, list(computed))
+            self.assertListEqual(X[:, expected].tolist(), Xs.tolist())
+
+    def test_get_cfs_subscapces(self):
+        results = [
+            (4, [18, 4, 16, 10]),
+            (6, [18, 4, 16, 10, 6, 19]),
+            (7, [18, 4, 16, 10, 6, 19, 8]),
+        ]
+        X, y = load_disc_dataset(n_features=20)
+        for k, expected in results:
+            tcl = self.build(feature_select="cfs")
+            Xs, computed = tcl.get_subspace(X, y, k)
+            self.assertListEqual(expected, list(computed))
+            self.assertListEqual(X[:, expected].tolist(), Xs.tolist())
+
+    def test_get_fcbf_subscapces(self):
+        results = [
+            (25, [11]),
+            (17, [5]),
+            (39, [28]),
+        ]
+        for rs, expected in results:
+            X, y = load_disc_dataset(n_features=rs)
+            tcl = self.build(feature_select="fcbf", random_state=rs)
+            Xs, computed = tcl.get_subspace(X, y, 3)
             self.assertListEqual(expected, list(computed))
             self.assertListEqual(X[:, expected].tolist(), Xs.tolist())

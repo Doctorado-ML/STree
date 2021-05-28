@@ -21,6 +21,7 @@ from sklearn.utils.validation import (
     check_is_fitted,
     _check_sample_weight,
 )
+from mfs import MFS
 
 
 class Snode:
@@ -209,13 +210,139 @@ class Splitter:
                 f"criteria has to be max_samples or impurity; got ({criteria})"
             )
 
-        if feature_select not in ["random", "best", "mutual"]:
+        if feature_select not in ["random", "best", "mutual", "cfs", "fcbf"]:
             raise ValueError(
-                "splitter must be in {random, best, mutual} got "
+                "splitter must be in {random, best, mutual, cfs, fcbf} got "
                 f"({feature_select})"
             )
         self.criterion_function = getattr(self, f"_{self._criterion}")
         self.decision_criteria = getattr(self, f"_{self._criteria}")
+        self.fs_function = getattr(self, f"_fs_{self._feature_select}")
+
+    def _fs_random(
+        self, dataset: np.array, labels: np.array, max_features: int
+    ) -> tuple:
+        """Return the best of five random feature set combinations
+
+        Parameters
+        ----------
+        dataset : np.array
+            array of samples
+        labels : np.array
+            labels of the dataset
+        max_features : int
+            number of features of the subspace
+            (< number of features in dataset)
+
+        Returns
+        -------
+        tuple
+            indices of the features selected
+        """
+        # Random feature reduction
+        n_features = dataset.shape[1]
+        features_sets = self._generate_spaces(n_features, max_features)
+        return self._select_best_set(dataset, labels, features_sets)
+
+    def _fs_best(
+        self, dataset: np.array, labels: np.array, max_features: int
+    ) -> tuple:
+        """Return the variabes with higher f-score
+
+        Parameters
+        ----------
+        dataset : np.array
+            array of samples
+        labels : np.array
+            labels of the dataset
+        max_features : int
+            number of features of the subspace
+            (< number of features in dataset)
+
+        Returns
+        -------
+        tuple
+            indices of the features selected
+        """
+        return (
+            SelectKBest(k=max_features)
+            .fit(dataset, labels)
+            .get_support(indices=True)
+        )
+
+    def _fs_mutual(
+        self, dataset: np.array, labels: np.array, max_features: int
+    ) -> tuple:
+        """Return the best features with mutual information with labels
+
+        Parameters
+        ----------
+        dataset : np.array
+            array of samples
+        labels : np.array
+            labels of the dataset
+        max_features : int
+            number of features of the subspace
+            (< number of features in dataset)
+
+        Returns
+        -------
+        tuple
+            indices of the features selected
+        """
+        # return best features with mutual info with the label
+        feature_list = mutual_info_classif(dataset, labels)
+        return tuple(
+            sorted(
+                range(len(feature_list)), key=lambda sub: feature_list[sub]
+            )[-max_features:]
+        )
+
+    def _fs_cfs(
+        self, dataset: np.array, labels: np.array, max_features: int
+    ) -> tuple:
+        """Correlattion-based feature selection with max_features limit
+
+        Parameters
+        ----------
+        dataset : np.array
+            array of samples
+        labels : np.array
+            labels of the dataset
+        max_features : int
+            number of features of the subspace
+            (< number of features in dataset)
+
+        Returns
+        -------
+        tuple
+            indices of the features selected
+        """
+        mfs = MFS(max_features)
+        return mfs.cfs(dataset, labels).get_results()
+
+    def _fs_fcbf(
+        self, dataset: np.array, labels: np.array, max_features: int
+    ) -> tuple:
+        """Fast Correlation-based Filter algorithm with max_features limit
+
+        Parameters
+        ----------
+        dataset : np.array
+            array of samples
+        labels : np.array
+            labels of the dataset
+        max_features : int
+            number of features of the subspace
+            (< number of features in dataset)
+
+        Returns
+        -------
+        tuple
+            indices of the features selected
+        """
+        mfs = MFS(max_features)
+        return mfs.fcbf(dataset, labels, 5e-4).get_results()
 
     def partition_impurity(self, y: np.array) -> np.array:
         return self.criterion_function(y)
@@ -378,34 +505,17 @@ class Splitter:
             indices of the features selected
         """
         # No feature reduction
-        if dataset.shape[1] == max_features:
-            return tuple(range(dataset.shape[1]))
-        # Random feature reduction
-        if self._feature_select == "random":
-            features_sets = self._generate_spaces(
-                dataset.shape[1], max_features
-            )
-            return self._select_best_set(dataset, labels, features_sets)
-        # return the KBest features
-        if self._feature_select == "best":
-            return (
-                SelectKBest(k=max_features)
-                .fit(dataset, labels)
-                .get_support(indices=True)
-            )
-        # return best features with mutual info with the label
-        feature_list = mutual_info_classif(dataset, labels)
-        return tuple(
-            sorted(
-                range(len(feature_list)), key=lambda sub: feature_list[sub]
-            )[-max_features:]
-        )
+        n_features = dataset.shape[1]
+        if n_features == max_features:
+            return tuple(range(n_features))
+        # select features as selected in constructor
+        return self.fs_function(dataset, labels, max_features)
 
     def get_subspace(
         self, dataset: np.array, labels: np.array, max_features: int
     ) -> tuple:
         """Re3turn a subspace of the selected dataset of max_features length.
-        Depending on hyperparmeter
+        Depending on hyperparameter
 
         Parameters
         ----------

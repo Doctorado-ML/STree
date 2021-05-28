@@ -1,4 +1,5 @@
 from sklearn.datasets import make_classification
+import numpy as np
 
 
 def load_dataset(random_state=0, n_classes=2, n_features=3, n_samples=1500):
@@ -14,4 +15,13 @@ def load_dataset(random_state=0, n_classes=2, n_features=3, n_samples=1500):
         flip_y=0,
         random_state=random_state,
     )
+    return X, y
+
+
+def load_disc_dataset(
+    random_state=0, n_classes=2, n_features=3, n_samples=1500
+):
+    np.random.seed(random_state)
+    X = np.random.randint(1, 17, size=(n_samples, n_features), dtype=int)
+    y = np.random.randint(low=0, high=n_classes, size=(n_samples), dtype=int)
     return X, y
