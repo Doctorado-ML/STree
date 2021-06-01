@@ -5,7 +5,7 @@ import random
 import numpy as np
 from sklearn.svm import SVC
 from sklearn.datasets import load_wine, load_iris
-from stree import Splitter
+from ..Splitter import Splitter
 from .utils import load_dataset, load_disc_dataset
 
 
