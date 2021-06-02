@@ -2,7 +2,7 @@ import os
 import unittest
 import numpy as np
 from stree import Stree
-from ..Splitter import Snode
+from stree.Splitter import Snode
 from .utils import load_dataset
 
 

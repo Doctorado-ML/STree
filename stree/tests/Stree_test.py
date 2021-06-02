@@ -8,7 +8,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.svm import LinearSVC
 
 from stree import Stree
-from ..Splitter import Snode
+from stree.Splitter import Snode
 from .utils import load_dataset
 
 

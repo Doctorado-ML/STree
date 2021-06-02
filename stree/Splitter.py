@@ -309,7 +309,7 @@ class Splitter:
         tuple
             indices of the features selected
         """
-        mfs = MFS(max_features=max_features, discrete=True)
+        mfs = MFS(max_features=max_features, discrete=False)
         return mfs.cfs(dataset, labels).get_results()
 
     def _fs_fcbf(
@@ -332,7 +332,7 @@ class Splitter:
         tuple
             indices of the features selected
         """
-        mfs = MFS(max_features=max_features, discrete=True)
+        mfs = MFS(max_features=max_features, discrete=False)
         return mfs.fcbf(dataset, labels, 5e-4).get_results()
 
     def partition_impurity(self, y: np.array) -> np.array:

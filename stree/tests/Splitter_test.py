@@ -5,7 +5,7 @@ import random
 import numpy as np
 from sklearn.svm import SVC
 from sklearn.datasets import load_wine, load_iris
-from ..Splitter import Splitter
+from stree.Splitter import Splitter
 from .utils import load_dataset, load_disc_dataset
 
 
@@ -245,7 +245,7 @@ class Splitter_test(unittest.TestCase):
             self.assertListEqual(expected, list(computed))
             self.assertListEqual(X[:, expected].tolist(), Xs.tolist())
 
-    def test_get_cfs_subscapces(self):
+    def test_get_cfs_subspaces(self):
         results = [
             (4, [18, 4, 16, 10]),
             (6, [18, 4, 16, 10, 6, 19]),
@@ -258,7 +258,7 @@ class Splitter_test(unittest.TestCase):
             self.assertListEqual(expected, list(computed))
             self.assertListEqual(X[:, expected].tolist(), Xs.tolist())
 
-    def test_get_fcbf_subscapces(self):
+    def test_get_fcbf_subspaces(self):
         results = [
             (25, [11]),
             (17, [5]),
