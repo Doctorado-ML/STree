@@ -2,11 +2,13 @@ from sklearn.datasets import make_classification
 import numpy as np
 
 
-def load_dataset(random_state=0, n_classes=2, n_features=3, n_samples=1500):
+def load_dataset(
+    random_state=0, n_classes=2, n_features=3, n_samples=1500, n_informative=3
+):
     X, y = make_classification(
         n_samples=n_samples,
         n_features=n_features,
-        n_informative=3,
+        n_informative=n_informative,
         n_redundant=0,
         n_repeated=0,
         n_classes=n_classes,

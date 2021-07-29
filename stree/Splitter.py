@@ -235,8 +235,9 @@ class Splitter:
         features_sets = self._generate_spaces(n_features, max_features)
         return self._select_best_set(dataset, labels, features_sets)
 
+    @staticmethod
     def _fs_best(
-        self, dataset: np.array, labels: np.array, max_features: int
+        dataset: np.array, labels: np.array, max_features: int
     ) -> tuple:
         """Return the variabes with higher f-score
 
@@ -261,8 +262,9 @@ class Splitter:
             .get_support(indices=True)
         )
 
+    @staticmethod
     def _fs_mutual(
-        self, dataset: np.array, labels: np.array, max_features: int
+        dataset: np.array, labels: np.array, max_features: int
     ) -> tuple:
         """Return the best features with mutual information with labels
 
@@ -289,8 +291,9 @@ class Splitter:
             )[-max_features:]
         )
 
+    @staticmethod
     def _fs_cfs(
-        self, dataset: np.array, labels: np.array, max_features: int
+        dataset: np.array, labels: np.array, max_features: int
     ) -> tuple:
         """Correlattion-based feature selection with max_features limit
 
@@ -312,8 +315,9 @@ class Splitter:
         mfs = MFS(max_features=max_features, discrete=False)
         return mfs.cfs(dataset, labels).get_results()
 
+    @staticmethod
     def _fs_fcbf(
-        self, dataset: np.array, labels: np.array, max_features: int
+        dataset: np.array, labels: np.array, max_features: int
     ) -> tuple:
         """Fast Correlation-based Filter algorithm with max_features limit
 

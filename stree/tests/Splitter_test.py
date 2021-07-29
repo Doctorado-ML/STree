@@ -245,13 +245,28 @@ class Splitter_test(unittest.TestCase):
             self.assertListEqual(expected, list(computed))
             self.assertListEqual(X[:, expected].tolist(), Xs.tolist())
 
-    def test_get_cfs_subspaces(self):
+    def test_get_best_subspaces_discrete(self):
         results = [
-            (4, [18, 4, 16, 10]),
-            (6, [18, 4, 16, 10, 6, 19]),
-            (7, [18, 4, 16, 10, 6, 19, 8]),
+            (4, [0, 3, 16, 18]),
+            (7, [0, 3, 13, 14, 16, 18, 19]),
+            (9, [0, 3, 7, 13, 14, 15, 16, 18, 19]),
         ]
         X, y = load_disc_dataset(n_features=20)
+        for k, expected in results:
+            tcl = self.build(
+                feature_select="best",
+            )
+            Xs, computed = tcl.get_subspace(X, y, k)
+            self.assertListEqual(expected, list(computed))
+            self.assertListEqual(X[:, expected].tolist(), Xs.tolist())
+
+    def test_get_cfs_subspaces(self):
+        results = [
+            (4, [1, 5, 9, 12]),
+            (6, [1, 5, 9, 12, 4, 2]),
+            (7, [1, 5, 9, 12, 4, 2, 3]),
+        ]
+        X, y = load_dataset(n_features=20, n_informative=7)
         for k, expected in results:
             tcl = self.build(feature_select="cfs")
             Xs, computed = tcl.get_subspace(X, y, k)
@@ -260,13 +275,13 @@ class Splitter_test(unittest.TestCase):
 
     def test_get_fcbf_subspaces(self):
         results = [
-            (25, [11]),
-            (17, [5]),
-            (39, [28]),
+            (4, [1, 5, 9, 12]),
+            (6, [1, 5, 9, 12, 4, 2]),
+            (7, [1, 5, 9, 12, 4, 2, 16]),
         ]
         for rs, expected in results:
-            X, y = load_disc_dataset(n_features=rs)
+            X, y = load_dataset(n_features=20, n_informative=7)
             tcl = self.build(feature_select="fcbf", random_state=rs)
-            Xs, computed = tcl.get_subspace(X, y, 3)
+            Xs, computed = tcl.get_subspace(X, y, rs)
             self.assertListEqual(expected, list(computed))
             self.assertListEqual(X[:, expected].tolist(), Xs.tolist())
