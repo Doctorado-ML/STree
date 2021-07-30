@@ -5,8 +5,8 @@ import random
 import numpy as np
 from sklearn.svm import SVC
 from sklearn.datasets import load_wine, load_iris
-from stree import Splitter
-from .utils import load_dataset
+from stree.Splitter import Splitter
+from .utils import load_dataset, load_disc_dataset
 
 
 class Splitter_test(unittest.TestCase):
@@ -242,5 +242,46 @@ class Splitter_test(unittest.TestCase):
                 feature_select="best",
             )
             Xs, computed = tcl.get_subspace(X, y, k)
+            self.assertListEqual(expected, list(computed))
+            self.assertListEqual(X[:, expected].tolist(), Xs.tolist())
+
+    def test_get_best_subspaces_discrete(self):
+        results = [
+            (4, [0, 3, 16, 18]),
+            (7, [0, 3, 13, 14, 16, 18, 19]),
+            (9, [0, 3, 7, 13, 14, 15, 16, 18, 19]),
+        ]
+        X, y = load_disc_dataset(n_features=20)
+        for k, expected in results:
+            tcl = self.build(
+                feature_select="best",
+            )
+            Xs, computed = tcl.get_subspace(X, y, k)
+            self.assertListEqual(expected, list(computed))
+            self.assertListEqual(X[:, expected].tolist(), Xs.tolist())
+
+    def test_get_cfs_subspaces(self):
+        results = [
+            (4, [1, 5, 9, 12]),
+            (6, [1, 5, 9, 12, 4, 2]),
+            (7, [1, 5, 9, 12, 4, 2, 3]),
+        ]
+        X, y = load_dataset(n_features=20, n_informative=7)
+        for k, expected in results:
+            tcl = self.build(feature_select="cfs")
+            Xs, computed = tcl.get_subspace(X, y, k)
+            self.assertListEqual(expected, list(computed))
+            self.assertListEqual(X[:, expected].tolist(), Xs.tolist())
+
+    def test_get_fcbf_subspaces(self):
+        results = [
+            (4, [1, 5, 9, 12]),
+            (6, [1, 5, 9, 12, 4, 2]),
+            (7, [1, 5, 9, 12, 4, 2, 16]),
+        ]
+        for rs, expected in results:
+            X, y = load_dataset(n_features=20, n_informative=7)
+            tcl = self.build(feature_select="fcbf", random_state=rs)
+            Xs, computed = tcl.get_subspace(X, y, rs)
             self.assertListEqual(expected, list(computed))
             self.assertListEqual(X[:, expected].tolist(), Xs.tolist())

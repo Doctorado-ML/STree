@@ -7,7 +7,8 @@ from sklearn.datasets import load_iris, load_wine
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.svm import LinearSVC
 
-from stree import Stree, Snode
+from stree import Stree
+from stree.Splitter import Snode
 from .utils import load_dataset
 
 

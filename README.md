@@ -53,6 +53,7 @@ Can be found in [stree.readthedocs.io](https://stree.readthedocs.io/en/stable/)
 |     | normalize           | \<bool\>                                               | False       | If standardization of features should be applied on each node with the samples that reach it                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | \*  | multiclass_strategy | {"ovo", "ovr"}                                         | "ovo"       | Strategy to use with multiclass datasets, **"ovo"**: one versus one. **"ovr"**: one versus rest                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 
+
 \* Hyperparameter used by the support vector classifier of every node
 
 \*\* **Splitting in a STree node**

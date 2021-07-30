@@ -1,7 +1,8 @@
 import os
 import unittest
 import numpy as np
-from stree import Stree, Snode
+from stree import Stree
+from stree.Splitter import Snode
 from .utils import load_dataset
 
 
