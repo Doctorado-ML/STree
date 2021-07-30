@@ -6,6 +6,6 @@ API index
    :caption: Contents:
 
    Stree
-   Splitter
-   Snode
    Siterator
+   Snode
+   Splitter

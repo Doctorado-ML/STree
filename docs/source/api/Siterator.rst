@@ -1,7 +1,7 @@
 Siterator
 =========
 
-.. automodule:: stree
+.. automodule:: Splitter
 .. autoclass:: Siterator
     :members:
     :undoc-members:

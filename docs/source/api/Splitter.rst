@@ -1,7 +1,7 @@
 Splitter
 ========
 
-.. automodule:: stree
+.. automodule:: Splitter
 .. autoclass:: Splitter
     :members:
     :undoc-members:
