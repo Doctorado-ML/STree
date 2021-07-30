@@ -1,7 +1,7 @@
 Snode
 =====
 
-.. automodule:: stree
+.. automodule:: Splitter
 .. autoclass:: Snode
     :members:
     :undoc-members:
