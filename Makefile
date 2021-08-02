@@ -26,6 +26,7 @@ doc:  ## Update documentation
 
 build:  ## Build package
 	rm -fr dist/*
+	rm -fr build/*
 	python setup.py sdist bdist_wheel
 
 doc-clean:  ## Update documentation
