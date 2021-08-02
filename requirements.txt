@@ -1,2 +1,2 @@
 scikit-learn>0.24
-mfs
+mufs

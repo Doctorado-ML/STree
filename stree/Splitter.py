@@ -12,7 +12,7 @@ from sklearn.feature_selection import SelectKBest, mutual_info_classif
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.exceptions import ConvergenceWarning
-from mfs import MFS
+from mufs import MUFS
 
 
 class Snode:
@@ -312,8 +312,8 @@ class Splitter:
         tuple
             indices of the features selected
         """
-        mfs = MFS(max_features=max_features, discrete=False)
-        return mfs.cfs(dataset, labels).get_results()
+        mufs = MUFS(max_features=max_features, discrete=False)
+        return mufs.cfs(dataset, labels).get_results()
 
     @staticmethod
     def _fs_fcbf(
@@ -336,8 +336,8 @@ class Splitter:
         tuple
             indices of the features selected
         """
-        mfs = MFS(max_features=max_features, discrete=False)
-        return mfs.fcbf(dataset, labels, 5e-4).get_results()
+        mufs = MUFS(max_features=max_features, discrete=False)
+        return mufs.fcbf(dataset, labels, 5e-4).get_results()
 
     def partition_impurity(self, y: np.array) -> np.array:
         return self.criterion_function(y)

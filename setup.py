@@ -44,7 +44,7 @@ setuptools.setup(
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
         "Intended Audience :: Science/Research",
     ],
-    install_requires=["scikit-learn", "numpy", "mfs"],
+    install_requires=["scikit-learn", "mufs"],
     test_suite="stree.tests",
     zip_safe=False,
 )

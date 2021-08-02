@@ -26,7 +26,6 @@ jobs:
           pip install -q --upgrade pip
           pip install -q -r requirements.txt
           pip install -q --upgrade codecov coverage black flake8 codacy-coverage
-          pip install -q git+https://github.com/doctorado-ml/mfs
       - name: Lint
         run: |
           black --check --diff stree
