@@ -4,6 +4,7 @@
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/Doctorado-ML/STree.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Doctorado-ML/STree/context:python)
 [![PyPI version](https://badge.fury.io/py/STree.svg)](https://badge.fury.io/py/STree)
 ![https://img.shields.io/badge/python-3.8%2B-blue](https://img.shields.io/badge/python-3.8%2B-brightgreen)
+[![DOI](https://zenodo.org/badge/262658230.svg)](https://zenodo.org/badge/latestdoi/262658230)
 
 
 # STree
