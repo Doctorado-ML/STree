@@ -20,11 +20,117 @@ from .Splitter import Splitter, Snode, Siterator
 
 
 class Stree(BaseEstimator, ClassifierMixin):
-    """Estimator that is based on binary trees of svm nodes
+    """
+    Estimator that is based on binary trees of svm nodes
     can deal with sample_weights in predict, used in boosting sklearn methods
     inheriting from BaseEstimator implements get_params and set_params methods
     inheriting from ClassifierMixin implement the attribute _estimator_type
     with "classifier" as value
+
+    Parameters
+    ----------
+    C : float, optional
+        Regularization parameter. The strength of the regularization is
+        inversely proportional to C. Must be strictly positive., by default 1.0
+    kernel : str, optional
+        Specifies the kernel type to be used in the algorithm. It must be one
+        of ‘liblinear’, ‘linear’, ‘poly’ or ‘rbf’. liblinear uses
+        [liblinear](https://www.csie.ntu.edu.tw/~cjlin/liblinear/) library and
+        the rest uses [libsvm](https://www.csie.ntu.edu.tw/~cjlin/libsvm/)
+        library through scikit-learn library, by default "linear"
+    max_iter : int, optional
+        Hard limit on iterations within solver, or -1 for no limit., by default
+        1e5
+    random_state : int, optional
+        Controls the pseudo random number generation for shuffling the data for
+        probability estimates. Ignored when probability is False.Pass an int
+        for reproducible output across multiple function calls, by
+        default None
+    max_depth : int, optional
+        Specifies the maximum depth of the tree, by default None
+    tol : float, optional
+        Tolerance for stopping, by default 1e-4
+    degree : int, optional
+        Degree of the polynomial kernel function (‘poly’). Ignored by all other
+        kernels., by default 3
+    gamma : str, optional
+        Kernel coefficient for ‘rbf’, ‘poly’ and ‘sigmoid’.if gamma='scale'
+        (default) is passed then it uses 1 / (n_features * X.var()) as value
+        of gamma,if ‘auto’, uses 1 / n_features., by default "scale"
+    split_criteria : str, optional
+        Decides (just in case of a multi class classification) which column
+        (class) use to split the dataset in a node. max_samples is
+        incompatible with 'ovo' multiclass_strategy, by default "impurity"
+    criterion : str, optional
+        The function to measure the quality of a split (only used if
+        max_features != num_features). Supported criteria are “gini” for the
+        Gini impurity and “entropy” for the information gain., by default
+        "entropy"
+    min_samples_split : int, optional
+        The minimum number of samples required to split an internal node. 0
+        (default) for any, by default 0
+    max_features : optional
+        The number of features to consider when looking for the split: If int,
+        then consider max_features features at each split. If float, then
+        max_features is a fraction and int(max_features * n_features) features
+        are considered at each split. If “auto”, then max_features=
+        sqrt(n_features). If “sqrt”, then max_features=sqrt(n_features). If
+        “log2”, then max_features=log2(n_features). If None, then max_features=
+        n_features., by default None
+    splitter : str, optional
+        The strategy used to choose the feature set at each node (only used if
+        max_features < num_features). Supported strategies are: “best”: sklearn
+        SelectKBest algorithm is used in every node to choose the max_features
+        best features. “random”: The algorithm generates 5 candidates and
+        choose the best (max. info. gain) of them. "mutual": Chooses the best
+        features w.r.t. their mutual info with the label. "cfs": Apply
+        Correlation-based Feature Selection. "fcbf": Apply Fast Correlation-
+        Based , by default "random"
+    multiclass_strategy : str, optional
+        Strategy to use with multiclass datasets, "ovo": one versus one. "ovr":
+        one versus rest, by default "ovo"
+    normalize : bool, optional
+        If standardization of features should be applied on each node with the
+        samples that reach it , by default False
+
+    Attributes
+    ----------
+    classes_ : ndarray of shape (n_classes,)
+        The classes labels.
+
+    n_classes_ : int
+        The number of classes
+
+    n_iter_ : int
+        Max number of iterations in classifier
+
+    depth_ : int
+        Max depht of the tree
+
+    n_features_ : int
+        The number of features when ``fit`` is performed.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+    max_features_ : int
+        Number of features to use in hyperplane computation
+
+    tree_ : Node
+        root of the tree
+
+    X_ : ndarray
+        points to the input dataset
+
+    y_ : ndarray
+        points to the input labels
+
+    References
+    ----------
+    R. Montañana, J. A. Gámez, J. M. Puerta, "STree: a single multi-class
+    oblique decision tree based on support vector machines.", 2021 LNAI...
+
+
     """
 
     def __init__(
@@ -45,6 +151,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         multiclass_strategy: str = "ovo",
         normalize: bool = False,
     ):
+
         self.max_iter = max_iter
         self.C = C
         self.kernel = kernel

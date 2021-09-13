@@ -16,8 +16,28 @@ from mufs import MUFS
 
 
 class Snode:
-    """Nodes of the tree that keeps the svm classifier and if testing the
+    """
+    Nodes of the tree that keeps the svm classifier and if testing the
     dataset assigned to it
+
+    Parameters
+    ----------
+    clf : SVC
+        Classifier used
+    X : np.ndarray
+        input dataset in train time (only in testing)
+    y : np.ndarray
+        input labes in train time
+    features : np.array
+        features used to compute hyperplane
+    impurity : float
+        impurity of the node
+    title : str
+        label describing the route to the node
+    weight : np.ndarray, optional
+        weights applied to input dataset in train time, by default None
+    scaler : StandardScaler, optional
+        scaler used if any, by default None
     """
 
     def __init__(
@@ -165,6 +185,55 @@ class Siterator:
 
 
 class Splitter:
+    """
+    Splits a dataset in two based on different criteria
+
+    Parameters
+    ----------
+    clf : SVC, optional
+        classifier, by default None
+    criterion : str, optional
+        The function to measure the quality of a split (only used if
+        max_features != num_features). Supported criteria are “gini” for the
+        Gini impurity and “entropy” for the information gain., by default
+        "entropy", by default None
+    feature_select : str, optional
+        The strategy used to choose the feature set at each node (only used if
+        max_features < num_features). Supported strategies are: “best”: sklearn
+        SelectKBest algorithm is used in every node to choose the max_features
+        best features. “random”: The algorithm generates 5 candidates and
+        choose the best (max. info. gain) of them. "mutual": Chooses the best
+        features w.r.t. their mutual info with the label. "cfs": Apply
+        Correlation-based Feature Selection. "fcbf": Apply Fast Correlation-
+        Based, by default None
+    criteria : str, optional
+        ecides (just in case of a multi class classification) which column
+        (class) use to split the dataset in a node. max_samples is
+        incompatible with 'ovo' multiclass_strategy, by default None
+    min_samples_split : int, optional
+        The minimum number of samples required to split an internal node. 0
+        (default) for any, by default None
+    random_state : optional
+        Controls the pseudo random number generation for shuffling the data for
+        probability estimates. Ignored when probability is False.Pass an int
+        for reproducible output across multiple function calls, by
+        default None
+    normalize : bool, optional
+        If standardization of features should be applied on each node with the
+        samples that reach it , by default False
+
+    Raises
+    ------
+    ValueError
+        clf has to be a sklearn estimator
+    ValueError
+        criterion must be gini or entropy
+    ValueError
+        criteria has to be max_samples or impurity
+    ValueError
+        splitter must be in {random, best, mutual, cfs, fcbf}
+    """
+
     def __init__(
         self,
         clf: SVC = None,
@@ -175,6 +244,7 @@ class Splitter:
         random_state=None,
         normalize=False,
     ):
+
         self._clf = clf
         self._random_state = random_state
         if random_state is not None:
