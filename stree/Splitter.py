@@ -314,8 +314,9 @@ class Splitter:
         features_sets = self._generate_spaces(n_features, max_features)
         return self._select_best_set(dataset, labels, features_sets)
 
+    @staticmethod
     def _fs_trandom(
-        self, dataset: np.array, labels: np.array, max_features: int
+        dataset: np.array, labels: np.array, max_features: int
     ) -> tuple:
         """Return the a random feature set combination
 
