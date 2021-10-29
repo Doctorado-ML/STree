@@ -297,3 +297,16 @@ class Splitter_test(unittest.TestCase):
             Xs, computed = tcl.get_subspace(X, y, rs)
             self.assertListEqual(expected, list(computed))
             self.assertListEqual(X[:, expected].tolist(), Xs.tolist())
+
+    def test_get_trandom_subspaces(self):
+        results = [
+            (4, [3, 7, 9, 12]),
+            (6, [0, 1, 2, 8, 15, 18]),
+            (7, [1, 2, 4, 8, 10, 12, 13]),
+        ]
+        for rs, expected in results:
+            X, y = load_dataset(n_features=20, n_informative=7)
+            tcl = self.build(feature_select="trandom", random_state=rs)
+            Xs, computed = tcl.get_subspace(X, y, rs)
+            self.assertListEqual(expected, list(computed))
+            self.assertListEqual(X[:, expected].tolist(), Xs.tolist())

@@ -273,6 +273,7 @@ class Splitter:
 
         if feature_select not in [
             "random",
+            "trandom",
             "best",
             "mutual",
             "cfs",
@@ -280,7 +281,8 @@ class Splitter:
             "iwss",
         ]:
             raise ValueError(
-                "splitter must be in {random, best, mutual, cfs, fcbf, iwss} "
+                "splitter must be in {random, trandom, best, mutual, cfs, "
+                "fcbf, iwss} "
                 f"got ({feature_select})"
             )
         self.criterion_function = getattr(self, f"_{self._criterion}")
@@ -311,6 +313,30 @@ class Splitter:
         n_features = dataset.shape[1]
         features_sets = self._generate_spaces(n_features, max_features)
         return self._select_best_set(dataset, labels, features_sets)
+
+    def _fs_trandom(
+        self, dataset: np.array, labels: np.array, max_features: int
+    ) -> tuple:
+        """Return the a random feature set combination
+
+        Parameters
+        ----------
+        dataset : np.array
+            array of samples
+        labels : np.array
+            labels of the dataset
+        max_features : int
+            number of features of the subspace
+            (< number of features in dataset)
+
+        Returns
+        -------
+        tuple
+            indices of the features selected
+        """
+        # Random feature reduction
+        n_features = dataset.shape[1]
+        return tuple(sorted(random.sample(range(n_features), max_features)))
 
     @staticmethod
     def _fs_best(
