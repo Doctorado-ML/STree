@@ -285,3 +285,15 @@ class Splitter_test(unittest.TestCase):
             Xs, computed = tcl.get_subspace(X, y, rs)
             self.assertListEqual(expected, list(computed))
             self.assertListEqual(X[:, expected].tolist(), Xs.tolist())
+
+    def test_get_iwss_subspaces(self):
+        results = [
+            (4, [1, 5, 9, 12]),
+            (6, [1, 5, 9, 12, 4, 15]),
+        ]
+        for rs, expected in results:
+            X, y = load_dataset(n_features=20, n_informative=7)
+            tcl = self.build(feature_select="iwss", random_state=rs)
+            Xs, computed = tcl.get_subspace(X, y, rs)
+            self.assertListEqual(expected, list(computed))
+            self.assertListEqual(X[:, expected].tolist(), Xs.tolist())
