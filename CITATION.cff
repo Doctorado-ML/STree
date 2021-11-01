@@ -1,0 +1,37 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Montañana"
+  given-names: "Ricardo"
+  orcid: "https://orcid.org/0000-0003-3242-5452"
+- family-names: "Gámez"
+  given-names: "José A."
+  orcid: "https://orcid.org/0000-0003-1188-1117"
+ - family-names: "Puerta"
+  given-names: "José M."
+  orcid: "https://orcid.org/0000-0002-9164-5191"
+title: "STree"
+version: 1.2.2
+doi: 10.5281/zenodo.5504083
+date-released: 2021-11-02
+url: "https://github.com/Doctorado-ML/STree"
+preferred-citation:
+  type: article
+  authors:
+  - family-names: "Montañana"
+    given-names: "Ricardo"
+    orcid: "https://orcid.org/0000-0003-3242-5452"
+  - family-names: "Gámez"
+    given-names: "José A."
+    orcid: "https://orcid.org/0000-0003-1188-1117"
+   - family-names: "Puerta"
+    given-names: "José M."
+    orcid: "https://orcid.org/0000-0002-9164-5191"
+  doi: "10.1007/978-3-030-85713-4_6"
+  journal: "Lecture Notes in Computer Science"
+  month: 9
+  start: 54
+  end: 64
+  title: "STree: A Single Multi-class Oblique Decision Tree Based on Support Vector Machines"
+  volume: 12882
+  year: 2021
