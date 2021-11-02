@@ -82,7 +82,8 @@ class Stree(BaseEstimator, ClassifierMixin):
         max_features < num_features). Supported strategies are: “best”: sklearn
         SelectKBest algorithm is used in every node to choose the max_features
         best features. “random”: The algorithm generates 5 candidates and
-        choose the best (max. info. gain) of them. "mutual": Chooses the best
+        choose the best (max. info. gain) of them. “trandom”: The algorithm
+        generates only one random combination. "mutual": Chooses the best
         features w.r.t. their mutual info with the label. "cfs": Apply
         Correlation-based Feature Selection. "fcbf": Apply Fast Correlation-
         Based , by default "random"
@@ -128,7 +129,7 @@ class Stree(BaseEstimator, ClassifierMixin):
     References
     ----------
     R. Montañana, J. A. Gámez, J. M. Puerta, "STree: a single multi-class
-    oblique decision tree based on support vector machines.", 2021 LNAI...
+    oblique decision tree based on support vector machines.", 2021 LNAI 12882
 
 
     """

@@ -73,3 +73,7 @@ python -m unittest -v stree.tests
 ## License
 
 STree is [MIT](https://github.com/doctorado-ml/stree/blob/master/LICENSE) licensed
+
+## Reference
+
+R. Montañana, J. A. Gámez, J. M. Puerta, "STree: a single multi-class oblique decision tree based on support vector machines.", 2021 LNAI 12882, pg. 54-64
