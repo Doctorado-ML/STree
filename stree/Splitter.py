@@ -367,9 +367,8 @@ class Splitter:
             .get_support(indices=True)
         )
 
-    @staticmethod
     def _fs_mutual(
-        dataset: np.array, labels: np.array, max_features: int
+        self, dataset: np.array, labels: np.array, max_features: int
     ) -> tuple:
         """Return the best features with mutual information with labels
 
@@ -389,7 +388,9 @@ class Splitter:
             indices of the features selected
         """
         # return best features with mutual info with the label
-        feature_list = mutual_info_classif(dataset, labels)
+        feature_list = mutual_info_classif(
+            dataset, labels, random_state=self._random_state
+        )
         return tuple(
             sorted(
                 range(len(feature_list)), key=lambda sub: feature_list[sub]
