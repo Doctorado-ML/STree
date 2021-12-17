@@ -10,6 +10,7 @@ from sklearn.svm import LinearSVC
 from stree import Stree
 from stree.Splitter import Snode
 from .utils import load_dataset
+from .._version import __version__
 
 
 class Stree_test(unittest.TestCase):
@@ -661,3 +662,7 @@ class Stree_test(unittest.TestCase):
         clf = Stree(multiclass_strategy="ovo", split_criteria="max_samples")
         with self.assertRaises(ValueError):
             clf.fit(X, y)
+
+    def test_version(self):
+        clf = Stree()
+        self.assertEqual(__version__, clf.version())

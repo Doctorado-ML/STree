@@ -1,6 +1,5 @@
 from .Strees import Stree, Siterator
-
-__version__ = "1.2.3"
+from ._version import __version__
 
 __author__ = "Ricardo Montañana Gómez"
 __copyright__ = "Copyright 2020-2021, Ricardo Montañana Gómez"

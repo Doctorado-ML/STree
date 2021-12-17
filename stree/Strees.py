@@ -17,6 +17,7 @@ from sklearn.utils.validation import (
     _check_sample_weight,
 )
 from .Splitter import Splitter, Snode, Siterator
+from ._version import __version__
 
 
 class Stree(BaseEstimator, ClassifierMixin):
@@ -168,6 +169,11 @@ class Stree(BaseEstimator, ClassifierMixin):
         self.splitter = splitter
         self.normalize = normalize
         self.multiclass_strategy = multiclass_strategy
+
+    @staticmethod
+    def version() -> str:
+        """Return the version of the package."""
+        return __version__
 
     def _more_tags(self) -> dict:
         """Required by sklearn to supply features of the classifier
