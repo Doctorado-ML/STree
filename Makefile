@@ -10,6 +10,9 @@ coverage:  ## Run tests with coverage
 deps:  ## Install dependencies
 	pip install -r requirements.txt
 
+devdeps:  ## Install development dependencies
+	pip install black pip-audit flake8 mypy coverage
+
 lint:  ## Lint and static-check
 	black stree
 	flake8 stree
@@ -31,6 +34,9 @@ build:  ## Build package
 
 doc-clean:  ## Update documentation
 	make -C docs --makefile=Makefile clean
+
+audit: ## Audit pip
+	pip-audit
 
 help: ## Show help message
 	@IFS=$$'\n' ; \
