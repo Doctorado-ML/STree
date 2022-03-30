@@ -666,3 +666,20 @@ class Stree_test(unittest.TestCase):
     def test_version(self):
         clf = Stree()
         self.assertEqual(__version__, clf.version())
+
+    def test_graph(self):
+        X, y = load_wine(return_X_y=True)
+        clf = Stree(random_state=self._random_state)
+        clf.fit(X, y)
+        expected_head = "digraph STree {\n"
+        expected_tail = (
+            ' [shape=box style=filled label="class=1 belief= '
+            '1.000 impurity=0.000 classes/samples=(array([1]), array([1]))"]'
+            ";\n}\n"
+        )
+        computed = clf.graph()
+        computed_head = computed[: len(expected_head)]
+        num = -len(expected_tail)
+        computed_tail = computed[num:]
+        self.assertEqual(computed_head, expected_head)
+        self.assertEqual(computed_tail, expected_tail)
