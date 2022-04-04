@@ -476,7 +476,7 @@ class Stree(BaseEstimator, ClassifierMixin):
             tree = None
         return Siterator(tree)
 
-    def graph(self) -> str:
+    def graph(self, title="") -> str:
         """Graphviz code representing the tree
 
         Returns
@@ -484,7 +484,10 @@ class Stree(BaseEstimator, ClassifierMixin):
         str
             graphviz code
         """
-        output = "digraph STree {\n"
+        output = (
+            "digraph STree {\nlabel=<STree "
+            f"{title}>\nfontsize=30\nfontcolor=blue\nlabelloc=t\n"
+        )
         for node in self:
             output += node.graph()
         output += "}\n"

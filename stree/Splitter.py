@@ -154,19 +154,17 @@ class Snode:
         if self.is_leaf():
             output += (
                 f'N{id(self)} [shape=box style=filled label="'
-                f"class={self._class} belief={self._belief: .3f} "
-                f"impurity={self._impurity:.3f} "
-                f'classes/samples={count_values}"];\n'
+                f"class={self._class} impurity={self._impurity:.3f} "
+                f'classes={count_values[0]} samples={count_values[1]}"];\n'
             )
         else:
             output += (
                 f'N{id(self)} [label="#features={len(self._features)} '
-                f'classes/samples={count_values}"];\n'
+                f"classes={count_values[0]} samples={count_values[1]} "
+                f'({sum(count_values[1])})"];\n'
             )
-            output += f'N{id(self)} -> N{id(self.get_up())} [label="Up"];\n'
-            output += (
-                f'N{id(self)} -> N{id(self.get_down())} [label="Down"];\n'
-            )
+            output += f"N{id(self)} -> N{id(self.get_up())};\n"
+            output += f"N{id(self)} -> N{id(self.get_down())};\n"
         return output
 
     def __str__(self) -> str:

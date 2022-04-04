@@ -688,15 +688,38 @@ class Stree_test(unittest.TestCase):
         """Check graphviz representation of the tree."""
         X, y = load_wine(return_X_y=True)
         clf = Stree(random_state=self._random_state)
-        self.assertEqual(clf.graph(), "digraph STree {\n}\n")
-        clf.fit(X, y)
-        expected_head = "digraph STree {\n"
-        expected_tail = (
-            ' [shape=box style=filled label="class=1 belief= '
-            '1.000 impurity=0.000 classes/samples=(array([1]), array([1]))"]'
-            ";\n}\n"
+
+        expected_head = (
+            "digraph STree {\nlabel=<STree >\nfontsize=30\n"
+            "fontcolor=blue\nlabelloc=t\n"
         )
+        expected_tail = (
+            ' [shape=box style=filled label="class=1 impurity=0.000 '
+            'classes=[1] samples=[1]"];\n}\n'
+        )
+        self.assertEqual(clf.graph(), expected_head + "}\n")
+        clf.fit(X, y)
         computed = clf.graph()
+        computed_head = computed[: len(expected_head)]
+        num = -len(expected_tail)
+        computed_tail = computed[num:]
+        self.assertEqual(computed_head, expected_head)
+        self.assertEqual(computed_tail, expected_tail)
+
+    def test_graph_title(self):
+        X, y = load_wine(return_X_y=True)
+        clf = Stree(random_state=self._random_state)
+        expected_head = (
+            "digraph STree {\nlabel=<STree Sample title>\nfontsize=30\n"
+            "fontcolor=blue\nlabelloc=t\n"
+        )
+        expected_tail = (
+            ' [shape=box style=filled label="class=1 impurity=0.000 '
+            'classes=[1] samples=[1]"];\n}\n'
+        )
+        self.assertEqual(clf.graph("Sample title"), expected_head + "}\n")
+        clf.fit(X, y)
+        computed = clf.graph("Sample title")
         computed_head = computed[: len(expected_head)]
         num = -len(expected_tail)
         computed_tail = computed[num:]
