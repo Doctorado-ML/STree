@@ -161,7 +161,7 @@ class Snode:
             output += (
                 f'N{id(self)} [label="#features={len(self._features)} '
                 f"classes={count_values[0]} samples={count_values[1]} "
-                f'({sum(count_values[1])})"];\n'
+                f'({sum(count_values[1])})" fontcolor=black];\n'
             )
             output += f"N{id(self)} -> N{id(self.get_up())};\n"
             output += f"N{id(self)} -> N{id(self.get_down())};\n"
