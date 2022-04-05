@@ -163,8 +163,8 @@ class Snode:
                 f"classes={count_values[0]} samples={count_values[1]} "
                 f'({sum(count_values[1])})" fontcolor=black];\n'
             )
-            output += f"N{id(self)} -> N{id(self.get_up())};\n"
-            output += f"N{id(self)} -> N{id(self.get_down())};\n"
+            output += f"N{id(self)} -> N{id(self.get_up())} [color=black];\n"
+            output += f"N{id(self)} -> N{id(self.get_down())} [color=black];\n"
         return output
 
     def __str__(self) -> str:
