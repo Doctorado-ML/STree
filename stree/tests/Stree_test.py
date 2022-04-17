@@ -358,6 +358,7 @@ class Stree_test(unittest.TestCase):
 
     # Tests of score
     def test_score_binary(self):
+        """Check score for binary classification."""
         X, y = load_dataset(self._random_state)
         accuracies = [
             0.9506666666666667,
@@ -380,6 +381,7 @@ class Stree_test(unittest.TestCase):
             self.assertAlmostEqual(accuracy_expected, accuracy_score)
 
     def test_score_max_features(self):
+        """Check score using max_features."""
         X, y = load_dataset(self._random_state)
         clf = Stree(
             kernel="liblinear",
@@ -391,6 +393,7 @@ class Stree_test(unittest.TestCase):
         self.assertAlmostEqual(0.9453333333333334, clf.score(X, y))
 
     def test_bogus_splitter_parameter(self):
+        """Check that bogus splitter parameter raises exception."""
         clf = Stree(splitter="duck")
         with self.assertRaises(ValueError):
             clf.fit(*load_dataset())
@@ -446,6 +449,7 @@ class Stree_test(unittest.TestCase):
         self.assertListEqual([47], resdn[1].tolist())
 
     def test_score_multiclass_rbf(self):
+        """Test score for multiclass classification with rbf kernel."""
         X, y = load_dataset(
             random_state=self._random_state,
             n_classes=3,
@@ -463,6 +467,7 @@ class Stree_test(unittest.TestCase):
         self.assertEqual(1.0, clf2.fit(X, y).score(X, y))
 
     def test_score_multiclass_poly(self):
+        """Test score for multiclass classification with poly kernel."""
         X, y = load_dataset(
             random_state=self._random_state,
             n_classes=3,
@@ -484,6 +489,7 @@ class Stree_test(unittest.TestCase):
         self.assertEqual(1.0, clf2.fit(X, y).score(X, y))
 
     def test_score_multiclass_liblinear(self):
+        """Test score for multiclass classification with liblinear kernel."""
         X, y = load_dataset(
             random_state=self._random_state,
             n_classes=3,
@@ -509,6 +515,7 @@ class Stree_test(unittest.TestCase):
         self.assertEqual(1.0, clf2.fit(X, y).score(X, y))
 
     def test_score_multiclass_sigmoid(self):
+        """Test score for multiclass classification with sigmoid kernel."""
         X, y = load_dataset(
             random_state=self._random_state,
             n_classes=3,
@@ -529,6 +536,7 @@ class Stree_test(unittest.TestCase):
         self.assertEqual(0.9662921348314607, clf2.fit(X, y).score(X, y))
 
     def test_score_multiclass_linear(self):
+        """Test score for multiclass classification with linear kernel."""
         warnings.filterwarnings("ignore", category=ConvergenceWarning)
         warnings.filterwarnings("ignore", category=RuntimeWarning)
         X, y = load_dataset(
@@ -556,11 +564,13 @@ class Stree_test(unittest.TestCase):
         self.assertEqual(1.0, clf2.fit(X, y).score(X, y))
 
     def test_zero_all_sample_weights(self):
+        """Test exception raises when all sample weights are zero."""
         X, y = load_dataset(self._random_state)
         with self.assertRaises(ValueError):
             Stree().fit(X, y, np.zeros(len(y)))
 
     def test_mask_samples_weighted_zero(self):
+        """Check that the weighted zero samples are masked."""
         X = np.array(
             [
                 [1, 1],
@@ -588,6 +598,7 @@ class Stree_test(unittest.TestCase):
         self.assertEqual(model2.score(X, y, w), 1)
 
     def test_depth(self):
+        """Check depth of the tree."""
         X, y = load_dataset(
             random_state=self._random_state,
             n_classes=3,
@@ -603,6 +614,7 @@ class Stree_test(unittest.TestCase):
         self.assertEqual(4, clf.depth_)
 
     def test_nodes_leaves(self):
+        """Check number of nodes and leaves."""
         X, y = load_dataset(
             random_state=self._random_state,
             n_classes=3,
@@ -622,6 +634,7 @@ class Stree_test(unittest.TestCase):
         self.assertEqual(6, leaves)
 
     def test_nodes_leaves_artificial(self):
+        """Check leaves of artificial dataset."""
         n1 = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], [], 0.0, "test1")
         n2 = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], [], 0.0, "test2")
         n3 = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], [], 0.0, "test3")
@@ -640,12 +653,14 @@ class Stree_test(unittest.TestCase):
         self.assertEqual(2, leaves)
 
     def test_bogus_multiclass_strategy(self):
+        """Check invalid multiclass strategy."""
         clf = Stree(multiclass_strategy="other")
         X, y = load_wine(return_X_y=True)
         with self.assertRaises(ValueError):
             clf.fit(X, y)
 
     def test_multiclass_strategy(self):
+        """Check multiclass strategy."""
         X, y = load_wine(return_X_y=True)
         clf_o = Stree(multiclass_strategy="ovo")
         clf_r = Stree(multiclass_strategy="ovr")
@@ -655,6 +670,7 @@ class Stree_test(unittest.TestCase):
         self.assertEqual(0.9269662921348315, score_r)
 
     def test_incompatible_hyperparameters(self):
+        """Check incompatible hyperparameters."""
         X, y = load_wine(return_X_y=True)
         clf = Stree(kernel="liblinear", multiclass_strategy="ovo")
         with self.assertRaises(ValueError):
@@ -664,5 +680,48 @@ class Stree_test(unittest.TestCase):
             clf.fit(X, y)
 
     def test_version(self):
+        """Check STree version."""
         clf = Stree()
         self.assertEqual(__version__, clf.version())
+
+    def test_graph(self):
+        """Check graphviz representation of the tree."""
+        X, y = load_wine(return_X_y=True)
+        clf = Stree(random_state=self._random_state)
+
+        expected_head = (
+            "digraph STree {\nlabel=<STree >\nfontsize=30\n"
+            "fontcolor=blue\nlabelloc=t\n"
+        )
+        expected_tail = (
+            ' [shape=box style=filled label="class=1 impurity=0.000 '
+            'classes=[1] samples=[1]"];\n}\n'
+        )
+        self.assertEqual(clf.graph(), expected_head + "}\n")
+        clf.fit(X, y)
+        computed = clf.graph()
+        computed_head = computed[: len(expected_head)]
+        num = -len(expected_tail)
+        computed_tail = computed[num:]
+        self.assertEqual(computed_head, expected_head)
+        self.assertEqual(computed_tail, expected_tail)
+
+    def test_graph_title(self):
+        X, y = load_wine(return_X_y=True)
+        clf = Stree(random_state=self._random_state)
+        expected_head = (
+            "digraph STree {\nlabel=<STree Sample title>\nfontsize=30\n"
+            "fontcolor=blue\nlabelloc=t\n"
+        )
+        expected_tail = (
+            ' [shape=box style=filled label="class=1 impurity=0.000 '
+            'classes=[1] samples=[1]"];\n}\n'
+        )
+        self.assertEqual(clf.graph("Sample title"), expected_head + "}\n")
+        clf.fit(X, y)
+        computed = clf.graph("Sample title")
+        computed_head = computed[: len(expected_head)]
+        num = -len(expected_tail)
+        computed_tail = computed[num:]
+        self.assertEqual(computed_head, expected_head)
+        self.assertEqual(computed_tail, expected_tail)

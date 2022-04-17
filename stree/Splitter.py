@@ -145,6 +145,28 @@ class Snode:
             except IndexError:
                 self._class = None
 
+    def graph(self):
+        """
+        Return a string representing the node in graphviz format
+        """
+        output = ""
+        count_values = np.unique(self._y, return_counts=True)
+        if self.is_leaf():
+            output += (
+                f'N{id(self)} [shape=box style=filled label="'
+                f"class={self._class} impurity={self._impurity:.3f} "
+                f'classes={count_values[0]} samples={count_values[1]}"];\n'
+            )
+        else:
+            output += (
+                f'N{id(self)} [label="#features={len(self._features)} '
+                f"classes={count_values[0]} samples={count_values[1]} "
+                f'({sum(count_values[1])})" fontcolor=black];\n'
+            )
+            output += f"N{id(self)} -> N{id(self.get_up())} [color=black];\n"
+            output += f"N{id(self)} -> N{id(self.get_down())} [color=black];\n"
+        return output
+
     def __str__(self) -> str:
         count_values = np.unique(self._y, return_counts=True)
         if self.is_leaf():
