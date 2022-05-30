@@ -67,10 +67,28 @@ class Snode_test(unittest.TestCase):
 
     def test_make_predictor_on_leaf(self):
         test = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], [], 0.0, "test")
-        test.make_predictor()
+        test.make_predictor(2)
         self.assertEqual(1, test._class)
         self.assertEqual(0.75, test._belief)
         self.assertEqual(-1, test._partition_column)
+        self.assertListEqual([1, 3], test._proba.tolist())
+
+    def test_make_predictor_on_not_leaf(self):
+        test = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], [], 0.0, "test")
+        test.set_up(Snode(None, [1], [1], [], 0.0, "another_test"))
+        test.make_predictor(2)
+        self.assertIsNone(test._class)
+        self.assertEqual(0, test._belief)
+        self.assertEqual(-1, test._partition_column)
+        self.assertEqual(-1, test.get_up()._partition_column)
+        self.assertIsNone(test._proba)
+
+    def test_make_predictor_on_leaf_bogus_data(self):
+        test = Snode(None, [1, 2, 3, 4], [], [], 0.0, "test")
+        test.make_predictor(2)
+        self.assertIsNone(test._class)
+        self.assertEqual(-1, test._partition_column)
+        self.assertListEqual([0, 0], test._proba.tolist())
 
     def test_set_title(self):
         test = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], [], 0.0, "test")
@@ -96,21 +114,6 @@ class Snode_test(unittest.TestCase):
         self.assertListEqual([0, 1], test.get_features())
         test.set_features([1, 2])
         self.assertListEqual([1, 2], test.get_features())
-
-    def test_make_predictor_on_not_leaf(self):
-        test = Snode(None, [1, 2, 3, 4], [1, 0, 1, 1], [], 0.0, "test")
-        test.set_up(Snode(None, [1], [1], [], 0.0, "another_test"))
-        test.make_predictor()
-        self.assertIsNone(test._class)
-        self.assertEqual(0, test._belief)
-        self.assertEqual(-1, test._partition_column)
-        self.assertEqual(-1, test.get_up()._partition_column)
-
-    def test_make_predictor_on_leaf_bogus_data(self):
-        test = Snode(None, [1, 2, 3, 4], [], [], 0.0, "test")
-        test.make_predictor()
-        self.assertIsNone(test._class)
-        self.assertEqual(-1, test._partition_column)
 
     def test_copy_node(self):
         px = [1, 2, 3, 4]

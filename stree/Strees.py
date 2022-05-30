@@ -314,7 +314,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         if np.unique(y).shape[0] == 1:
             # only 1 class => pure dataset
             node.set_title(title + ", <pure>")
-            node.make_predictor()
+            node.make_predictor(self.n_classes_)
             return node
         # Train the model
         clf = self._build_clf()
@@ -333,7 +333,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         if X_U is None or X_D is None:
             # didn't part anything
             node.set_title(title + ", <cgaf>")
-            node.make_predictor()
+            node.make_predictor(self.n_classes_)
             return node
         node.set_up(
             self._train(X_U, y_u, sw_u, depth + 1, title + f" - Up({depth+1})")

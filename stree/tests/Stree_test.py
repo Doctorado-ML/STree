@@ -695,7 +695,7 @@ class Stree_test(unittest.TestCase):
         )
         expected_tail = (
             ' [shape=box style=filled label="class=1 impurity=0.000 '
-            'classes=[1] samples=[1]"];\n}\n'
+            'counts=[0. 1. 0.]"];\n}\n'
         )
         self.assertEqual(clf.graph(), expected_head + "}\n")
         clf.fit(X, y)
@@ -715,7 +715,7 @@ class Stree_test(unittest.TestCase):
         )
         expected_tail = (
             ' [shape=box style=filled label="class=1 impurity=0.000 '
-            'classes=[1] samples=[1]"];\n}\n'
+            'counts=[0. 1. 0.]"];\n}\n'
         )
         self.assertEqual(clf.graph("Sample title"), expected_head + "}\n")
         clf.fit(X, y)
