@@ -135,7 +135,7 @@ class Snode:
         if not self.is_leaf():
             return
         classes, card = np.unique(self._y, return_counts=True)
-        self._proba = np.zeros((num_classes,))
+        self._proba = np.zeros((num_classes,), dtype=np.int64)
         for c, n in zip(classes, card):
             self._proba[c] = n
         try:
