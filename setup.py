@@ -7,9 +7,8 @@ def readme():
         return f.read()
 
 
-def get_data(field):
+def get_data(field, file_name="__init__.py"):
     item = ""
-    file_name = "_version.py" if field == "version" else "__init__.py"
     with open(os.path.join("stree", file_name)) as f:
         for line in f.readlines():
             if line.startswith(f"__{field}__"):
@@ -21,9 +20,14 @@ def get_data(field):
     return item
 
 
+def get_requirements():
+    with open("requirements.txt") as f:
+        return f.read().splitlines()
+
+
 setuptools.setup(
     name="STree",
-    version=get_data("version"),
+    version=get_data("version", "_version.py"),
     license=get_data("license"),
     description="Oblique decision tree with svm nodes",
     long_description=readme(),
@@ -46,7 +50,7 @@ setuptools.setup(
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
         "Intended Audience :: Science/Research",
     ],
-    install_requires=["scikit-learn", "mufs"],
+    install_requires=get_requirements(),
     test_suite="stree.tests",
     zip_safe=False,
 )

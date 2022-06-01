@@ -368,6 +368,21 @@ class Stree(BaseEstimator, ClassifierMixin):
         )
 
     def __predict_class(self, X: np.array) -> np.array:
+        """Compute the predicted class for the samples in X. Returns the number
+        of samples of each class in the corresponding leaf node.
+
+        Parameters
+        ----------
+        X : np.array
+            Array of samples
+
+        Returns
+        -------
+        np.array
+            Array of shape (n_samples, n_classes) with the number of samples
+            of each class in the corresponding leaf node
+        """
+
         def compute_prediction(xp, indices, node):
             if xp is None:
                 return
@@ -388,6 +403,25 @@ class Stree(BaseEstimator, ClassifierMixin):
         return result
 
     def check_predict(self, X) -> np.array:
+        """Checks predict and predict_proba preconditions. If input X is not an
+        np.array convert it to one.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Array of samples
+
+        Returns
+        -------
+        np.array
+            Array of samples
+
+        Raises
+        ------
+        ValueError
+            If number of features of X is different of the number of features
+            in training data
+        """
         check_is_fitted(self, ["tree_"])
         # Input validation
         X = check_array(X)
