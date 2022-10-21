@@ -68,6 +68,7 @@ class Snode:
         self._impurity = impurity
         self._partition_column: int = -1
         self._scaler = scaler
+        self._proba = None
 
     @classmethod
     def copy(cls, node: "Snode") -> "Snode":
@@ -127,23 +128,22 @@ class Snode:
     def get_up(self) -> "Snode":
         return self._up
 
-    def make_predictor(self):
+    def make_predictor(self, num_classes: int) -> None:
         """Compute the class of the predictor and its belief based on the
         subdataset of the node only if it is a leaf
         """
         if not self.is_leaf():
             return
         classes, card = np.unique(self._y, return_counts=True)
-        if len(classes) > 1:
+        self._proba = np.zeros((num_classes,), dtype=np.int64)
+        for c, n in zip(classes, card):
+            self._proba[c] = n
+        try:
             max_card = max(card)
             self._class = classes[card == max_card][0]
             self._belief = max_card / np.sum(card)
-        else:
-            self._belief = 1
-            try:
-                self._class = classes[0]
-            except IndexError:
-                self._class = None
+        except ValueError:
+            self._class = None
 
     def graph(self):
         """
@@ -155,7 +155,7 @@ class Snode:
             output += (
                 f'N{id(self)} [shape=box style=filled label="'
                 f"class={self._class} impurity={self._impurity:.3f} "
-                f'classes={count_values[0]} samples={count_values[1]}"];\n'
+                f'counts={self._proba}"];\n'
             )
         else:
             output += (
