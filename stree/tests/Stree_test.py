@@ -306,7 +306,7 @@ class Stree_test(unittest.TestCase):
             for criteria in ["max_samples", "impurity"]:
                 for kernel in self._kernels:
                     clf = Stree(
-                        max_iter=1e4,
+                        max_iter=int(1e4),
                         multiclass_strategy="ovr"
                         if kernel == "liblinear"
                         else "ovo",
