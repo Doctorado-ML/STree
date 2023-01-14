@@ -139,7 +139,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         self,
         C: float = 1.0,
         kernel: str = "linear",
-        max_iter: int = 1e5,
+        max_iter: int = int(1e5),
         random_state: int = None,
         max_depth: int = None,
         tol: float = 1e-4,
