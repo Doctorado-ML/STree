@@ -267,7 +267,6 @@ class Splitter:
         random_state=None,
         normalize=False,
     ):
-
         self._clf = clf
         self._random_state = random_state
         if random_state is not None:

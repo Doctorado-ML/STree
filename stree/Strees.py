@@ -153,7 +153,6 @@ class Stree(BaseEstimator, ClassifierMixin):
         multiclass_strategy: str = "ovo",
         normalize: bool = False,
     ):
-
         self.max_iter = max_iter
         self.C = C
         self.kernel = kernel
