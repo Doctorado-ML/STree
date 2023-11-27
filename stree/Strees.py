@@ -484,6 +484,43 @@ class Stree(BaseEstimator, ClassifierMixin):
         X = self.check_predict(X)
         return self.classes_[np.argmax(self.__predict_class(X), axis=1)]
 
+    def get_nodes(self) -> int:
+        """Return the number of nodes in the tree
+
+        Returns
+        -------
+        int
+            number of nodes
+        """
+        nodes = 0
+        for _ in self:
+            nodes += 1
+        return nodes
+
+    def get_leaves(self) -> int:
+        """Return the number of leaves in the tree
+
+        Returns
+        -------
+        int
+            number of leaves
+        """
+        leaves = 0
+        for node in self:
+            if node.is_leaf():
+                leaves += 1
+        return leaves
+
+    def get_depth(self) -> int:
+        """Return the depth of the tree
+
+        Returns
+        -------
+        int
+            depth of the tree
+        """
+        return self.depth_
+
     def nodes_leaves(self) -> tuple:
         """Compute the number of nodes and leaves in the built tree
 

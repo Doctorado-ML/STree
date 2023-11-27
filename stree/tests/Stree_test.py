@@ -239,6 +239,7 @@ class Stree_test(unittest.TestCase):
             )
             tcl.fit(*load_dataset(self._random_state))
             self.assertEqual(depth, tcl.depth_)
+            self.assertEqual(depth, tcl.get_depth())
 
     def test_unfitted_tree_is_iterable(self):
         tcl = Stree()
@@ -640,10 +641,12 @@ class Stree_test(unittest.TestCase):
         clf = Stree(random_state=self._random_state)
         clf.fit(X, y)
         self.assertEqual(6, clf.depth_)
+        self.assertEqual(6, clf.get_depth())
         X, y = load_wine(return_X_y=True)
         clf = Stree(random_state=self._random_state)
         clf.fit(X, y)
         self.assertEqual(4, clf.depth_)
+        self.assertEqual(4, clf.get_depth())
 
     def test_nodes_leaves(self):
         """Check number of nodes and leaves."""
@@ -657,13 +660,17 @@ class Stree_test(unittest.TestCase):
         clf.fit(X, y)
         nodes, leaves = clf.nodes_leaves()
         self.assertEqual(31, nodes)
+        self.assertEqual(31, clf.get_nodes())
         self.assertEqual(16, leaves)
+        self.assertEqual(16, clf.get_leaves())
         X, y = load_wine(return_X_y=True)
         clf = Stree(random_state=self._random_state)
         clf.fit(X, y)
         nodes, leaves = clf.nodes_leaves()
         self.assertEqual(11, nodes)
+        self.assertEqual(11, clf.get_nodes())
         self.assertEqual(6, leaves)
+        self.assertEqual(6, clf.get_leaves())
 
     def test_nodes_leaves_artificial(self):
         """Check leaves of artificial dataset."""
@@ -682,7 +689,9 @@ class Stree_test(unittest.TestCase):
         clf.tree_ = n1
         nodes, leaves = clf.nodes_leaves()
         self.assertEqual(6, nodes)
+        self.assertEqual(6, clf.get_nodes())
         self.assertEqual(2, leaves)
+        self.assertEqual(2, clf.get_leaves())
 
     def test_bogus_multiclass_strategy(self):
         """Check invalid multiclass strategy."""
