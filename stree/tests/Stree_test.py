@@ -308,9 +308,9 @@ class Stree_test(unittest.TestCase):
                 for kernel in self._kernels:
                     clf = Stree(
                         max_iter=int(1e4),
-                        multiclass_strategy="ovr"
-                        if kernel == "liblinear"
-                        else "ovo",
+                        multiclass_strategy=(
+                            "ovr" if kernel == "liblinear" else "ovo"
+                        ),
                         kernel=kernel,
                         random_state=self._random_state,
                     )
