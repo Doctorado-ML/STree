@@ -15,7 +15,7 @@ Oblique Tree classifier based on SVM nodes. The nodes are built and splitted wit
 ## Installation
 
 ```bash
-pip install git+https://github.com/doctorado-ml/stree
+pip install Stree
 ```
 
 ## Documentation
