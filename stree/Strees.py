@@ -174,6 +174,10 @@ class Stree(BaseEstimator, ClassifierMixin):
         """Return the version of the package."""
         return __version__
 
+    def __call__(self) -> str:
+        """Only added to comply with scikit-learn base estimator for ensemble"""
+        return self.version()
+
     def _more_tags(self) -> dict:
         """Required by sklearn to supply features of the classifier
         make mandatory the labels array

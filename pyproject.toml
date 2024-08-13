@@ -1,5 +1,68 @@
+[build-system]
+requires = ["setuptools", "scikit-learn>1.0", "numpy", "mufs"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["stree"]
+license-files = ["LICENSE"]
+
+[tool.setuptools.dynamic]
+version = { attr = "stree.__version__" }
+
+[project]
+name = "STree"
+dependencies = ["scikit-learn>1.0", "numpy", "mufs"]
+license = { file = "LICENSE" }
+description = "Oblique decision tree with svm nodes."
+readme = "README.md"
+authors = [
+  { name = "Ricardo Montañana", email = "ricardo.montanana@alu.uclm.es" },
+]
+dynamic = ['version']
+requires-python = ">=3.8"
+keywords = [
+  "scikit-learn",
+  "oblique-classifier",
+  "oblique-decision-tree",
+  "decision-tree",
+  "svm",
+  "svc",
+]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Science/Research",
+  "Intended Audience :: Developers",
+  "Topic :: Software Development",
+  "Topic :: Scientific/Engineering",
+  "License :: OSI Approved :: MIT License",
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+
+[project.optional-dependencies]
+dev = ["black", "flake8", "mypy", "coverage"]
+
+[project.urls]
+Code = "https://github.com/Doctorado-ML/STree"
+Documentation = "https://stree.readthedocs.io/en/latest/index.html"
+
+[tool.coverage.run]
+branch = true
+source = ["stree"]
+command_line = "-m unittest discover -s stree.tests"
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 100
+
 [tool.black]
 line-length = 79
+target_version = ['py311']
 include = '\.pyi?$'
 exclude = '''
 /(
