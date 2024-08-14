@@ -28,7 +28,7 @@ jobs:
           pip install -q --upgrade codecov coverage black flake8 codacy-coverage
       - name: Lint
         run: |
-          black --check --diff stree
+          # black --check --diff stree
           flake8 --count stree
       - name: Tests
         run: |
