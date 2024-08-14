@@ -7,7 +7,7 @@ coverage:  ## Run tests with coverage
 	@coverage run -m unittest -v stree.tests
 	@coverage report -m
 
-lint:  ## Lint and static-check
+lint:  ## Lint source files
 	@black stree
 	@flake8 stree
 
