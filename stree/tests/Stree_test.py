@@ -728,7 +728,7 @@ class Stree_test(unittest.TestCase):
     def test_call(self) -> None:
         """Check call method."""
         clf = Stree()
-        self.assertEqual(__version__, clf())
+        self.assertIsNone(clf())
 
     def test_graph(self):
         """Check graphviz representation of the tree."""
