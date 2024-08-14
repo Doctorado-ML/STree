@@ -1,17 +1,10 @@
 [build-system]
-requires = ["setuptools", "scikit-learn>1.0", "numpy", "mufs"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools]
-packages = ["stree"]
-license-files = ["LICENSE"]
-
-[tool.setuptools.dynamic]
-version = { attr = "stree.__version__" }
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "STree"
-dependencies = ["scikit-learn>1.0", "numpy", "mufs"]
+dependencies = ["scikit-learn>1.0", "mufs"]
 license = { file = "LICENSE" }
 description = "Oblique decision tree with svm nodes."
 readme = "README.md"
@@ -45,11 +38,18 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-dev = ["black", "flake8", "mypy", "coverage"]
+dev = ["black", "flake8", "coverage", "hatch", "pip-audit"]
+doc = ["sphinx", "myst-parser", "sphinx_rtd_theme", "sphinx-autodoc-typehints"]
 
 [project.urls]
 Code = "https://github.com/Doctorado-ML/STree"
 Documentation = "https://stree.readthedocs.io/en/latest/index.html"
+
+[tool.hatch.version]
+path = "stree/_version.py"
+
+[tool.hatch.build.targets.sdist]
+include = ["/stree"]
 
 [tool.coverage.run]
 branch = true
@@ -62,7 +62,7 @@ fail_under = 100
 
 [tool.black]
 line-length = 79
-target_version = ['py311']
+target-version = ["py311"]
 include = '\.pyi?$'
 exclude = '''
 /(

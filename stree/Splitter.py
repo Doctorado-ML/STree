@@ -414,7 +414,8 @@ class Splitter:
         )
         return tuple(
             sorted(
-                range(len(feature_list)), key=lambda sub: feature_list[sub]
+                range(len(feature_list)),
+                key=lambda sub: feature_list[sub],
             )[-max_features:]
         )
 
@@ -529,7 +530,10 @@ class Splitter:
         return entropy
 
     def information_gain(
-        self, labels: np.array, labels_up: np.array, labels_dn: np.array
+        self,
+        labels: np.array,
+        labels_up: np.array,
+        labels_dn: np.array,
     ) -> float:
         """Compute information gain of a split candidate
 

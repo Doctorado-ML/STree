@@ -175,7 +175,8 @@ class Stree(BaseEstimator, ClassifierMixin):
         return __version__
 
     def __call__(self) -> str:
-        """Only added to comply with scikit-learn base estimator for ensemble"""
+        """Only added to comply with scikit-learn base sestimator for ensembles
+        """
         return self.version()
 
     def _more_tags(self) -> dict:
@@ -188,7 +189,10 @@ class Stree(BaseEstimator, ClassifierMixin):
         return {"requires_y": True}
 
     def fit(
-        self, X: np.ndarray, y: np.ndarray, sample_weight: np.array = None
+        self,
+        X: np.ndarray,
+        y: np.ndarray,
+        sample_weight: np.array = None,
     ) -> "Stree":
         """Build the tree based on the dataset of samples and its labels
 
@@ -343,7 +347,11 @@ class Stree(BaseEstimator, ClassifierMixin):
         )
         node.set_down(
             self._train(
-                X_D, y_d, sw_d, depth + 1, title + f" - Down({depth+1})"
+                X_D,
+                y_d,
+                sw_d,
+                depth + 1,
+                title + f" - Down({depth+1})",
             )
         )
         return node

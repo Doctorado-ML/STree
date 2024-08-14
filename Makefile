@@ -1,46 +1,36 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
-.PHONY: coverage deps help lint push test doc build
+.PHONY: audit coverage help lint test doc doc-clean build
 
 coverage:  ## Run tests with coverage
-	coverage erase
-	coverage run -m unittest -v stree.tests
-	coverage report -m
-
-deps:  ## Install dependencies
-	pip install -r requirements.txt
-
-devdeps:  ## Install development dependencies
-	pip install black pip-audit flake8 mypy coverage
+	@coverage erase
+	@coverage run -m unittest -v stree.tests
+	@coverage report -m
 
 lint:  ## Lint and static-check
-	black stree
-	flake8 stree
-	mypy stree
-
-push:  ## Push code with tags
-	git push && git push --tags
+	@black stree
+	@flake8 stree
 
 test:  ## Run tests
-	python -m unittest -v stree.tests
+	@python -m unittest -v stree.tests
 
 doc:  ## Update documentation
-	make -C docs --makefile=Makefile html
+	@make -C docs --makefile=Makefile html
 
 build:  ## Build package
-	rm -fr dist/*
-	rm -fr build/*
-	python setup.py sdist bdist_wheel
+	@rm -fr dist/*
+	@rm -fr build/*
+	@hatch build
 
-doc-clean:  ## Update documentation
-	make -C docs --makefile=Makefile clean
+doc-clean:  ## Clean documentation folders
+	@make -C docs --makefile=Makefile clean
 
 audit: ## Audit pip
-	pip-audit
+	@pip-audit
 
-help: ## Show help message
+help: ## Show this help message
 	@IFS=$$'\n' ; \
-	help_lines=(`fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##/:/'`); \
+	help_lines=(`grep -Fh "##" $(MAKEFILE_LIST) | grep -Fv fgrep | sed -e 's/\\$$//' | sed -e 's/##/:/'`); \
 	printf "%s\n\n" "Usage: make [task]"; \
 	printf "%-20s %s\n" "task" "help" ; \
 	printf "%-20s %s\n" "------" "----" ; \
