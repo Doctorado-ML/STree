@@ -7,3 +7,4 @@ Siterator
     :undoc-members:
     :private-members:
     :show-inheritance:
+    :noindex:

@@ -7,3 +7,4 @@ Splitter
     :undoc-members:
     :private-members:
     :show-inheritance:
+    :noindex:
