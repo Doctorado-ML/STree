@@ -12,9 +12,10 @@
 #
 import os
 import sys
-from stree._version import __version__
 
 sys.path.insert(0, os.path.abspath("../../stree/"))
+
+from stree._version import __version__
 
 # -- Project information -----------------------------------------------------
 
