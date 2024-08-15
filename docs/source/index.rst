@@ -5,7 +5,6 @@ Welcome to STree's documentation!
    :caption: Contents:
    :titlesonly:
 
-
    stree
    install
    hyperparameters
