@@ -7,3 +7,4 @@ Stree
     :undoc-members:
     :private-members:
     :show-inheritance:
+    :noindex:
