@@ -175,8 +175,8 @@ class Stree(BaseEstimator, ClassifierMixin):
         return __version__
 
     def __call__(self) -> None:
-        """Only added to comply with scikit-learn base sestimator for ensembles
-        """
+        """Only added to comply with scikit-learn base sestimator for
+        ensembles"""
         pass
 
     def _more_tags(self) -> dict:
