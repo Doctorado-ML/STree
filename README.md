@@ -1,3 +1,5 @@
+# STree
+
 ![CI](https://github.com/Doctorado-ML/STree/workflows/CI/badge.svg)
 [![CodeQL](https://github.com/Doctorado-ML/STree/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/Doctorado-ML/STree/actions/workflows/codeql-analysis.yml)
 [![codecov](https://codecov.io/gh/doctorado-ml/stree/branch/master/graph/badge.svg)](https://codecov.io/gh/doctorado-ml/stree)
@@ -6,11 +8,10 @@
 ![https://img.shields.io/badge/python-3.11%2B-blue](https://img.shields.io/badge/python-3.11%2B-brightgreen)
 [![DOI](https://zenodo.org/badge/262658230.svg)](https://zenodo.org/badge/latestdoi/262658230)
 
-# STree
+![Stree](https://raw.github.com/doctorado-ml/stree/master/example.png)
 
 Oblique Tree classifier based on SVM nodes. The nodes are built and splitted with sklearn SVC models. Stree is a sklearn estimator and can be integrated in pipelines, grid searches, etc.
 
-![Stree](https://raw.github.com/doctorado-ml/stree/master/example.png)
 
 ## Installation
 

@@ -746,7 +746,7 @@ class Splitter:
             Train time - True / Test time - False
         """
         # data contains the distances of every sample to every class hyperplane
-        # array of (m, nc) nc = # classes
+        # array of (m, nc) nc = k if ovr, nc = k*(k-1)/2 if ovo
         data = self._distances(node, samples)
         if data.shape[0] < self._min_samples_split:
             # there aren't enough samples to split
