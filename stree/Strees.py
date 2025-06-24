@@ -168,6 +168,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         self.splitter = splitter
         self.normalize = normalize
         self.multiclass_strategy = multiclass_strategy
+        self.depth_ = 0
 
     @staticmethod
     def version() -> str:

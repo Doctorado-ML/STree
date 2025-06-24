@@ -6,6 +6,7 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/35fa3dfd53a24a339344b33d9f9f2f3d)](https://www.codacy.com/gh/Doctorado-ML/STree?utm_source=github.com&utm_medium=referral&utm_content=Doctorado-ML/STree&utm_campaign=Badge_Grade)
 [![PyPI version](https://badge.fury.io/py/STree.svg)](https://badge.fury.io/py/STree)
 ![https://img.shields.io/badge/python-3.11%2B-blue](https://img.shields.io/badge/python-3.11%2B-brightgreen)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Doctorado-ML/STree)
 [![DOI](https://zenodo.org/badge/262658230.svg)](https://zenodo.org/badge/latestdoi/262658230)
 
 ![Stree](https://raw.github.com/doctorado-ml/stree/master/example.png)
