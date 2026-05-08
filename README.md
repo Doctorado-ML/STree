@@ -1,6 +1,6 @@
 # STree
 
-![CI](https://github.com/Doctorado-ML/STree/workflows/CI/badge.svg)
+[![CI](https://github.com/Doctorado-ML/STree/actions/workflows/main.yml/badge.svg)](https://github.com/Doctorado-ML/STree/actions/workflows/main.yml)
 [![CodeQL](https://github.com/Doctorado-ML/STree/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/Doctorado-ML/STree/actions/workflows/codeql-analysis.yml)
 [![codecov](https://codecov.io/gh/doctorado-ml/stree/branch/master/graph/badge.svg)](https://codecov.io/gh/doctorado-ml/stree)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/35fa3dfd53a24a339344b33d9f9f2f3d)](https://app.codacy.com/gh/Doctorado-ML/STree/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
