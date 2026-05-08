@@ -11,16 +11,16 @@ from sklearn.svm import SVC, LinearSVC
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
-    check_X_y,
-    check_array,
     check_is_fitted,
     _check_sample_weight,
+    validate_data,
 )
+from sklearn.utils._tags import (Tags, ClassifierTags, TargetTags, InputTags)
 from .Splitter import Splitter, Snode, Siterator
 from ._version import __version__
 
 
-class Stree(BaseEstimator, ClassifierMixin):
+class Stree(ClassifierMixin, BaseEstimator):
     """
     Estimator that is based on binary trees of svm nodes
     can deal with sample_weights in predict, used in boosting sklearn methods
@@ -179,15 +179,32 @@ class Stree(BaseEstimator, ClassifierMixin):
         ensembles"""
         pass
 
-    def _more_tags(self) -> dict:
-        """Required by sklearn to supply features of the classifier
-        make mandatory the labels array
-
-        :return: the tag required
-        :rtype: dict
-        """
-        return {"requires_y": True}
-
+    def __sklearn_tags__(self):
+        return Tags(
+            estimator_type="classifier",
+            target_tags=TargetTags(
+                required=True,
+                multi_output=False,
+            ),
+            classifier_tags=ClassifierTags(
+                multi_class=True,
+                multi_label=False,
+                poor_score=False,
+            ),
+            input_tags=InputTags(
+                sparse=False,
+                one_d_array=False,
+                two_d_array=True,
+                three_d_array=False,
+                categorical=True,
+                string=True,
+                pairwise=False,
+            ),
+            requires_fit=True,
+            array_api_support=False,
+            non_deterministic=False,
+            _skip_test=False,
+        )
     def fit(
         self,
         X: np.ndarray,
@@ -245,7 +262,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         if self.kernel not in kernels:
             raise ValueError(f"Kernel {self.kernel} not in {kernels}")
         check_classification_targets(y)
-        X, y = check_X_y(X, y)
+        X, y = validate_data(self, X, y)
         sample_weight = _check_sample_weight(
             sample_weight, X, dtype=np.float64
         )
@@ -435,12 +452,7 @@ class Stree(BaseEstimator, ClassifierMixin):
         """
         check_is_fitted(self, ["tree_"])
         # Input validation
-        X = check_array(X)
-        if X.shape[1] != self.n_features_:
-            raise ValueError(
-                f"Expected {self.n_features_} features but got "
-                f"({X.shape[1]})"
-            )
+        X = validate_data(self, X, reset=False)
         return X
 
     def predict_proba(self, X: np.array) -> np.array:

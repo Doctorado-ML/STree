@@ -4,8 +4,9 @@ build-backend = "hatchling.build"
 
 [project]
 name = "STree"
-dependencies = ["scikit-learn==1.5.2", "numpy==1.26.4", "mufs"]
-license = { file = "LICENSE" }
+dependencies = ["scikit-learn>=1.8.0", "mufs"]
+license = "MIT"
+license-files = ["LICENSE"]
 description = "Oblique decision tree with svm nodes."
 readme = "README.md"
 authors = [
