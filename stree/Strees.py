@@ -15,7 +15,7 @@ from sklearn.utils.validation import (
     _check_sample_weight,
     validate_data,
 )
-from sklearn.utils._tags import (Tags, ClassifierTags, TargetTags, InputTags)
+from sklearn.utils._tags import Tags, ClassifierTags, TargetTags, InputTags
 from .Splitter import Splitter, Snode, Siterator
 from ._version import __version__
 
@@ -205,6 +205,7 @@ class Stree(ClassifierMixin, BaseEstimator):
             non_deterministic=False,
             _skip_test=False,
         )
+
     def fit(
         self,
         X: np.ndarray,
