@@ -263,8 +263,8 @@ class Splitter_test(unittest.TestCase):
     def test_get_cfs_subspaces(self):
         results = [
             (4, [1, 5, 9, 12]),
-            (6, [1, 5, 9, 12, 4, 2]),
-            (7, [1, 5, 9, 12, 4, 2, 3]),
+            (6, [1, 5, 9, 12, 4, 15]),
+            (7, [1, 5, 9, 12, 4, 15, 19]),
         ]
         X, y = load_dataset(n_features=20, n_informative=7)
         for k, expected in results:
